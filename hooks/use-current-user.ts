@@ -24,6 +24,7 @@ function toCurrentUser(p: Profile): CurrentUser {
 
 export function useCurrentUser() {
   const [user, setUser] = useState<CurrentUser | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -31,8 +32,9 @@ export function useCurrentUser() {
     setLoading(true);
     setError(null);
     try {
-      const profile = await profilesService.getCurrent();
-      setUser(profile ? toCurrentUser(profile) : null);
+      const p = await profilesService.getCurrent();
+      setProfile(p);
+      setUser(p ? toCurrentUser(p) : null);
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
@@ -44,5 +46,5 @@ export function useCurrentUser() {
     fetch();
   }, [fetch]);
 
-  return { user, loading, error, refetch: fetch };
+  return { user, profile, loading, error, refetch: fetch };
 }

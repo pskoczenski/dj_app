@@ -1,16 +1,17 @@
 "use client";
 
-import { use } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useProfile } from "@/hooks/use-profile";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { followsService } from "@/lib/services/follows";
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { SocialLinks } from "@/components/profile/social-links";
 import { FollowButton } from "@/components/profile/follow-button";
 import { EmptyState } from "@/components/shared/empty-state";
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 export default function DjProfilePage({
   params,
@@ -46,6 +47,39 @@ export default function DjProfilePage({
   }
 
   const isOwnProfile = currentUser?.id === profile.id;
+  const [following, setFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+
+  useEffect(() => {
+    if (!currentUser || isOwnProfile || !profile) return;
+    followsService.isFollowing(currentUser.id, profile.id).then(setFollowing);
+  }, [currentUser, profile, isOwnProfile]);
+
+  const handleFollow = useCallback(async () => {
+    if (!currentUser || !profile) return;
+    setFollowLoading(true);
+    try {
+      await followsService.follow(currentUser.id, profile.id);
+      setFollowing(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to follow.");
+    } finally {
+      setFollowLoading(false);
+    }
+  }, [currentUser, profile]);
+
+  const handleUnfollow = useCallback(async () => {
+    if (!currentUser || !profile) return;
+    setFollowLoading(true);
+    try {
+      await followsService.unfollow(currentUser.id, profile.id);
+      setFollowing(false);
+    } catch {
+      toast.error("Failed to unfollow.");
+    } finally {
+      setFollowLoading(false);
+    }
+  }, [currentUser, profile]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -60,13 +94,14 @@ export default function DjProfilePage({
             >
               Edit Profile
             </Link>
-          ) : (
+          ) : currentUser ? (
             <FollowButton
-              isFollowing={false} // TODO: wire follow service (Step 16)
-              onFollow={() => {}}
-              onUnfollow={() => {}}
+              isFollowing={following}
+              onFollow={handleFollow}
+              onUnfollow={handleUnfollow}
+              loading={followLoading}
             />
-          )}
+          ) : null}
         </div>
       </section>
 
