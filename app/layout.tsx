@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Libre_Franklin, JetBrains_Mono, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -41,7 +42,10 @@ export default function RootLayout({
       lang="en"
       className={cn("dark", "h-full", "antialiased", fraunces.variable, libreFranklin.variable, jetbrainsMono.variable, "font-sans", geist.variable)}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

@@ -1,14 +1,15 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-/*
- ---break---
- */
+
 @custom-variant dark (&:is(.dark *));
 
 /*
  * DJ Network design tokens — single source of truth.
  * See docs/design_specs/01-brand-and-color-tokens.md
+ *
+ * shadcn semantic variables are mapped to our palette so all
+ * shadcn components render in the botanical dark theme.
  */
 :root {
   /* Backgrounds */
@@ -58,38 +59,42 @@
   --shadow-default: 0 2px 4px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-focus: 0 0 0 2px #4A7C59;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  /* shadcn semantic → botanical dark (dark-only app, no light theme) */
+  --background: #121714;
+  --foreground: #E8E4DE;
+  --card: #1A221D;
+  --card-foreground: #E8E4DE;
+  --popover: #1A221D;
+  --popover-foreground: #E8E4DE;
+  --primary: #4A7C59;
+  --primary-foreground: #E8E4DE;
+  --secondary: #232B26;
+  --secondary-foreground: #E8E4DE;
+  --muted: #232B26;
+  --muted-foreground: #A8B0A4;
+  --accent: #232B26;
+  --accent-foreground: #E8E4DE;
+  --destructive: #8B3A3A;
+  --border: #2A3B32;
+  --input: #2A3B32;
+  --ring: #4A7C59;
+  --radius: 0.5rem;
+
+  --sidebar: #1A221D;
+  --sidebar-foreground: #E8E4DE;
+  --sidebar-primary: #4A7C59;
+  --sidebar-primary-foreground: #E8E4DE;
+  --sidebar-accent: #232B26;
+  --sidebar-accent-foreground: #E8E4DE;
+  --sidebar-border: #2A3B32;
+  --sidebar-ring: #4A7C59;
+
+  --chart-1: #4A7C59;
+  --chart-2: #5A9B6B;
+  --chart-3: #C9A227;
+  --chart-4: #A8B0A4;
+  --chart-5: #6B7569;
 }
 
 /* Tailwind v4 @theme — maps CSS vars to utility classes */
@@ -131,8 +136,10 @@
   --shadow-default: var(--shadow-default);
   --shadow-lg: var(--shadow-lg);
   --shadow-focus: var(--shadow-focus);
-  --font-heading: var(--font-sans);
-  --font-sans: var(--font-sans);
+
+  /* shadcn @theme mappings */
+  --font-heading: var(--font-display);
+  --font-sans: var(--font-body);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -177,58 +184,13 @@ body {
   font-family: var(--font-body);
 }
 
-/* Fern glow focus ring for all interactive elements */
 :focus-visible {
   outline: none;
   box-shadow: var(--shadow-focus);
 }
-/*
- ---break---
- */
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
-/*
- ---break---
- */
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
   }
 }
