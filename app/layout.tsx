@@ -28,7 +28,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DJ Network",
+  title: {
+    template: "%s | DJ Network",
+    default: "DJ Network",
+  },
   description: "A grassroots DJ networking platform",
 };
 
