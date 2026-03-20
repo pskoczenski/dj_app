@@ -182,6 +182,35 @@ body {
   background-color: var(--color-deep-loam);
   color: var(--color-bone);
   font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/*
+ * Type scale — Fraunces WONK axis by size context.
+ *   Hero/display (5xl, 6xl):  WONK 1
+ *   Headings (xl–4xl):        WONK 0.5
+ *   Smaller Fraunces:         WONK 0
+ *
+ * Applied via .font-display (Fraunces utility) combined with size.
+ * Never use Fraunces below 20px (xl / 1.25rem).
+ */
+.heading-hero {
+  font-family: var(--font-display);
+  font-variation-settings: "WONK" 1;
+  letter-spacing: 0.02em;
+}
+
+.heading-section {
+  font-family: var(--font-display);
+  font-variation-settings: "WONK" 0.5;
+  letter-spacing: 0.02em;
+}
+
+.heading-subtle {
+  font-family: var(--font-display);
+  font-variation-settings: "WONK" 0;
+  letter-spacing: 0.02em;
 }
 
 :focus-visible {
