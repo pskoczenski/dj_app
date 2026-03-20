@@ -1,21 +1,31 @@
-export type {
-  ProfileType,
-  EventStatus,
-  MixPlatform,
-  ProfileRow as Profile,
-  ProfileInsert,
-  ProfileUpdate,
-  EventRow as Event,
-  EventInsert,
-  EventUpdate,
-  EventLineupRow as EventLineup,
-  EventLineupInsert,
-  MixRow as Mix,
-  MixInsert,
-  MixUpdate,
-  FollowRow as Follow,
-  FollowInsert,
-  GenreTagRow as GenreTag,
-  ProfileFollowCountsRow as ProfileFollowCounts,
-  Database,
-} from "./database";
+export type { Database, Json } from "./database";
+
+type Tables = import("./database").Database["public"]["Tables"];
+type Views = import("./database").Database["public"]["Views"];
+type Enums = import("./database").Database["public"]["Enums"];
+
+// Row types
+export type Profile = Tables["profiles"]["Row"];
+export type Event = Tables["events"]["Row"];
+export type EventLineup = Tables["event_lineup"]["Row"];
+export type Mix = Tables["mixes"]["Row"];
+export type Follow = Tables["follows"]["Row"];
+export type GenreTag = Tables["genre_tags"]["Row"];
+export type ProfileFollowCounts = Views["profile_follow_counts"]["Row"];
+
+// Insert types
+export type ProfileInsert = Tables["profiles"]["Insert"];
+export type EventInsert = Tables["events"]["Insert"];
+export type EventLineupInsert = Tables["event_lineup"]["Insert"];
+export type MixInsert = Tables["mixes"]["Insert"];
+export type FollowInsert = Tables["follows"]["Insert"];
+
+// Update types
+export type ProfileUpdate = Tables["profiles"]["Update"];
+export type EventUpdate = Tables["events"]["Update"];
+export type MixUpdate = Tables["mixes"]["Update"];
+
+// Enum types
+export type ProfileType = Enums["profile_type"];
+export type EventStatus = Enums["event_status"];
+export type MixPlatform = Enums["mix_platform"];

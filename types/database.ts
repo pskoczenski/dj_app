@@ -1,214 +1,524 @@
-/**
- * Hand-written Database types matching the SQL schema.
- * Replace with `npx supabase gen types typescript` when CLI is available.
- */
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
-export type ProfileType = "dj" | "promoter" | "fan";
-export type EventStatus = "draft" | "published" | "cancelled";
-export type MixPlatform =
-  | "soundcloud"
-  | "mixcloud"
-  | "youtube"
-  | "spotify"
-  | "apple_music"
-  | "other";
-
-export interface ProfileRow {
-  id: string;
-  display_name: string;
-  slug: string;
-  bio: string | null;
-  city: string | null;
-  state: string | null;
-  country: string | null;
-  genres: string[];
-  profile_image_url: string | null;
-  social_links: Record<string, string>;
-  profile_type: ProfileType;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.4"
+  }
+  public: {
+    Tables: {
+      event_lineup: {
+        Row: {
+          added_by: string
+          created_at: string | null
+          event_id: string
+          id: string
+          is_headliner: boolean | null
+          profile_id: string
+          set_time: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          added_by: string
+          created_at?: string | null
+          event_id: string
+          id?: string
+          is_headliner?: boolean | null
+          profile_id: string
+          set_time?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          added_by?: string
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          is_headliner?: boolean | null
+          profile_id?: string
+          set_time?: string | null
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_lineup_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profile_follow_counts"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "event_lineup_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_lineup_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_lineup_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profile_follow_counts"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "event_lineup_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          created_by: string
+          deleted_at: string | null
+          description: string | null
+          end_date: string | null
+          end_time: string | null
+          flyer_image_url: string | null
+          genres: string[] | null
+          google_place_id: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          start_date: string
+          start_time: string | null
+          state: string | null
+          status: Database["public"]["Enums"]["event_status"]
+          ticket_url: string | null
+          title: string
+          updated_at: string | null
+          venue: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by: string
+          deleted_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          flyer_image_url?: string | null
+          genres?: string[] | null
+          google_place_id?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          start_date: string
+          start_time?: string | null
+          state?: string | null
+          status?: Database["public"]["Enums"]["event_status"]
+          ticket_url?: string | null
+          title: string
+          updated_at?: string | null
+          venue?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by?: string
+          deleted_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          flyer_image_url?: string | null
+          genres?: string[] | null
+          google_place_id?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          start_date?: string
+          start_time?: string | null
+          state?: string | null
+          status?: Database["public"]["Enums"]["event_status"]
+          ticket_url?: string | null
+          title?: string
+          updated_at?: string | null
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profile_follow_counts"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follows: {
+        Row: {
+          created_at: string | null
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profile_follow_counts"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profile_follow_counts"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genre_tags: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
+      mixes: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string | null
+          deleted_at: string | null
+          description: string | null
+          duration: string | null
+          embed_url: string
+          genres: string[] | null
+          id: string
+          platform: Database["public"]["Enums"]["mix_platform"]
+          profile_id: string
+          sort_order: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          duration?: string | null
+          embed_url: string
+          genres?: string[] | null
+          id?: string
+          platform: Database["public"]["Enums"]["mix_platform"]
+          profile_id: string
+          sort_order?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          duration?: string | null
+          embed_url?: string
+          genres?: string[] | null
+          id?: string
+          platform?: Database["public"]["Enums"]["mix_platform"]
+          profile_id?: string
+          sort_order?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mixes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profile_follow_counts"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "mixes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          bio: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          deleted_at: string | null
+          display_name: string
+          genres: string[] | null
+          id: string
+          profile_image_url: string | null
+          profile_type: Database["public"]["Enums"]["profile_type"]
+          slug: string
+          social_links: Json | null
+          state: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bio?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          display_name: string
+          genres?: string[] | null
+          id: string
+          profile_image_url?: string | null
+          profile_type?: Database["public"]["Enums"]["profile_type"]
+          slug: string
+          social_links?: Json | null
+          state?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bio?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          display_name?: string
+          genres?: string[] | null
+          id?: string
+          profile_image_url?: string | null
+          profile_type?: Database["public"]["Enums"]["profile_type"]
+          slug?: string
+          social_links?: Json | null
+          state?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      profile_follow_counts: {
+        Row: {
+          followers_count: number | null
+          following_count: number | null
+          profile_id: string | null
+        }
+        Relationships: []
+      }
+    }
+    Functions: {
+      upsert_genre_tags: { Args: { input_genres: string[] }; Returns: string[] }
+    }
+    Enums: {
+      event_status: "draft" | "published" | "cancelled"
+      mix_platform:
+        | "soundcloud"
+        | "mixcloud"
+        | "youtube"
+        | "spotify"
+        | "apple_music"
+        | "other"
+      profile_type: "dj" | "promoter" | "fan"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }
 
-export interface ProfileInsert {
-  id: string;
-  display_name: string;
-  slug: string;
-  bio?: string | null;
-  city?: string | null;
-  state?: string | null;
-  country?: string | null;
-  genres?: string[];
-  profile_image_url?: string | null;
-  social_links?: Record<string, string>;
-  profile_type?: ProfileType;
-}
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-export interface ProfileUpdate {
-  display_name?: string;
-  slug?: string;
-  bio?: string | null;
-  city?: string | null;
-  state?: string | null;
-  country?: string | null;
-  genres?: string[];
-  profile_image_url?: string | null;
-  social_links?: Record<string, string>;
-  profile_type?: ProfileType;
-}
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
-export interface EventRow {
-  id: string;
-  title: string;
-  description: string | null;
-  venue: string | null;
-  city: string | null;
-  state: string | null;
-  country: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  google_place_id: string | null;
-  start_date: string;
-  end_date: string | null;
-  start_time: string | null;
-  end_time: string | null;
-  flyer_image_url: string | null;
-  ticket_url: string | null;
-  genres: string[];
-  status: EventStatus;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
 }
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
-export interface EventInsert {
-  title: string;
-  start_date: string;
-  created_by: string;
-  description?: string | null;
-  venue?: string | null;
-  city?: string | null;
-  state?: string | null;
-  country?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  google_place_id?: string | null;
-  end_date?: string | null;
-  start_time?: string | null;
-  end_time?: string | null;
-  flyer_image_url?: string | null;
-  ticket_url?: string | null;
-  genres?: string[];
-  status?: EventStatus;
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
 }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
-export interface EventUpdate {
-  title?: string;
-  description?: string | null;
-  venue?: string | null;
-  city?: string | null;
-  state?: string | null;
-  country?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  google_place_id?: string | null;
-  start_date?: string;
-  end_date?: string | null;
-  start_time?: string | null;
-  end_time?: string | null;
-  flyer_image_url?: string | null;
-  ticket_url?: string | null;
-  genres?: string[];
-  status?: EventStatus;
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
 }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
-export interface EventLineupRow {
-  id: string;
-  event_id: string;
-  profile_id: string;
-  set_time: string | null;
-  sort_order: number;
-  is_headliner: boolean;
-  added_by: string;
-  created_at: string;
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
 }
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
-export interface EventLineupInsert {
-  event_id: string;
-  profile_id: string;
-  added_by: string;
-  set_time?: string | null;
-  sort_order?: number;
-  is_headliner?: boolean;
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
 }
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
-export interface MixRow {
-  id: string;
-  profile_id: string;
-  title: string;
-  description: string | null;
-  embed_url: string;
-  platform: MixPlatform;
-  duration: string | null;
-  cover_image_url: string | null;
-  genres: string[];
-  sort_order: number;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-}
-
-export interface MixInsert {
-  profile_id: string;
-  title: string;
-  embed_url: string;
-  platform: MixPlatform;
-  description?: string | null;
-  duration?: string | null;
-  cover_image_url?: string | null;
-  genres?: string[];
-  sort_order?: number;
-}
-
-export interface MixUpdate {
-  title?: string;
-  description?: string | null;
-  embed_url?: string;
-  platform?: MixPlatform;
-  duration?: string | null;
-  cover_image_url?: string | null;
-  genres?: string[];
-  sort_order?: number;
-}
-
-export interface FollowRow {
-  id: string;
-  follower_id: string;
-  following_id: string;
-  created_at: string;
-}
-
-export interface FollowInsert {
-  follower_id: string;
-  following_id: string;
-}
-
-export interface GenreTagRow {
-  id: string;
-  name: string;
-  usage_count: number;
-  created_at: string;
-}
-
-export interface ProfileFollowCountsRow {
-  profile_id: string;
-  followers_count: number;
-  following_count: number;
-}
-
-/**
- * Minimal Database type for Supabase client generic.
- * Services should use the row/insert/update interfaces directly.
- */
-export type Database = Record<string, unknown>;
+export const Constants = {
+  public: {
+    Enums: {
+      event_status: ["draft", "published", "cancelled"],
+      mix_platform: [
+        "soundcloud",
+        "mixcloud",
+        "youtube",
+        "spotify",
+        "apple_music",
+        "other",
+      ],
+      profile_type: ["dj", "promoter", "fan"],
+    },
+  },
+} as const
