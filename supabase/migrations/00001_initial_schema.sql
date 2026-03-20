@@ -299,7 +299,7 @@ $$;
 -- 10. profile_follow_counts view
 -- ============================================================
 
-CREATE VIEW profile_follow_counts AS
+CREATE VIEW profile_follow_counts WITH (security_invoker = on) AS
 SELECT
   p.id AS profile_id,
   COUNT(DISTINCT f1.follower_id) AS followers_count,
