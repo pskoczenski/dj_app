@@ -10,7 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CharacterCounter } from "@/components/shared/character-counter";
 import { GenreTagInput } from "@/components/forms/genre-tag-input";
+import { ImageUpload } from "@/components/forms/image-upload";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { storageService } from "@/lib/services/storage";
 import { toast } from "sonner";
 import type { Profile, ProfileType } from "@/types";
 
@@ -49,6 +51,7 @@ export default function EditProfilePage() {
   const [genres, setGenres] = useState<string[]>([]);
   const [profileType, setProfileType] = useState<ProfileType>("dj");
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
 
   // Validation
   const [slugWarning, setSlugWarning] = useState("");
@@ -74,6 +77,7 @@ export default function EditProfilePage() {
           ? (p.social_links as Record<string, string>)
           : {},
       );
+      setProfileImageUrl(p.profile_image_url);
       setLoading(false);
     }
 
@@ -121,6 +125,7 @@ export default function EditProfilePage() {
         genres: genres.length > 0 ? genres : null,
         profile_type: profileType,
         social_links: Object.keys(socialLinks).length > 0 ? socialLinks : null,
+        profile_image_url: profileImageUrl,
       });
       toast.success("Profile updated!");
       router.push(`/dj/${slug}`);
@@ -146,6 +151,23 @@ export default function EditProfilePage() {
       </h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <div>
+          <p className="mb-2 text-sm font-medium text-bone">Profile Image</p>
+          <ImageUpload
+            currentUrl={profileImageUrl}
+            onUploadComplete={async (file) => {
+              const url = await storageService.uploadProfileImage(
+                profile!.id,
+                file,
+              );
+              setProfileImageUrl(url);
+              return url;
+            }}
+            onRemove={() => setProfileImageUrl(null)}
+            label="Upload profile image"
+          />
+        </div>
+
         <Field label="Display Name" id="display-name" error={errors.displayName}>
           <Input
             id="display-name"
