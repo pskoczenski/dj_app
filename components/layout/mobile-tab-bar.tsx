@@ -64,11 +64,13 @@ function TabLink({
       href={href}
       aria-label={label}
       className={cn(
-        "flex flex-col items-center gap-0.5 text-[10px]",
-        active ? "text-fern" : "text-stone",
+        "group flex flex-col items-center gap-0.5 text-[10px] transition-colors",
+        active ? "text-bone" : "text-fog hover:text-stone",
       )}
     >
-      {children}
+      <span className={cn(active ? "text-fern" : "text-stone group-hover:text-fern")}>
+        {children}
+      </span>
       <span>{label}</span>
     </Link>
   );

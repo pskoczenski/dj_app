@@ -204,7 +204,7 @@ function MixesBrowser() {
           description="Try adjusting your search or filters."
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2">
           {mixes.map((mix) => (
             <MixCard
               key={mix.id}

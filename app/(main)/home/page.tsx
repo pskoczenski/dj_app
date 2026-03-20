@@ -81,7 +81,7 @@ export default function HomePage() {
     .toUpperCase();
 
   return (
-    <div className="flex flex-col gap-8 lg:flex-row">
+    <div className="flex flex-col gap-6 lg:flex-row">
       {/* Sidebar */}
       <aside className="flex flex-col gap-4 lg:w-[300px] lg:shrink-0">
         {/* Profile card */}
@@ -148,7 +148,7 @@ export default function HomePage() {
       </aside>
 
       {/* Main */}
-      <div className="flex flex-1 flex-col gap-8">
+      <div className="flex flex-1 flex-col gap-6">
         {/* Complete profile banner */}
         {profileIncomplete && (
           <div className="flex items-center gap-3 rounded-default border border-amber-sap/40 bg-amber-sap/10 px-4 py-3 text-sm">

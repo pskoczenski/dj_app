@@ -38,7 +38,7 @@ export function Navbar({ user }: NavbarProps) {
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 pathname.startsWith(href)
-                  ? "bg-forest-shadow text-bone"
+                  ? "text-bone underline decoration-fern decoration-2 underline-offset-8"
                   : "text-stone hover:text-bone",
               )}
             >
