@@ -61,7 +61,12 @@ describe("EventCard", () => {
 
   it("links to event detail page", () => {
     render(<EventCard event={MOCK_EVENT} />);
-    const link = screen.getByRole("link");
+    const link = screen.getByRole("link", { name: /underground session/i });
     expect(link).toHaveAttribute("href", "/events/evt-1");
+  });
+
+  it("renders semantic article wrapper", () => {
+    render(<EventCard event={MOCK_EVENT} />);
+    expect(screen.getByRole("article")).toBeInTheDocument();
   });
 });

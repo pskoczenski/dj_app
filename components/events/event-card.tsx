@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Calendar, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CornerVineAccent } from "@/components/decorative/corner-vine-accent";
 import type { Event } from "@/types";
 
 function formatDate(dateStr: string): string {
@@ -18,11 +19,11 @@ function formatDate(dateStr: string): string {
 function statusVariant(status: string) {
   switch (status) {
     case "cancelled":
-      return "destructive" as const;
+      return "cancelled" as const;
     case "draft":
-      return "outline" as const;
+      return "draft" as const;
     default:
-      return "secondary" as const;
+      return "published" as const;
   }
 }
 
@@ -30,10 +31,17 @@ export function EventCard({ event }: { event: Event }) {
   const location = [event.venue, event.city, event.state]
     .filter(Boolean)
     .join(", ");
+  const headingId = `event-title-${event.id}`;
 
   return (
-    <Link href={`/events/${event.id}`} className="block">
-      <Card className="transition-colors hover:ring-sage-edge">
+    <article aria-labelledby={headingId}>
+      <Link href={`/events/${event.id}`} className="block">
+      <Card variant="interactive" className="relative">
+        <CornerVineAccent
+          corner="top-right"
+          className="absolute right-2 top-2 h-8 w-8"
+          opacity={0.1}
+        />
         {event.flyer_image_url && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -43,7 +51,9 @@ export function EventCard({ event }: { event: Event }) {
           />
         )}
         <CardHeader>
-          <CardTitle className="text-bone">{event.title}</CardTitle>
+          <CardTitle id={headingId} className="text-bone">
+            {event.title}
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           <div className="flex items-center gap-1.5 text-sm text-stone">
@@ -72,6 +82,7 @@ export function EventCard({ event }: { event: Event }) {
           )}
         </CardContent>
       </Card>
-    </Link>
+      </Link>
+    </article>
   );
 }

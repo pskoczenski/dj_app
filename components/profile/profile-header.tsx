@@ -39,7 +39,7 @@ export function ProfileHeader({
       </Avatar>
 
       <div className="flex-1 text-center sm:text-left">
-        <h1 className="font-display text-2xl font-bold text-bone">
+        <h1 className="font-display text-3xl font-bold tracking-[0.02em] text-bone md:text-4xl">
           {profile.display_name}
         </h1>
         <p className="text-sm text-fog">@{profile.slug}</p>
@@ -53,7 +53,7 @@ export function ProfileHeader({
         {profile.genres && profile.genres.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {profile.genres.map((g) => (
-              <Badge key={g} variant="secondary">
+              <Badge key={g} variant="genre">
                 {g}
               </Badge>
             ))}

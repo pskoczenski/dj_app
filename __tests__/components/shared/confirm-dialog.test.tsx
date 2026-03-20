@@ -30,6 +30,7 @@ describe("ConfirmDialog", () => {
 
     expect(await screen.findByText("Are you sure?")).toBeInTheDocument();
     expect(screen.getByText("This cannot be undone.")).toBeInTheDocument();
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
   });
 
   it("fires onConfirm when confirm button is clicked", async () => {

@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { EmptyState } from "@/components/shared/empty-state";
 
 describe("EmptyState", () => {
@@ -28,5 +29,13 @@ describe("EmptyState", () => {
     expect(
       screen.getByRole("button", { name: /create a mix/i })
     ).toBeInTheDocument();
+  });
+
+  it("keeps CTA keyboard reachable", async () => {
+    const user = userEvent.setup();
+    render(<EmptyState title="No mixes" action={<button>Create a mix</button>} />);
+
+    await user.tab();
+    expect(screen.getByRole("button", { name: /create a mix/i })).toHaveFocus();
   });
 });
