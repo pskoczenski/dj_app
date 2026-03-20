@@ -75,6 +75,19 @@ export async function update(
   return updated;
 }
 
+export async function search(query: string, limit = 10): Promise<Profile[]> {
+  const term = `%${query}%`;
+  const { data, error } = await supabase()
+    .from(TABLES.profiles)
+    .select("*")
+    .is("deleted_at", null)
+    .or(`display_name.ilike.${term},slug.ilike.${term}`)
+    .limit(limit);
+
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function getFollowCounts(profileId: string): Promise<FollowCounts> {
   const { data, error } = await supabase()
     .from(VIEWS.profileFollowCounts)
@@ -104,5 +117,6 @@ export const profilesService = {
   getById,
   getCurrent,
   update,
+  search,
   getFollowCounts,
 };
