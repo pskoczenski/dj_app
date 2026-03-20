@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useCallback, useEffect, useState } from "react";
+import { profilesService } from "@/lib/services/profiles";
+import type { Profile } from "@/types";
 
 export interface CurrentUser {
   id: string;
@@ -11,54 +12,37 @@ export interface CurrentUser {
   profileType: string;
 }
 
-/**
- * Client-side hook to fetch the authenticated user's profile.
- * Returns null while loading or if unauthenticated.
- *
- * TODO: Replace with a server-side fetch or React context provider
- * once profile service (Step 8) is available.
- */
+function toCurrentUser(p: Profile): CurrentUser {
+  return {
+    id: p.id,
+    displayName: p.display_name,
+    slug: p.slug,
+    avatarUrl: p.profile_image_url,
+    profileType: p.profile_type,
+  };
+}
+
 export function useCurrentUser() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      const supabase = createClient();
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
-
-      if (!authUser || cancelled) {
-        setLoading(false);
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, display_name, slug, profile_type")
-        .eq("id", authUser.id)
-        .maybeSingle();
-
-      if (!cancelled && profile) {
-        setUser({
-          id: profile.id,
-          displayName: profile.display_name,
-          slug: profile.slug,
-          avatarUrl: null, // TODO: add avatar_url column in Step 10
-          profileType: profile.profile_type,
-        });
-      }
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const profile = await profilesService.getCurrent();
+      setUser(profile ? toCurrentUser(profile) : null);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error(String(err)));
+    } finally {
       setLoading(false);
     }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
-  return { user, loading };
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { user, loading, error, refetch: fetch };
 }

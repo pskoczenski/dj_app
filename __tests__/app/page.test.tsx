@@ -6,10 +6,13 @@ describe("Root page", () => {
     render(<Home />);
 
     expect(
-      screen.getByRole("heading", { level: 1, name: /dj network/i })
+      screen.getByRole("heading", { level: 1, name: /anastomosis/i })
     ).toBeInTheDocument();
 
     expect(screen.getByText(/grassroots/i)).toBeInTheDocument();
+
+    expect(screen.getByRole("link", { name: /get started/i })).toHaveAttribute("href", "/signup");
+    expect(screen.getByRole("link", { name: /log in/i })).toHaveAttribute("href", "/login");
   });
 
   it("renders a main landmark", () => {
