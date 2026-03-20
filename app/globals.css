@@ -95,6 +95,17 @@
   --chart-3: #C9A227;
   --chart-4: #A8B0A4;
   --chart-5: #6B7569;
+
+  /* Motion */
+  --duration-fast: 100ms;
+  --duration-default: 150ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Tailwind v4 @theme — maps CSS vars to utility classes */
@@ -216,6 +227,38 @@ body {
 :focus-visible {
   outline: none;
   box-shadow: var(--shadow-focus);
+}
+
+@keyframes sproutPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @layer base {
