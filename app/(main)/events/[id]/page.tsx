@@ -1,0 +1,235 @@
+"use client";
+
+import { use } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEvent } from "@/hooks/use-event";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { eventLineupService } from "@/lib/services/event-lineup";
+import { CancelledBanner } from "@/components/events/cancelled-banner";
+import { ShareButton } from "@/components/events/share-button";
+import { LineupCard } from "@/components/events/lineup-card";
+import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  ExternalLink,
+  Pencil,
+  UserMinus,
+} from "lucide-react";
+import { toast } from "sonner";
+import type { EventLineup } from "@/types";
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export default function EventDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const router = useRouter();
+  const { event, lineup, loading, error, refetch } = useEvent(id);
+  const { user } = useCurrentUser();
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error || !event) {
+    return (
+      <EmptyState
+        title="Event not found"
+        description="This event may have been removed."
+      />
+    );
+  }
+
+  const isCreator = user?.id === event.created_by;
+  const userLineupEntry: EventLineup | undefined = user
+    ? lineup.find((l) => l.profile_id === user.id)
+    : undefined;
+
+  const location = [event.venue, event.city, event.state, event.country]
+    .filter(Boolean)
+    .join(", ");
+
+  // The creator profile is joined in getById as `profiles`
+  const creator = (event as Record<string, unknown>).profiles as
+    | { id: string; display_name: string; slug: string; profile_image_url: string | null }
+    | undefined;
+
+  async function handleRemoveSelf() {
+    if (!userLineupEntry) return;
+    try {
+      await eventLineupService.remove(userLineupEntry.id);
+      toast.success("You've been removed from the lineup.");
+      refetch();
+    } catch {
+      toast.error("Failed to remove yourself from the lineup.");
+    }
+  }
+
+  return (
+    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+      {event.status === "cancelled" && <CancelledBanner />}
+
+      {/* Hero / Flyer */}
+      {event.flyer_image_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={event.flyer_image_url}
+          alt={event.title}
+          className="aspect-[2/1] w-full rounded-default object-cover"
+        />
+      )}
+
+      {/* Title & actions */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <h1 className="font-display text-3xl font-bold text-bone">
+          {event.title}
+        </h1>
+        <div className="flex gap-2">
+          <ShareButton title={event.title} />
+          {isCreator && (
+            <Link
+              href={`/events/${event.id}/edit`}
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <Pencil className="mr-1.5 size-4" />
+              Edit
+            </Link>
+          )}
+          {userLineupEntry && !isCreator && (
+            <Button variant="destructive" size="sm" onClick={handleRemoveSelf}>
+              <UserMinus className="mr-1.5 size-4" />
+              Leave Lineup
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Meta */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2 text-stone">
+          <Calendar className="size-4 shrink-0" />
+          <span>{formatDate(event.start_date)}</span>
+          {event.end_date && event.end_date !== event.start_date && (
+            <span className="text-fog">— {formatDate(event.end_date)}</span>
+          )}
+        </div>
+        {(event.start_time || event.end_time) && (
+          <div className="flex items-center gap-2 text-stone">
+            <Clock className="size-4 shrink-0" />
+            <span>
+              {[event.start_time, event.end_time].filter(Boolean).join(" — ")}
+            </span>
+          </div>
+        )}
+        {location && (
+          <div className="flex items-center gap-2 text-stone">
+            <MapPin className="size-4 shrink-0" />
+            <span>{location}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Genres */}
+      {event.genres && event.genres.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {event.genres.map((g) => (
+            <Badge key={g} variant="secondary">
+              {g}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      {/* Ticket CTA */}
+      {event.ticket_url && (
+        <a
+          href={event.ticket_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonVariants({ variant: "default" })}
+        >
+          <ExternalLink className="mr-1.5 size-4" />
+          Get Tickets
+        </a>
+      )}
+
+      {/* Description */}
+      {event.description && (
+        <div className="prose prose-invert max-w-none text-stone">
+          <p className="whitespace-pre-wrap">{event.description}</p>
+        </div>
+      )}
+
+      {/* Lineup */}
+      {lineup.length > 0 && (
+        <section>
+          <h2 className="mb-3 font-display text-xl font-bold text-bone">
+            Lineup
+          </h2>
+          <div className="flex flex-col gap-2">
+            {lineup.map((item) => (
+              <LineupCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Posted By */}
+      {creator && (
+        <section>
+          <h2 className="mb-3 font-display text-lg font-bold text-bone">
+            Posted By
+          </h2>
+          <Link
+            href={`/dj/${creator.slug}`}
+            className="flex items-center gap-3 rounded-default border border-root-line p-3 transition-colors hover:border-sage-edge"
+          >
+            <Avatar className="size-10">
+              {creator.profile_image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={creator.profile_image_url}
+                  alt={creator.display_name}
+                  className="size-full object-cover"
+                />
+              )}
+              <AvatarFallback className="text-xs">
+                {creator.display_name
+                  .split(" ")
+                  .map((w) => w[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium text-bone">
+              {creator.display_name}
+            </span>
+          </Link>
+        </section>
+      )}
+    </div>
+  );
+}
