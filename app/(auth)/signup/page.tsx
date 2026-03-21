@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { generateUniqueSlug } from "@/lib/utils/slug";
+import { ensureProfileForUser } from "@/lib/auth/profile-bootstrap";
 import type { ProfileType } from "@/types";
 
 const PROFILE_TYPES: { value: ProfileType; label: string }[] = [
@@ -33,6 +33,12 @@ export default function SignupPage() {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          display_name: displayName,
+          profile_type: profileType,
+        },
+      },
     });
 
     if (authError) {
@@ -48,22 +54,28 @@ export default function SignupPage() {
       return;
     }
 
-    const slug = await generateUniqueSlug(displayName);
-
-    const { error: profileError } = await supabase.from("profiles").insert({
-      id: userId,
-      display_name: displayName,
-      slug,
-      profile_type: profileType,
-    });
-
-    if (profileError) {
-      setError(profileError.message);
-      setLoading(false);
+    if (authData.session) {
+      try {
+        await ensureProfileForUser({
+          userId,
+          displayName,
+          profileType,
+        });
+      } catch (profileError) {
+        setError(
+          profileError instanceof Error
+            ? profileError.message
+            : "Could not create profile."
+        );
+        setLoading(false);
+        return;
+      }
+      router.push("/home");
       return;
     }
 
-    router.push("/home");
+    // Email-confirm flows typically do not return a session yet.
+    router.push("/login?created=1");
   }
 
   return (

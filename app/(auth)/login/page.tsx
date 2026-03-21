@@ -4,6 +4,8 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { ensureProfileForUser } from "@/lib/auth/profile-bootstrap";
+import type { ProfileType } from "@/types";
 
 export default function LoginPage() {
   return (
@@ -29,7 +31,10 @@ function LoginForm() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const {
+      data: authData,
+      error: authError,
+    } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -38,6 +43,35 @@ function LoginForm() {
       setError(authError.message);
       setLoading(false);
       return;
+    }
+
+    const user = authData.user;
+    if (user) {
+      const metadata = (user.user_metadata ?? {}) as {
+        display_name?: string;
+        profile_type?: ProfileType;
+      };
+
+      const fallbackName =
+        metadata.display_name ||
+        user.email?.split("@")[0] ||
+        "New User";
+      const fallbackType: ProfileType =
+        metadata.profile_type === "promoter" ||
+        metadata.profile_type === "fan" ||
+        metadata.profile_type === "dj"
+          ? metadata.profile_type
+          : "dj";
+
+      try {
+        await ensureProfileForUser({
+          userId: user.id,
+          displayName: fallbackName,
+          profileType: fallbackType,
+        });
+      } catch {
+        // Non-fatal: user can still continue and complete profile manually.
+      }
     }
 
     router.push(redirectTo);

@@ -17,7 +17,8 @@ import { CalendarPlus, Music, AlertCircle } from "lucide-react";
 import type { Event, Mix } from "@/types";
 
 export default function HomePage() {
-  const { user, profile, loading: userLoading } = useCurrentUser();
+  const { user, profile, hasAuthSession, loading: userLoading } =
+    useCurrentUser();
   const [nearbyEvents, setNearbyEvents] = useState<Event[]>([]);
   const [upcomingGigs, setUpcomingGigs] = useState<Event[]>([]);
   const [recentMixes, setRecentMixes] = useState<Mix[]>([]);
@@ -28,7 +29,11 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (userLoading || !user || !profile) return;
+    if (userLoading) return;
+    if (!user || !profile) {
+      setLoading(false);
+      return;
+    }
 
     async function load() {
       try {
@@ -63,16 +68,41 @@ export default function HomePage() {
     );
   }
 
-  if (!user) {
+  if (!hasAuthSession) {
     return (
       <EmptyState
         title="Not logged in"
         description="Please log in to see your dashboard."
+        action={
+          <Link
+            href="/login"
+            className={buttonVariants({ variant: "default", size: "sm" })}
+          >
+            Log in
+          </Link>
+        }
       />
     );
   }
 
-  const profileIncomplete = !profile?.bio || !profile?.city;
+  if (!profile || !user) {
+    return (
+      <EmptyState
+        title="Finish your profile setup"
+        description="We could not load your profile yet. Open profile settings to complete your account."
+        action={
+          <Link
+            href="/profile/edit"
+            className={buttonVariants({ variant: "default", size: "sm" })}
+          >
+            Open Profile Settings
+          </Link>
+        }
+      />
+    );
+  }
+
+  const profileIncomplete = !profile.bio || !profile.city;
   const initials = user.displayName
     .split(" ")
     .map((w) => w[0])

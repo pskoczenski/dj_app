@@ -4,7 +4,7 @@ import SignupPage from "@/app/(auth)/signup/page";
 
 const mockPush = jest.fn();
 const mockSignUp = jest.fn();
-const mockInsert = jest.fn();
+const mockEnsureProfileForUser = jest.fn();
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
@@ -13,12 +13,11 @@ jest.mock("next/navigation", () => ({
 jest.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     auth: { signUp: mockSignUp },
-    from: () => ({ insert: mockInsert }),
   }),
 }));
 
-jest.mock("@/lib/utils/slug", () => ({
-  generateUniqueSlug: jest.fn().mockResolvedValue("dj-shadow"),
+jest.mock("@/lib/auth/profile-bootstrap", () => ({
+  ensureProfileForUser: (...args: unknown[]) => mockEnsureProfileForUser(...args),
 }));
 
 describe("SignupPage", () => {
@@ -48,12 +47,12 @@ describe("SignupPage", () => {
     );
   });
 
-  it("calls signUp, inserts profile, and redirects on success", async () => {
+  it("calls signUp, bootstraps profile, and redirects to /home when session exists", async () => {
     mockSignUp.mockResolvedValueOnce({
-      data: { user: { id: "user-123" } },
+      data: { user: { id: "user-123" }, session: { access_token: "token" } },
       error: null,
     });
-    mockInsert.mockResolvedValueOnce({ error: null });
+    mockEnsureProfileForUser.mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
 
     render(<SignupPage />);
@@ -66,14 +65,37 @@ describe("SignupPage", () => {
     expect(mockSignUp).toHaveBeenCalledWith({
       email: "dj@example.com",
       password: "password123",
+      options: {
+        data: {
+          display_name: "DJ Shadow",
+          profile_type: "dj",
+        },
+      },
     });
-    expect(mockInsert).toHaveBeenCalledWith({
-      id: "user-123",
-      display_name: "DJ Shadow",
-      slug: "dj-shadow",
-      profile_type: "dj",
+    expect(mockEnsureProfileForUser).toHaveBeenCalledWith({
+      userId: "user-123",
+      displayName: "DJ Shadow",
+      profileType: "dj",
     });
     expect(mockPush).toHaveBeenCalledWith("/home");
+  });
+
+  it("redirects to login confirmation flow when session is not returned", async () => {
+    mockSignUp.mockResolvedValueOnce({
+      data: { user: { id: "user-123" }, session: null },
+      error: null,
+    });
+    const user = userEvent.setup();
+
+    render(<SignupPage />);
+
+    await user.type(screen.getByLabelText(/display name/i), "DJ Shadow");
+    await user.type(screen.getByLabelText(/email/i), "dj@example.com");
+    await user.type(screen.getByLabelText(/password/i), "password123");
+    await user.click(screen.getByRole("button", { name: /sign up/i }));
+
+    expect(mockEnsureProfileForUser).not.toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith("/login?created=1");
   });
 
   it("shows an error when auth signup fails", async () => {
@@ -98,10 +120,10 @@ describe("SignupPage", () => {
 
   it("allows selecting a different profile type", async () => {
     mockSignUp.mockResolvedValueOnce({
-      data: { user: { id: "user-456" } },
+      data: { user: { id: "user-456" }, session: { access_token: "token" } },
       error: null,
     });
-    mockInsert.mockResolvedValueOnce({ error: null });
+    mockEnsureProfileForUser.mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
 
     render(<SignupPage />);
@@ -112,8 +134,8 @@ describe("SignupPage", () => {
     await user.type(screen.getByLabelText(/password/i), "password123");
     await user.click(screen.getByRole("button", { name: /sign up/i }));
 
-    expect(mockInsert).toHaveBeenCalledWith(
-      expect.objectContaining({ profile_type: "promoter" })
+    expect(mockEnsureProfileForUser).toHaveBeenCalledWith(
+      expect.objectContaining({ profileType: "promoter" }),
     );
   });
 });

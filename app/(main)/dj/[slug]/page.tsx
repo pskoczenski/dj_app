@@ -22,38 +22,20 @@ export default function DjProfilePage({
   const { profile, counts, loading, error } = useProfile(slug);
   const { user: currentUser } = useCurrentUser();
 
-  if (loading) {
-    return (
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-6">
-          <Skeleton className="size-28 rounded-full" />
-          <div className="flex-1 space-y-3">
-            <Skeleton className="h-7 w-48" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !profile) {
-    return (
-      <EmptyState
-        title="Profile not found"
-        description="This DJ doesn't exist or the page has been removed."
-      />
-    );
-  }
-
-  const isOwnProfile = currentUser?.id === profile.id;
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
 
+  const isOwnProfile =
+    profile != null && currentUser?.id === profile.id;
+
   useEffect(() => {
-    if (!currentUser || isOwnProfile || !profile) return;
+    if (!profile || !currentUser || isOwnProfile) return;
     followsService.isFollowing(currentUser.id, profile.id).then(setFollowing);
   }, [currentUser, profile, isOwnProfile]);
+
+  useEffect(() => {
+    setFollowing(false);
+  }, [profile?.id]);
 
   const handleFollow = useCallback(async () => {
     if (!currentUser || !profile) return;
@@ -80,6 +62,30 @@ export default function DjProfilePage({
       setFollowLoading(false);
     }
   }, [currentUser, profile]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center gap-6">
+          <Skeleton className="size-28 rounded-full" />
+          <div className="flex-1 space-y-3">
+            <Skeleton className="h-7 w-48" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <EmptyState
+        title="Profile not found"
+        description="This DJ doesn't exist or the page has been removed."
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8">

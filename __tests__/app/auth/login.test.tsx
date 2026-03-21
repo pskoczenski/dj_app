@@ -5,6 +5,7 @@ import LoginPage from "@/app/(auth)/login/page";
 const mockPush = jest.fn();
 const mockSignIn = jest.fn();
 const mockSignInOAuth = jest.fn();
+const mockEnsureProfileForUser = jest.fn();
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
@@ -18,6 +19,10 @@ jest.mock("@/lib/supabase/client", () => ({
       signInWithOAuth: mockSignInOAuth,
     },
   }),
+}));
+
+jest.mock("@/lib/auth/profile-bootstrap", () => ({
+  ensureProfileForUser: (...args: unknown[]) => mockEnsureProfileForUser(...args),
 }));
 
 describe("LoginPage", () => {
@@ -41,8 +46,18 @@ describe("LoginPage", () => {
     );
   });
 
-  it("calls signInWithPassword and redirects on success", async () => {
-    mockSignIn.mockResolvedValueOnce({ error: null });
+  it("calls signInWithPassword, ensures profile, and redirects on success", async () => {
+    mockSignIn.mockResolvedValueOnce({
+      data: {
+        user: {
+          id: "user-1",
+          email: "test@example.com",
+          user_metadata: { display_name: "DJ Test", profile_type: "dj" },
+        },
+      },
+      error: null,
+    });
+    mockEnsureProfileForUser.mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
 
     render(<LoginPage />);
@@ -54,6 +69,11 @@ describe("LoginPage", () => {
     expect(mockSignIn).toHaveBeenCalledWith({
       email: "test@example.com",
       password: "password123",
+    });
+    expect(mockEnsureProfileForUser).toHaveBeenCalledWith({
+      userId: "user-1",
+      displayName: "DJ Test",
+      profileType: "dj",
     });
     expect(mockPush).toHaveBeenCalledWith("/events");
   });

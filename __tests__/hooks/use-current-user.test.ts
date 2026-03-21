@@ -8,21 +8,36 @@ const MOCK_PROFILE = {
   profile_image_url: null,
 };
 
-const mockGetCurrent = jest.fn();
+const mockGetUser = jest.fn();
+const mockGetById = jest.fn();
+
+jest.mock("@/lib/supabase/client", () => ({
+  createClient: () => ({
+    auth: {
+      getUser: () => mockGetUser(),
+    },
+  }),
+}));
 
 jest.mock("@/lib/services/profiles", () => ({
   profilesService: {
-    getCurrent: (...args: unknown[]) => mockGetCurrent(...args),
+    getById: (...args: unknown[]) => mockGetById(...args),
   },
 }));
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 describe("useCurrentUser", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it("starts loading then resolves with user", async () => {
-    mockGetCurrent.mockResolvedValueOnce(MOCK_PROFILE);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    mockGetById.mockResolvedValueOnce(MOCK_PROFILE);
 
     const { result } = renderHook(() => useCurrentUser());
 
@@ -30,6 +45,7 @@ describe("useCurrentUser", () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
+    expect(result.current.hasAuthSession).toBe(true);
     expect(result.current.user).toEqual({
       id: "user-1",
       displayName: "DJ Shadow",
@@ -41,22 +57,62 @@ describe("useCurrentUser", () => {
   });
 
   it("returns null user when not authenticated", async () => {
-    mockGetCurrent.mockResolvedValueOnce(null);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: null,
+    });
 
     const { result } = renderHook(() => useCurrentUser());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
+    expect(result.current.hasAuthSession).toBe(false);
     expect(result.current.user).toBeNull();
   });
 
-  it("captures errors", async () => {
-    mockGetCurrent.mockRejectedValueOnce(new Error("Network error"));
+  it("has session but no profile row still reports hasAuthSession", async () => {
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    mockGetById.mockResolvedValueOnce(null);
 
     const { result } = renderHook(() => useCurrentUser());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
+    expect(result.current.hasAuthSession).toBe(true);
+    expect(result.current.user).toBeNull();
+    expect(result.current.profile).toBeNull();
+  });
+
+  it("captures auth errors", async () => {
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "JWT expired" },
+    });
+
+    const { result } = renderHook(() => useCurrentUser());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.error?.message).toBe("JWT expired");
+    expect(result.current.hasAuthSession).toBe(false);
+    expect(result.current.user).toBeNull();
+  });
+
+  it("captures profile load errors while keeping session", async () => {
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    mockGetById.mockRejectedValueOnce(new Error("Network error"));
+
+    const { result } = renderHook(() => useCurrentUser());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.hasAuthSession).toBe(true);
     expect(result.current.error?.message).toBe("Network error");
     expect(result.current.user).toBeNull();
   });

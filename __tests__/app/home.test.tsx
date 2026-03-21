@@ -29,6 +29,7 @@ jest.mock("@/hooks/use-current-user", () => ({
   useCurrentUser: () => ({
     user: MOCK_USER,
     profile: MOCK_PROFILE,
+    hasAuthSession: true,
     loading: false,
   }),
 }));

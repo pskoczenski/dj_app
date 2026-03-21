@@ -12,6 +12,7 @@ jest.mock("next/navigation", () => ({
 jest.mock("@/hooks/use-current-user", () => ({
   useCurrentUser: () => ({
     user: { id: "user-1", displayName: "DJ Shadow", slug: "dj-shadow", avatarUrl: null, profileType: "dj" },
+    hasAuthSession: true,
     loading: false,
   }),
 }));
