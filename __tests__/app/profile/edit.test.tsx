@@ -3,15 +3,38 @@ import userEvent from "@testing-library/user-event";
 import EditProfilePage from "@/app/(main)/profile/edit/page";
 
 const mockPush = jest.fn();
+const mockReplace = jest.fn();
 const mockUpdate = jest.fn().mockResolvedValue({});
 
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
 }));
 
 jest.mock("@/hooks/use-current-user", () => ({
   useCurrentUser: () => ({
-    user: { id: "user-1", displayName: "DJ Shadow", slug: "dj-shadow", avatarUrl: null, profileType: "dj" },
+    user: {
+      id: "user-1",
+      displayName: "DJ Shadow",
+      slug: "dj-shadow",
+      avatarUrl: null,
+      profileType: "dj",
+    },
+    profile: {
+      id: "user-1",
+      display_name: "DJ Shadow",
+      slug: "dj-shadow",
+      bio: "Bio text",
+      city: "Brooklyn",
+      state: "NY",
+      country: "US",
+      genres: ["house"],
+      profile_type: "dj",
+      profile_image_url: null,
+      social_links: null,
+      created_at: "2024-01-01",
+      updated_at: "2024-01-01",
+      deleted_at: null,
+    },
     hasAuthSession: true,
     loading: false,
   }),

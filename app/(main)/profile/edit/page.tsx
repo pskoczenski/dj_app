@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import {
+  ensureProfileForUser,
+  profileDefaultsFromAuthUser,
+} from "@/lib/auth/profile-bootstrap";
 import { profilesService } from "@/lib/services/profiles";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -35,7 +39,12 @@ const PROFILE_TYPES: { value: ProfileType; label: string }[] = [
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const { user, loading: userLoading } = useCurrentUser();
+  const {
+    profile: hookProfile,
+    hasAuthSession,
+    loading: userLoading,
+    refetch: refetchUser,
+  } = useCurrentUser();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,31 +67,83 @@ export default function EditProfilePage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (userLoading || !user) return;
+    if (userLoading) return;
+
+    let cancelled = false;
 
     async function load() {
-      const p = await profilesService.getById(user!.id);
-      if (!p) return;
-      setProfile(p);
-      setDisplayName(p.display_name);
-      setSlug(p.slug);
-      setBio(p.bio ?? "");
-      setCity(p.city ?? "");
-      setStateField(p.state ?? "");
-      setCountry(p.country ?? "");
-      setGenres(p.genres ?? []);
-      setProfileType(p.profile_type);
-      setSocialLinks(
-        typeof p.social_links === "object" && p.social_links !== null
-          ? (p.social_links as Record<string, string>)
-          : {},
-      );
-      setProfileImageUrl(p.profile_image_url);
-      setLoading(false);
+      try {
+        if (!hasAuthSession) {
+          router.replace("/login?redirect=/profile/edit");
+          return;
+        }
+
+        let p = hookProfile;
+        if (!p) {
+          const sb = createClient();
+          const {
+            data: { user: authUser },
+          } = await sb.auth.getUser();
+          if (!authUser) {
+            return;
+          }
+          p = await profilesService.getById(authUser.id);
+          if (!p) {
+            try {
+              const { displayName, profileType } =
+                profileDefaultsFromAuthUser(authUser);
+              await ensureProfileForUser({
+                userId: authUser.id,
+                displayName,
+                profileType,
+              });
+            } catch (err) {
+              toast.error(
+                err instanceof Error
+                  ? err.message
+                  : "Could not create your profile.",
+              );
+              return;
+            }
+            p = await profilesService.getById(authUser.id);
+            await refetchUser();
+          }
+        }
+
+        if (cancelled) return;
+
+        if (!p) {
+          toast.error("Could not load your profile.");
+          return;
+        }
+
+        setProfile(p);
+        setDisplayName(p.display_name);
+        setSlug(p.slug);
+        setBio(p.bio ?? "");
+        setCity(p.city ?? "");
+        setStateField(p.state ?? "");
+        setCountry(p.country ?? "");
+        setGenres(p.genres ?? []);
+        setProfileType(p.profile_type);
+        setSocialLinks(
+          typeof p.social_links === "object" && p.social_links !== null
+            ? (p.social_links as Record<string, string>)
+            : {},
+        );
+        setProfileImageUrl(p.profile_image_url);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
 
-    load();
-  }, [user, userLoading]);
+    void load();
+    return () => {
+      cancelled = true;
+    };
+    // hookProfile?.id: stable when profile row is loaded (object identity from hook may change).
+    // Omit router — useRouter() identity can change every render and would retrigger this effect.
+  }, [userLoading, hasAuthSession, hookProfile?.id]);
 
   async function checkSlug(value: string) {
     if (!value || value === profile?.slug) {

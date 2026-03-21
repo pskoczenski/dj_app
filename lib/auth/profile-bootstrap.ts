@@ -1,6 +1,26 @@
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { generateUniqueSlug } from "@/lib/utils/slug";
 import type { ProfileType } from "@/types";
+
+/** Display name + profile type from auth user metadata (same defaults as login/signup). */
+export function profileDefaultsFromAuthUser(user: User): {
+  displayName: string;
+  profileType: ProfileType;
+} {
+  const metadata = (user.user_metadata ?? {}) as {
+    display_name?: string;
+    profile_type?: string;
+  };
+  const displayName =
+    metadata.display_name ||
+    user.email?.split("@")[0] ||
+    "New User";
+  const pt = metadata.profile_type;
+  const profileType: ProfileType =
+    pt === "promoter" || pt === "fan" || pt === "dj" ? pt : "dj";
+  return { displayName, profileType };
+}
 
 export async function ensureProfileForUser({
   userId,
