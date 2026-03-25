@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
-import type { Profile, Event, Mix } from "@/types";
+import { EVENT_LIST_WITH_LINEUP } from "@/lib/services/events";
+import type { Profile, EventWithLineupPreview, Mix } from "@/types";
 
 function supabase() {
   return createClient();
@@ -28,11 +29,11 @@ export async function searchDjs(
 export async function searchEvents(
   query: string,
   limit = 20,
-): Promise<Event[]> {
+): Promise<EventWithLineupPreview[]> {
   const term = `%${query}%`;
   const { data, error } = await supabase()
     .from(TABLES.events)
-    .select("*")
+    .select(EVENT_LIST_WITH_LINEUP)
     .is("deleted_at", null)
     .eq("status", "published")
     .or(

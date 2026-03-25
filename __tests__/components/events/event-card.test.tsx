@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { EventCard } from "@/components/events/event-card";
-import type { Event } from "@/types";
+import type { EventWithLineupPreview } from "@/types";
 
-const MOCK_EVENT: Event = {
+const MOCK_EVENT: EventWithLineupPreview = {
   id: "evt-1",
   title: "Underground Session",
   created_by: "user-1",
@@ -31,6 +31,27 @@ describe("EventCard", () => {
   it("renders title", () => {
     render(<EventCard event={MOCK_EVENT} />);
     expect(screen.getByText("Underground Session")).toBeInTheDocument();
+  });
+
+  it("renders lineup DJs under the title when present", () => {
+    render(
+      <EventCard
+        event={{
+          ...MOCK_EVENT,
+          event_lineup: [
+            {
+              sort_order: 0,
+              profile: { display_name: "DJ Alpha", slug: "dj-alpha" },
+            },
+            {
+              sort_order: 1,
+              profile: { display_name: "DJ Beta", slug: "dj-beta" },
+            },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText(/DJ Alpha · DJ Beta/)).toBeInTheDocument();
   });
 
   it("renders formatted date", () => {

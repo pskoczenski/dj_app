@@ -9,18 +9,22 @@ import { profilesService, type FollowCounts } from "@/lib/services/profiles";
 import { EventCard } from "@/components/events/event-card";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarPlus, Music, AlertCircle } from "lucide-react";
-import type { Event, Mix } from "@/types";
+import type { EventWithLineupPreview, Mix } from "@/types";
 
 export default function HomePage() {
   const { user, profile, hasAuthSession, loading: userLoading } =
     useCurrentUser();
-  const [nearbyEvents, setNearbyEvents] = useState<Event[]>([]);
-  const [upcomingGigs, setUpcomingGigs] = useState<Event[]>([]);
+  const [nearbyEvents, setNearbyEvents] = useState<EventWithLineupPreview[]>(
+    [],
+  );
+  const [upcomingGigs, setUpcomingGigs] = useState<EventWithLineupPreview[]>(
+    [],
+  );
   const [recentMixes, setRecentMixes] = useState<Mix[]>([]);
   const [counts, setCounts] = useState<FollowCounts>({
     followersCount: 0,
@@ -118,15 +122,15 @@ export default function HomePage() {
         <Card>
           <CardContent className="flex flex-col items-center gap-3 pt-4">
             <Avatar className="size-16">
-              {user.avatarUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+              {user.avatarUrl ? (
+                <AvatarImage
                   src={user.avatarUrl}
                   alt={user.displayName}
-                  className="size-full object-cover"
+                  className="box-border border-2 border-border"
                 />
+              ) : (
+                <AvatarFallback>{initials}</AvatarFallback>
               )}
-              <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
             <div className="text-center">
               <p className="font-display text-lg font-bold text-bone">

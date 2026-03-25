@@ -40,7 +40,7 @@ jest.mock("@/lib/supabase/client", () => ({
   createClient: () => mock.client,
 }));
 
-import { eventsService } from "@/lib/services/events";
+import { eventsService, EVENT_LIST_WITH_LINEUP } from "@/lib/services/events";
 
 const MOCK_EVENT = {
   id: "evt-1",
@@ -88,6 +88,8 @@ describe("eventsService", () => {
       const result = await eventsService.getAll();
       expect(result).toEqual([MOCK_EVENT]);
       expect(mock.client.from).toHaveBeenCalledWith("events");
+      const builder = mock.builder(0);
+      expect(builder.select).toHaveBeenCalledWith(EVENT_LIST_WITH_LINEUP);
     });
 
     it("applies dateFrom filter via gte", async () => {

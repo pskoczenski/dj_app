@@ -1,6 +1,24 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
-import type { Event, EventInsert, EventUpdate, EventStatus } from "@/types";
+import type {
+  Event,
+  EventInsert,
+  EventUpdate,
+  EventStatus,
+  EventWithLineupPreview,
+} from "@/types";
+
+/** Supabase select for browse/card rows: event fields plus lineup DJs (ordered client-side by sort_order). */
+export const EVENT_LIST_WITH_LINEUP = `
+  *,
+  event_lineup (
+    sort_order,
+    profile:profiles!event_lineup_profile_id_fkey (
+      display_name,
+      slug
+    )
+  )
+`;
 
 export interface EventFilters {
   dateFrom?: string;
@@ -17,10 +35,10 @@ function supabase() {
 
 export async function getAll(
   filters: EventFilters = {},
-): Promise<Event[]> {
+): Promise<EventWithLineupPreview[]> {
   let query = supabase()
     .from(TABLES.events)
-    .select("*")
+    .select(EVENT_LIST_WITH_LINEUP)
     .is("deleted_at", null)
     .eq("status", "published" as EventStatus);
 
@@ -71,12 +89,12 @@ export async function getById(id: string): Promise<Event | null> {
   return data;
 }
 
-export async function getUpcoming(state?: string): Promise<Event[]> {
+export async function getUpcoming(state?: string): Promise<EventWithLineupPreview[]> {
   const today = new Date().toISOString().split("T")[0];
 
   let query = supabase()
     .from(TABLES.events)
-    .select("*")
+    .select(EVENT_LIST_WITH_LINEUP)
     .is("deleted_at", null)
     .eq("status", "published" as EventStatus)
     .gte("start_date", today)
@@ -91,7 +109,7 @@ export async function getUpcoming(state?: string): Promise<Event[]> {
   return data ?? [];
 }
 
-export async function getByProfile(profileId: string): Promise<Event[]> {
+export async function getByProfile(profileId: string): Promise<EventWithLineupPreview[]> {
   const { data: lineupRows, error: lineupError } = await supabase()
     .from(TABLES.eventLineup)
     .select("event_id")
@@ -103,18 +121,18 @@ export async function getByProfile(profileId: string): Promise<Event[]> {
 
   const { data: createdEvents, error: createdError } = await supabase()
     .from(TABLES.events)
-    .select("*")
+    .select(EVENT_LIST_WITH_LINEUP)
     .eq("created_by", profileId)
     .is("deleted_at", null)
     .order("start_date", { ascending: true });
 
   if (createdError) throw createdError;
 
-  let lineupEvents: Event[] = [];
+  let lineupEvents: EventWithLineupPreview[] = [];
   if (lineupEventIds.length > 0) {
     const { data, error } = await supabase()
       .from(TABLES.events)
-      .select("*")
+      .select(EVENT_LIST_WITH_LINEUP)
       .in("id", lineupEventIds)
       .is("deleted_at", null)
       .order("start_date", { ascending: true });
@@ -124,7 +142,7 @@ export async function getByProfile(profileId: string): Promise<Event[]> {
   }
 
   const seen = new Set<string>();
-  const merged: Event[] = [];
+  const merged: EventWithLineupPreview[] = [];
   for (const event of [...(createdEvents ?? []), ...lineupEvents]) {
     if (!seen.has(event.id)) {
       seen.add(event.id);

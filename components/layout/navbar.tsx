@@ -22,10 +22,10 @@ export function Navbar({ user }: NavbarProps) {
 
   return (
     <header className="hidden border-b border-root-line bg-dark-moss md:block">
-      <nav className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
+      <nav className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
         <Link
           href="/home"
-          className="mr-2 font-display text-lg font-bold tracking-wide text-bone"
+          className="shrink-0 font-display text-lg font-bold tracking-wide text-bone"
         >
           DJ Network
         </Link>
@@ -47,7 +47,7 @@ export function Navbar({ user }: NavbarProps) {
           ))}
         </div>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex shrink-0 items-center gap-1">
           <Link
             href="/search"
             aria-label="Search"
@@ -55,8 +55,7 @@ export function Navbar({ user }: NavbarProps) {
           >
             <Search className="size-5" />
           </Link>
-
-          {user && <AvatarDropdown user={user} />}
+          {user ? <AvatarDropdown user={user} /> : null}
         </div>
       </nav>
     </header>

@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { eventsService, type EventFilters } from "@/lib/services/events";
-import type { Event } from "@/types";
+import type { EventWithLineupPreview } from "@/types";
 
 export function useEvents(filters: EventFilters = {}) {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<EventWithLineupPreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 

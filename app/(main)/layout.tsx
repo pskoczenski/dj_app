@@ -16,7 +16,7 @@ export default function MainLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar user={user} />
-      <MobileTopBar />
+      <MobileTopBar user={user} />
       <PageContainer as="main" className="flex-1 py-6 pb-20 md:pb-6">
         {children}
       </PageContainer>

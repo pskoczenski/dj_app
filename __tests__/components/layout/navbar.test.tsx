@@ -7,7 +7,7 @@ const mockPush = jest.fn();
 const mockSignOut = jest.fn().mockResolvedValue({});
 
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, refresh: jest.fn() }),
   usePathname: () => "/home",
 }));
 
@@ -58,9 +58,9 @@ describe("Navbar", () => {
     expect(screen.getByText("DJ Network")).toBeInTheDocument();
   });
 
-  it("shows avatar with user initials", () => {
+  it("shows user menu trigger when logged in", () => {
     render(<Navbar user={mockUser} />);
-    expect(screen.getByText("DS")).toBeInTheDocument();
+    expect(screen.getByLabelText("User menu")).toBeInTheDocument();
   });
 
   it("log out calls signOut and redirects to /", async () => {
@@ -69,7 +69,7 @@ describe("Navbar", () => {
 
     await user.click(screen.getByLabelText("User menu"));
 
-    const logOutItem = await screen.findByText("Log Out");
+    const logOutItem = await screen.findByText("Log out");
     await user.click(logOutItem);
 
     expect(mockSignOut).toHaveBeenCalledTimes(1);

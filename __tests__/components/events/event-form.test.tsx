@@ -20,6 +20,7 @@ jest.mock("@/lib/services/event-lineup", () => ({
 jest.mock("@/lib/services/storage", () => ({
   storageService: {
     uploadEventFlyer: jest.fn(),
+    uploadEventFlyerDraft: jest.fn(),
     validateImageFile: jest.fn().mockReturnValue({ valid: true }),
   },
 }));
@@ -75,6 +76,34 @@ describe("EventForm", () => {
     expect(
       screen.getByRole("button", { name: /save as draft/i }),
     ).toBeInTheDocument();
+  });
+
+  it("shows Added DJs cards below lineup when initial lineup has entries", () => {
+    render(
+      <EventForm
+        mode="create"
+        currentUserId="user-1"
+        initialLineup={[
+          {
+            tempId: "tmp-1",
+            profileId: "dj-1",
+            displayName: "DJ Alpha",
+            slug: "dj-alpha",
+            profileImageUrl: null,
+            isHeadliner: true,
+            setTime: "22:00",
+            sortOrder: 0,
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: /added djs/i })).toBeInTheDocument();
+    expect(screen.getAllByText("DJ Alpha").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByRole("link", { name: /dj alpha/i })).toHaveAttribute(
+      "href",
+      "/dj/dj-alpha",
+    );
   });
 
   it("shows Cancel Event button in edit mode", () => {

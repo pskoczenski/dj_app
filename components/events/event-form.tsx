@@ -14,8 +14,42 @@ import {
   LineupBuilder,
   type LineupEntry,
 } from "@/components/events/lineup-builder";
+import { LineupCard } from "@/components/events/lineup-card";
 import { toast } from "sonner";
-import type { Event, EventInsert, EventUpdate, EventStatus } from "@/types";
+import type { Event, EventInsert, EventUpdate, EventLineup, EventStatus } from "@/types";
+
+/** Minimal row shape for LineupCard preview from builder state. */
+function lineupEntryToCardProps(entry: LineupEntry): {
+  item: EventLineup;
+  profile: {
+    id: string;
+    display_name: string;
+    slug: string;
+    profile_image_url: string | null;
+    genres: string[] | null;
+  };
+} {
+  const item = {
+    id: entry.tempId,
+    event_id: "",
+    profile_id: entry.profileId,
+    added_by: "",
+    set_time: entry.setTime.trim() || null,
+    sort_order: entry.sortOrder,
+    is_headliner: entry.isHeadliner,
+    created_at: null,
+  } as EventLineup;
+
+  const profile = {
+    id: entry.profileId,
+    display_name: entry.displayName,
+    slug: entry.slug,
+    profile_image_url: entry.profileImageUrl,
+    genres: null as string[] | null,
+  };
+
+  return { item, profile };
+}
 
 interface EventFormProps {
   mode: "create" | "edit";
@@ -156,8 +190,9 @@ export function EventForm({
         <ImageUpload
           currentUrl={flyerUrl}
           onUploadComplete={async (file) => {
-            const eventId = event?.id ?? "temp";
-            const url = await storageService.uploadEventFlyer(eventId, file);
+            const url = event?.id
+              ? await storageService.uploadEventFlyer(event.id, file)
+              : await storageService.uploadEventFlyerDraft(currentUserId, file);
             setFlyerUrl(url);
             return url;
           }}
@@ -348,6 +383,26 @@ export function EventForm({
         onChange={setLineup}
         currentUserId={currentUserId}
       />
+
+      {lineup.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <h3 className="text-sm font-medium text-bone">Added DJs</h3>
+          <div className="flex flex-col gap-2">
+            {[...lineup]
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map((entry) => {
+                const { item, profile } = lineupEntryToCardProps(entry);
+                return (
+                  <LineupCard
+                    key={entry.tempId}
+                    item={item}
+                    profile={profile}
+                  />
+                );
+              })}
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex flex-wrap gap-3">

@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Search as SearchIcon } from "lucide-react";
-import type { Profile, Event, Mix } from "@/types";
+import type { Profile, EventWithLineupPreview, Mix } from "@/types";
 
 type TabValue = "all" | "djs" | "events" | "mixes";
 
@@ -36,7 +36,7 @@ function SearchBrowser() {
   const debouncedQuery = useDebounce(query, 300);
 
   const [djs, setDjs] = useState<Profile[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<EventWithLineupPreview[]>([]);
   const [mixes, setMixes] = useState<Mix[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);

@@ -47,7 +47,7 @@ supabase db reset       # applies migrations from scratch
 
 ### Storage buckets
 
-The third migration (`00003_storage_buckets_and_policies.sql`) creates three public storage buckets (`profile-images`, `event-flyers`, `mix-covers`) with RLS policies. These are applied automatically by `supabase db push` or `supabase db reset`.
+Migrations `00003_storage_buckets_and_policies.sql` and `00004_event_flyer_draft_storage_policies.sql` create three public storage buckets (`profile-images`, `event-flyers`, `mix-covers`) with RLS policies, including flyer uploads **before** an event exists (draft path under the user id). Apply with `supabase db push` or `supabase db reset`.
 
 ## Development
 

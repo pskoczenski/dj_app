@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { eventsService } from "@/lib/services/events";
 import { eventLineupService } from "@/lib/services/event-lineup";
-import type { Event, EventLineup } from "@/types";
+import type { Event, EventLineupWithProfile } from "@/types";
 
 export function useEvent(id: string) {
   const [event, setEvent] = useState<Event | null>(null);
-  const [lineup, setLineup] = useState<EventLineup[]>([]);
+  const [lineup, setLineup] = useState<EventLineupWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 

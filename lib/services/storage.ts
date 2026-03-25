@@ -68,6 +68,15 @@ export async function uploadEventFlyer(
   return upload(BUCKETS.eventFlyers, path, file);
 }
 
+/** Upload before the event exists; path prefix must be auth user id (see storage RLS). */
+export async function uploadEventFlyerDraft(
+  userId: string,
+  file: File,
+): Promise<string> {
+  const path = `${userId}/draft-flyer.${fileExtension(file)}`;
+  return upload(BUCKETS.eventFlyers, path, file);
+}
+
 export async function uploadMixCover(
   mixId: string,
   file: File,
@@ -88,6 +97,7 @@ export async function deleteFile(
 export const storageService = {
   uploadProfileImage,
   uploadEventFlyer,
+  uploadEventFlyerDraft,
   uploadMixCover,
   deleteFile,
   validateImageFile,

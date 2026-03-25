@@ -5,7 +5,16 @@ import { Calendar, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CornerVineAccent } from "@/components/decorative/corner-vine-accent";
-import type { Event } from "@/types";
+import type { EventWithLineupPreview } from "@/types";
+
+function lineupDisplayNames(event: EventWithLineupPreview): string[] {
+  const rows = event.event_lineup;
+  if (!rows?.length) return [];
+  return [...rows]
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .map((r) => r.profile?.display_name)
+    .filter((n): n is string => Boolean(n));
+}
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
@@ -27,11 +36,12 @@ function statusVariant(status: string) {
   }
 }
 
-export function EventCard({ event }: { event: Event }) {
+export function EventCard({ event }: { event: EventWithLineupPreview }) {
   const location = [event.venue, event.city, event.state]
     .filter(Boolean)
     .join(", ");
   const headingId = `event-title-${event.id}`;
+  const djNames = lineupDisplayNames(event);
 
   return (
     <article aria-labelledby={headingId}>
@@ -54,6 +64,11 @@ export function EventCard({ event }: { event: Event }) {
           <CardTitle id={headingId} className="text-bone">
             {event.title}
           </CardTitle>
+          {djNames.length > 0 && (
+            <p className="mt-1 text-sm leading-snug text-stone">
+              {djNames.join(" · ")}
+            </p>
+          )}
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           <div className="flex items-center gap-1.5 text-sm text-stone">

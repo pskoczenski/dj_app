@@ -10,10 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
 import type { CurrentUser } from "@/hooks/use-current-user";
-import { LogOut, User, Pencil, CalendarPlus } from "lucide-react";
+import { LogOut, Pencil, User } from "lucide-react";
 
 interface AvatarDropdownProps {
   user: CurrentUser;
@@ -26,56 +25,42 @@ export function AvatarDropdown({ user }: AvatarDropdownProps) {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/");
+    router.refresh();
   }
-
-  const initials = user.displayName
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-fern"
+        className="flex size-9 cursor-pointer items-center justify-center rounded-full text-stone outline-none transition-colors hover:bg-root-line/60 hover:text-bone focus-visible:ring-2 focus-visible:ring-fern"
         aria-label="User menu"
       >
-        <Avatar className="size-8">
-          {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.displayName} />}
-          <AvatarFallback className="bg-forest-shadow text-xs text-bone">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+        <User className="size-5" aria-hidden />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" sideOffset={8} className="w-56">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>
-            <span className="block font-medium text-bone">{user.displayName}</span>
-            <span className="block text-xs text-fog">@{user.slug}</span>
+          <DropdownMenuLabel className="text-bone">
+            <span className="block text-sm font-medium normal-case">
+              {user.displayName}
+            </span>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => router.push(`/dj/${user.slug}`)}>
-            <User className="size-4" />
-            View Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push("/profile/edit")}>
+          <DropdownMenuItem
+            className="text-bone focus:bg-root-line focus:text-bone"
+            onClick={() => router.push("/profile/edit")}
+          >
             <Pencil className="size-4" />
-            Edit Profile
+            Edit profile
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push("/events/create")}>
-            <CalendarPlus className="size-4" />
-            Create Event
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem onClick={handleLogout}>
+          <DropdownMenuItem
+            variant="destructive"
+            className="focus:text-destructive"
+            onClick={handleLogout}
+          >
             <LogOut className="size-4" />
-            Log Out
+            Log out
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

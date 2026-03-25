@@ -8,6 +8,25 @@ type Enums = import("./database").Database["public"]["Enums"];
 export type Profile = Tables["profiles"]["Row"];
 export type Event = Tables["events"]["Row"];
 export type EventLineup = Tables["event_lineup"]["Row"];
+
+/** Embedded lineup row on event list/card queries (minimal profile fields). */
+export type EventLineupCardPreview = Pick<EventLineup, "sort_order"> & {
+  profile: Pick<Profile, "display_name" | "slug"> | null;
+};
+
+/** Event row with optional nested lineup for cards and browse lists. */
+export type EventWithLineupPreview = Event & {
+  event_lineup?: EventLineupCardPreview[] | null;
+};
+
+/** Lineup row from `listForEvent` with embedded DJ profile. */
+export type EventLineupWithProfile = EventLineup & {
+  profile: Pick<
+    Profile,
+    "id" | "display_name" | "slug" | "profile_image_url" | "genres"
+  > | null;
+};
+
 export type Mix = Tables["mixes"]["Row"];
 export type Follow = Tables["follows"]["Row"];
 export type GenreTag = Tables["genre_tags"]["Row"];

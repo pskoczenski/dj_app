@@ -1,20 +1,37 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
-import type { EventLineup, EventLineupInsert } from "@/types";
+import type {
+  EventLineup,
+  EventLineupInsert,
+  EventLineupWithProfile,
+} from "@/types";
 
 function supabase() {
   return createClient();
 }
 
-export async function listForEvent(eventId: string): Promise<EventLineup[]> {
+export async function listForEvent(
+  eventId: string,
+): Promise<EventLineupWithProfile[]> {
   const { data, error } = await supabase()
     .from(TABLES.eventLineup)
-    .select("*")
+    .select(
+      `
+      *,
+      profile:profiles!event_lineup_profile_id_fkey (
+        id,
+        display_name,
+        slug,
+        profile_image_url,
+        genres
+      )
+    `,
+    )
     .eq("event_id", eventId)
     .order("sort_order", { ascending: true });
 
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as EventLineupWithProfile[];
 }
 
 export async function add(data: EventLineupInsert): Promise<EventLineup> {

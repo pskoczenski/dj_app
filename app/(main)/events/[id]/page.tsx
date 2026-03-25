@@ -23,7 +23,7 @@ import {
   UserMinus,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { EventLineup } from "@/types";
+import type { EventLineupWithProfile } from "@/types";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
@@ -63,7 +63,7 @@ export default function EventDetailPage({
   }
 
   const isCreator = user?.id === event.created_by;
-  const userLineupEntry: EventLineup | undefined = user
+  const userLineupEntry: EventLineupWithProfile | undefined = user
     ? lineup.find((l) => l.profile_id === user.id)
     : undefined;
 
@@ -190,7 +190,11 @@ export default function EventDetailPage({
           </h2>
           <div className="flex flex-col gap-2">
             {lineup.map((item) => (
-              <LineupCard key={item.id} item={item} />
+              <LineupCard
+                key={item.id}
+                item={item}
+                profile={item.profile ?? undefined}
+              />
             ))}
           </div>
         </section>
