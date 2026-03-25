@@ -1,10 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import LoginPage from "@/app/(auth)/login/page";
 
 const mockPush = jest.fn();
 const mockSignIn = jest.fn();
 const mockSignInOAuth = jest.fn();
+const mockResetPasswordForEmail = jest.fn();
 const mockEnsureProfileForUser = jest.fn();
 
 jest.mock("next/navigation", () => ({
@@ -17,6 +18,7 @@ jest.mock("@/lib/supabase/client", () => ({
     auth: {
       signInWithPassword: mockSignIn,
       signInWithOAuth: mockSignInOAuth,
+      resetPasswordForEmail: mockResetPasswordForEmail,
     },
   }),
 }));
@@ -100,6 +102,34 @@ describe("LoginPage", () => {
     render(<LoginPage />);
     expect(
       screen.getByRole("button", { name: /google/i })
+    ).toBeInTheDocument();
+  });
+
+  it("opens forgot-password dialog and sends reset email via Supabase", async () => {
+    mockResetPasswordForEmail.mockResolvedValueOnce({ error: null });
+    const user = userEvent.setup();
+    render(<LoginPage />);
+
+    await user.click(screen.getByRole("button", { name: /forgot password/i }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByRole("heading", { name: /reset your password/i }),
+    ).toBeInTheDocument();
+
+    const resetEmailInput = within(dialog).getByLabelText(/^email$/i);
+    await user.clear(resetEmailInput);
+    await user.type(resetEmailInput, "recover@example.com");
+    await user.click(
+      within(dialog).getByRole("button", { name: /send reset link/i }),
+    );
+
+    expect(mockResetPasswordForEmail).toHaveBeenCalledWith(
+      "recover@example.com",
+      { redirectTo: "http://localhost/login" },
+    );
+    expect(
+      await within(dialog).findByText(/check your inbox/i),
     ).toBeInTheDocument();
   });
 });

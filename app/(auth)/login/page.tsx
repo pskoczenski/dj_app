@@ -5,6 +5,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ensureProfileForUser } from "@/lib/auth/profile-bootstrap";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { ProfileType } from "@/types";
 
 export default function LoginPage() {
@@ -24,6 +33,12 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,6 +100,33 @@ function LoginForm() {
     });
   }
 
+  function openForgotPassword() {
+    setResetEmail(email);
+    setResetError(null);
+    setResetSent(false);
+    setForgotOpen(true);
+  }
+
+  async function handleForgotSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setResetError(null);
+    setResetLoading(true);
+    const supabase = createClient();
+    const trimmed = resetEmail.trim();
+    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(
+      trimmed,
+      {
+        redirectTo: `${window.location.origin}/login`,
+      },
+    );
+    setResetLoading(false);
+    if (resetErr) {
+      setResetError(resetErr.message);
+      return;
+    }
+    setResetSent(true);
+  }
+
   return (
     <>
       <h1 className="mb-6 font-display text-2xl font-bold tracking-wide text-bone">
@@ -117,9 +159,18 @@ function LoginForm() {
         </div>
 
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm text-stone">
-            Password
-          </label>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <label htmlFor="password" className="block text-sm text-stone">
+              Password
+            </label>
+            <button
+              type="button"
+              onClick={openForgotPassword}
+              className="text-sm text-fern underline-offset-4 hover:underline"
+            >
+              Forgot password?
+            </button>
+          </div>
           <input
             id="password"
             type="password"
@@ -160,6 +211,64 @@ function LoginForm() {
           Sign up
         </Link>
       </p>
+
+      <Dialog
+        open={forgotOpen}
+        onOpenChange={(open) => {
+          setForgotOpen(open);
+          if (!open) {
+            setResetError(null);
+            setResetSent(false);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-bone">Reset your password</DialogTitle>
+            <DialogDescription className="text-stone">
+              Enter your account email and we&apos;ll send you a link to choose a
+              new password.
+            </DialogDescription>
+          </DialogHeader>
+          {resetSent ? (
+            <p className="text-sm text-stone" role="status">
+              Check your inbox for a reset link. If you don&apos;t see it, try
+              your spam folder.
+            </p>
+          ) : (
+            <form onSubmit={handleForgotSubmit} className="flex flex-col gap-4">
+              {resetError && (
+                <div
+                  role="alert"
+                  className="rounded-default border border-dried-blood bg-rust-mist/30 px-4 py-3 text-sm text-bone"
+                >
+                  {resetError}
+                </div>
+              )}
+              <div>
+                <label
+                  htmlFor="reset-email"
+                  className="mb-1 block text-sm text-stone"
+                >
+                  Email
+                </label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="you@example.com"
+                />
+              </div>
+              <Button type="submit" disabled={resetLoading}>
+                {resetLoading ? "Sending…" : "Send reset link"}
+              </Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
