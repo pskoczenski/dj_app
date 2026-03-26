@@ -208,4 +208,23 @@ describe("profilesService", () => {
       expect(result.genres).toEqual(["techno"]);
     });
   });
+
+  describe("syncGenreTags", () => {
+    it("does not call RPC for an empty list", async () => {
+      mock = chainMock();
+      await profilesService.syncGenreTags([]);
+      expect(mockRpc).not.toHaveBeenCalled();
+    });
+
+    it("calls upsert_genre_tags with trimmed non-empty tags", async () => {
+      mock = chainMock();
+      mockRpc.mockResolvedValueOnce({ data: ["techno"], error: null });
+
+      await profilesService.syncGenreTags(["  techno ", ""]);
+
+      expect(mockRpc).toHaveBeenCalledWith("upsert_genre_tags", {
+        input_genres: ["techno"],
+      });
+    });
+  });
 });

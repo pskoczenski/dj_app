@@ -57,6 +57,9 @@ describe("mixesService", () => {
       await mixesService.getAll();
       expect(mock.client.from).toHaveBeenCalledWith("mixes");
       const builder = mock.builder(0);
+      expect(builder.select).toHaveBeenCalledWith(
+        expect.stringMatching(/creator:profiles!mixes_profile_id_fkey/),
+      );
       expect(builder.order).toHaveBeenCalledWith("created_at", { ascending: false });
     });
 

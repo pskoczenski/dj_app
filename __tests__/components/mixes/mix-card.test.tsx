@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MixCard } from "@/components/mixes/mix-card";
-import type { Mix } from "@/types";
+import type { MixWithCreator } from "@/types";
 
-const MOCK_MIX: Mix = {
+const MOCK_MIX: MixWithCreator = {
   id: "mix-1",
   title: "Summer Vibes",
   embed_url: "https://soundcloud.com/artist/summer-vibes",
@@ -14,9 +14,10 @@ const MOCK_MIX: Mix = {
   cover_image_url: null,
   duration: "1:32:00",
   sort_order: 0,
-  created_at: "2025-01-01",
-  updated_at: "2025-01-01",
+  created_at: "2025-01-01T00:00:00.000Z",
+  updated_at: "2025-01-01T00:00:00.000Z",
   deleted_at: null,
+  creator: { display_name: "Test DJ", slug: "test-dj" },
 };
 
 describe("MixCard", () => {
@@ -26,6 +27,16 @@ describe("MixCard", () => {
     );
     expect(screen.getByText("Summer Vibes")).toBeInTheDocument();
     expect(screen.getByText("SoundCloud")).toBeInTheDocument();
+  });
+
+  it("renders creator name, profile link, and added date", () => {
+    render(
+      <MixCard mix={MOCK_MIX} expanded={false} onToggle={jest.fn()} />,
+    );
+    const nameLink = screen.getByRole("link", { name: "Test DJ" });
+    expect(nameLink).toHaveAttribute("href", "/dj/test-dj");
+    expect(screen.getByText("Added")).toBeInTheDocument();
+    expect(screen.getByText("01/01/25")).toBeInTheDocument();
   });
 
   it("renders genre badges", () => {
@@ -92,5 +103,22 @@ describe("MixCard", () => {
     expect(
       screen.getByRole("button", { name: /summer vibes/i }),
     ).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("manageMode delete button calls onDelete", async () => {
+    const user = userEvent.setup();
+    const onDelete = jest.fn();
+    render(
+      <MixCard
+        mix={MOCK_MIX}
+        expanded={false}
+        onToggle={jest.fn()}
+        manageMode
+        onDelete={onDelete}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /delete mix/i }));
+    expect(onDelete).toHaveBeenCalledTimes(1);
   });
 });
