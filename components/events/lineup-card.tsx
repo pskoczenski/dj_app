@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatSetTime12h } from "@/lib/format-time";
 import type { EventLineup } from "@/types";
 
 interface LineupProfile {
@@ -28,15 +29,15 @@ export function LineupCard({ item, profile }: LineupCardProps) {
   const inner = (
     <div className="flex items-center gap-3 rounded-default border border-root-line p-3 transition-colors hover:border-sage-edge">
       <Avatar className="size-10">
-        {profile?.profile_image_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+        {profile?.profile_image_url ? (
+          <AvatarImage
             src={profile.profile_image_url}
             alt={name}
-            className="size-full object-cover"
+            className="box-border border-2 border-border"
           />
+        ) : (
+          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
         )}
-        <AvatarFallback className="text-xs">{initials}</AvatarFallback>
       </Avatar>
       <div className="flex flex-1 flex-col gap-0.5">
         <div className="flex items-center gap-2">
@@ -48,7 +49,9 @@ export function LineupCard({ item, profile }: LineupCardProps) {
           )}
         </div>
         {item.set_time && (
-          <span className="text-xs text-stone">{item.set_time}</span>
+          <span className="text-xs text-stone">
+            {formatSetTime12h(item.set_time)}
+          </span>
         )}
         {profile?.genres && profile.genres.length > 0 && (
           <div className="flex flex-wrap gap-1 pt-0.5">

@@ -23,6 +23,7 @@ import {
   UserMinus,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatSetTime12h } from "@/lib/format-time";
 import type { EventLineupWithProfile } from "@/types";
 
 function formatDate(dateStr: string): string {
@@ -139,7 +140,12 @@ export default function EventDetailPage({
           <div className="flex items-center gap-2 text-stone">
             <Clock className="size-4 shrink-0" />
             <span>
-              {[event.start_time, event.end_time].filter(Boolean).join(" — ")}
+              {[
+                event.start_time && formatSetTime12h(event.start_time),
+                event.end_time && formatSetTime12h(event.end_time),
+              ]
+                .filter(Boolean)
+                .join(" — ")}
             </span>
           </div>
         )}

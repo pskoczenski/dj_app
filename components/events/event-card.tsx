@@ -5,6 +5,7 @@ import { Calendar, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CornerVineAccent } from "@/components/decorative/corner-vine-accent";
+import { formatSetTime12h } from "@/lib/format-time";
 import type { EventWithLineupPreview } from "@/types";
 
 function lineupDisplayNames(event: EventWithLineupPreview): string[] {
@@ -23,6 +24,16 @@ function formatDate(dateStr: string): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function formatEventDateTimeLine(event: EventWithLineupPreview): string {
+  const datePart = formatDate(event.start_date);
+  const start = event.start_time ? formatSetTime12h(event.start_time) : null;
+  const end = event.end_time ? formatSetTime12h(event.end_time) : null;
+  if (start && end) return `${datePart} · ${start} – ${end}`;
+  if (start) return `${datePart} · ${start}`;
+  if (end) return `${datePart} · ${end}`;
+  return datePart;
 }
 
 function statusVariant(status: string) {
@@ -73,7 +84,7 @@ export function EventCard({ event }: { event: EventWithLineupPreview }) {
         <CardContent className="flex flex-col gap-2">
           <div className="flex items-center gap-1.5 text-sm text-stone">
             <Calendar className="size-4 shrink-0" />
-            <span>{formatDate(event.start_date)}</span>
+            <span>{formatEventDateTimeLine(event)}</span>
           </div>
           {location && (
             <div className="flex items-center gap-1.5 text-sm text-stone">

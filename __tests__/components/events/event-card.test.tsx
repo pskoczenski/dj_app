@@ -59,6 +59,21 @@ describe("EventCard", () => {
     expect(screen.getByText(/Jun 15, 2025/)).toBeInTheDocument();
   });
 
+  it("renders start and end times in 12-hour form when set", () => {
+    render(
+      <EventCard
+        event={{
+          ...MOCK_EVENT,
+          start_time: "21:00:00",
+          end_time: "02:30:00",
+        }}
+      />,
+    );
+    expect(
+      screen.getByText(/Jun 15, 2025 · 9:00 PM – 2:30 AM/),
+    ).toBeInTheDocument();
+  });
+
   it("renders venue and city", () => {
     render(<EventCard event={MOCK_EVENT} />);
     expect(screen.getByText(/Holocene, Portland, OR/)).toBeInTheDocument();
