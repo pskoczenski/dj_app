@@ -6,6 +6,9 @@ export const TABLES = {
   profiles: "profiles",
   events: "events",
   eventLineup: "event_lineup",
+  conversations: "conversations",
+  conversationParticipants: "conversation_participants",
+  messages: "messages",
   mixes: "mixes",
   mixLikes: "mix_likes",
   follows: "follows",
@@ -19,6 +22,7 @@ export const VIEWS = {
 export const ENUMS = {
   profileType: "profile_type",
   eventStatus: "event_status",
+  conversationType: "conversation_type",
   mixPlatform: "mix_platform",
 } as const;
 

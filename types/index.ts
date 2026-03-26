@@ -8,6 +8,9 @@ type Enums = import("./database").Database["public"]["Enums"];
 export type Profile = Tables["profiles"]["Row"];
 export type Event = Tables["events"]["Row"];
 export type EventLineup = Tables["event_lineup"]["Row"];
+export type Conversation = Tables["conversations"]["Row"];
+export type ConversationParticipant = Tables["conversation_participants"]["Row"];
+export type Message = Tables["messages"]["Row"];
 
 /** Embedded lineup row on event list/card queries (minimal profile fields). */
 export type EventLineupCardPreview = Pick<EventLineup, "sort_order"> & {
@@ -38,6 +41,24 @@ export type Follow = Tables["follows"]["Row"];
 export type GenreTag = Tables["genre_tags"]["Row"];
 export type ProfileFollowCounts = Views["profile_follow_counts"]["Row"];
 
+export interface MessageWithSender extends Message {
+  sender: Pick<Profile, "id" | "display_name" | "slug" | "profile_image_url"> | null;
+}
+
+export interface ConversationInboxItem {
+  id: string;
+  type: ConversationType;
+  event_id: string | null;
+  updated_at: string | null;
+  lastMessage: Pick<Message, "body" | "sender_id" | "created_at"> | null;
+  unreadCount: number;
+  otherParticipant: Pick<
+    Profile,
+    "id" | "display_name" | "slug" | "profile_image_url"
+  > | null;
+  event: Pick<Event, "id" | "title" | "flyer_image_url"> | null;
+}
+
 // Insert types
 export type ProfileInsert = Tables["profiles"]["Insert"];
 export type EventInsert = Tables["events"]["Insert"];
@@ -49,8 +70,10 @@ export type FollowInsert = Tables["follows"]["Insert"];
 export type ProfileUpdate = Tables["profiles"]["Update"];
 export type EventUpdate = Tables["events"]["Update"];
 export type MixUpdate = Tables["mixes"]["Update"];
+export type MessageUpdate = Tables["messages"]["Update"];
 
 // Enum types
 export type ProfileType = Enums["profile_type"];
 export type EventStatus = Enums["event_status"];
+export type ConversationType = Enums["conversation_type"];
 export type MixPlatform = Enums["mix_platform"];

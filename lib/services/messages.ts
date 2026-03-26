@@ -1,0 +1,88 @@
+import { createClient } from "@/lib/supabase/client";
+import { TABLES } from "@/lib/db/schema-constants";
+import { conversationsService } from "@/lib/services/conversations";
+import type { MessageWithSender } from "@/types";
+
+export const MESSAGES_POLL_INTERVAL_MS = 5_000;
+export const DEFAULT_MESSAGES_PAGE_SIZE = 30;
+
+function supabase() {
+  return createClient();
+}
+
+async function resolveCurrentUserId(currentUserId?: string): Promise<string> {
+  if (currentUserId) return currentUserId;
+  const {
+    data: { user },
+    error,
+  } = await supabase().auth.getUser();
+  if (error) throw error;
+  if (!user) throw new Error("Authentication required.");
+  return user.id;
+}
+
+export async function getMessages(
+  conversationId: string,
+  options: { limit?: number; before?: string } = {},
+): Promise<MessageWithSender[]> {
+  const limit = options.limit ?? DEFAULT_MESSAGES_PAGE_SIZE;
+  let query = supabase()
+    .from(TABLES.messages)
+    .select(
+      "*, sender:profiles!messages_sender_id_fkey(id,display_name,slug,profile_image_url)",
+    )
+    .eq("conversation_id", conversationId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+
+  if (options.before) {
+    query = query.lt("created_at", options.before);
+  }
+
+  query = query.limit(limit);
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []) as MessageWithSender[];
+}
+
+export async function send(
+  conversationId: string,
+  body: string,
+  currentUserId?: string,
+): Promise<MessageWithSender> {
+  const senderId = await resolveCurrentUserId(currentUserId);
+  const trimmed = body.trim();
+  if (!trimmed) throw new Error("Message cannot be empty.");
+
+  const { data, error } = await supabase()
+    .from(TABLES.messages)
+    .insert({
+      conversation_id: conversationId,
+      sender_id: senderId,
+      body: trimmed,
+    })
+    .select(
+      "*, sender:profiles!messages_sender_id_fkey(id,display_name,slug,profile_image_url)",
+    )
+    .single();
+  if (error) throw error;
+
+  await conversationsService.markAsRead(conversationId, senderId);
+
+  return data as MessageWithSender;
+}
+
+export async function deleteMessage(messageId: string): Promise<void> {
+  const { error } = await supabase()
+    .from(TABLES.messages)
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", messageId);
+  if (error) throw error;
+}
+
+export const messagesService = {
+  getMessages,
+  send,
+  deleteMessage,
+};
