@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarPlus, Music, AlertCircle } from "lucide-react";
-import type { EventWithLineupPreview, Mix } from "@/types";
+import type { EventWithLineupPreview, MixWithCreator } from "@/types";
 
 export default function HomePage() {
   const { user, profile, hasAuthSession, loading: userLoading } =
@@ -25,7 +25,7 @@ export default function HomePage() {
   const [upcomingGigs, setUpcomingGigs] = useState<EventWithLineupPreview[]>(
     [],
   );
-  const [recentMixes, setRecentMixes] = useState<Mix[]>([]);
+  const [recentMixes, setRecentMixes] = useState<MixWithCreator[]>([]);
   const [counts, setCounts] = useState<FollowCounts>({
     followersCount: 0,
     followingCount: 0,
@@ -171,7 +171,7 @@ export default function HomePage() {
               Create Event
             </Link>
             <Link
-              href="/profile/edit#mixes"
+              href="/mixes/new"
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               <Music className="mr-1.5 size-4" />

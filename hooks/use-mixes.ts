@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { mixesService, type MixFilters } from "@/lib/services/mixes";
-import type { Mix } from "@/types";
+import type { MixWithCreator } from "@/types";
 
 export function useMixes(filters: MixFilters = {}) {
-  const [mixes, setMixes] = useState<Mix[]>([]);
+  const [mixes, setMixes] = useState<MixWithCreator[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 

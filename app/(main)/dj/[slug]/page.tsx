@@ -5,13 +5,26 @@ import Link from "next/link";
 import { useProfile } from "@/hooks/use-profile";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { followsService } from "@/lib/services/follows";
+import { mixesService } from "@/lib/services/mixes";
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { SocialLinks } from "@/components/profile/social-links";
 import { FollowButton } from "@/components/profile/follow-button";
 import { EmptyState } from "@/components/shared/empty-state";
+import { MixCard } from "@/components/mixes/mix-card";
 import { buttonVariants } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import type { MixWithCreator } from "@/types";
 
 export default function DjProfilePage({
   params,
@@ -25,6 +38,11 @@ export default function DjProfilePage({
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
 
+  const [mixes, setMixes] = useState<MixWithCreator[]>([]);
+  const [mixesLoading, setMixesLoading] = useState(false);
+  const [expandedMixId, setExpandedMixId] = useState<string | null>(null);
+  const [mixToDelete, setMixToDelete] = useState<MixWithCreator | null>(null);
+
   const isOwnProfile =
     profile != null && currentUser?.id === profile.id;
 
@@ -36,6 +54,71 @@ export default function DjProfilePage({
   useEffect(() => {
     setFollowing(false);
   }, [profile?.id]);
+
+  useEffect(() => {
+    if (!profile) {
+      setMixes([]);
+      return;
+    }
+    let cancelled = false;
+    setMixesLoading(true);
+    mixesService
+      .getByProfile(profile.id)
+      .then((data) => {
+        if (!cancelled) setMixes(data);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Could not load mixes.");
+      })
+      .finally(() => {
+        if (!cancelled) setMixesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.id]);
+
+  const refetchMixes = useCallback(async () => {
+    if (!profile) return;
+    try {
+      const data = await mixesService.getByProfile(profile.id);
+      setMixes(data);
+    } catch {
+      toast.error("Could not refresh mixes.");
+    }
+  }, [profile]);
+
+  const moveMix = useCallback(
+    async (fromIndex: number, toIndex: number) => {
+      if (!profile || toIndex < 0 || toIndex >= mixes.length) return;
+      const next = [...mixes];
+      const [removed] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, removed);
+      setMixes(next);
+      try {
+        await mixesService.reorder(
+          profile.id,
+          next.map((m) => m.id),
+        );
+      } catch {
+        toast.error("Could not reorder mixes.");
+        void refetchMixes();
+      }
+    },
+    [mixes, profile, refetchMixes],
+  );
+
+  const confirmDeleteMix = useCallback(async () => {
+    if (!mixToDelete) return;
+    try {
+      await mixesService.delete(mixToDelete.id);
+      toast.success("Mix removed.");
+      setMixToDelete(null);
+      setMixes((prev) => prev.filter((m) => m.id !== mixToDelete.id));
+    } catch {
+      toast.error("Could not delete mix.");
+    }
+  }, [mixToDelete]);
 
   const handleFollow = useCallback(async () => {
     if (!currentUser || !profile) return;
@@ -121,16 +204,92 @@ export default function DjProfilePage({
       )}
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-lg font-semibold text-bone">
             Mixes
           </h2>
+          {isOwnProfile && (
+            <Link
+              href="/mixes/new"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              Add Mix
+            </Link>
+          )}
         </div>
-        <EmptyState
-          title="No mixes yet"
-          description="This DJ hasn't added any mixes."
-        />
+        {mixesLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-24 w-full rounded-default" />
+            <Skeleton className="h-24 w-full rounded-default" />
+          </div>
+        ) : mixes.length === 0 ? (
+          <EmptyState
+            title="No mixes yet"
+            description={
+              isOwnProfile
+                ? "Add your first mix to show it here."
+                : "This DJ hasn't added any mixes."
+            }
+            action={
+              isOwnProfile ? (
+                <Link
+                  href="/mixes/new"
+                  className={buttonVariants({ size: "sm" })}
+                >
+                  Add Mix
+                </Link>
+              ) : undefined
+            }
+          />
+        ) : (
+          <div className="flex flex-col gap-3">
+            {mixes.map((mix, index) => (
+              <MixCard
+                key={mix.id}
+                mix={mix}
+                expanded={expandedMixId === mix.id}
+                onToggle={() =>
+                  setExpandedMixId((id) =>
+                    id === mix.id ? null : mix.id,
+                  )
+                }
+                manageMode={isOwnProfile}
+                disableMoveUp={index === 0}
+                disableMoveDown={index === mixes.length - 1}
+                onMoveUp={() => void moveMix(index, index - 1)}
+                onMoveDown={() => void moveMix(index, index + 1)}
+                onDelete={() => setMixToDelete(mix)}
+              />
+            ))}
+          </div>
+        )}
       </section>
+
+      <AlertDialog
+        open={mixToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setMixToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this mix?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes &ldquo;{mixToDelete?.title ?? "this mix"}&rdquo; from
+              your profile. You can add it again later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => void confirmDeleteMix()}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <section>
         <h2 className="mb-3 font-display text-lg font-semibold text-bone">

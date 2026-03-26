@@ -28,6 +28,12 @@ export type EventLineupWithProfile = EventLineup & {
 };
 
 export type Mix = Tables["mixes"]["Row"];
+
+/** Mix row with DJ profile from list queries (`getAll`, `getByProfile`). */
+export type MixWithCreator = Mix & {
+  creator?: Pick<Profile, "display_name" | "slug"> | null;
+};
+
 export type Follow = Tables["follows"]["Row"];
 export type GenreTag = Tables["genre_tags"]["Row"];
 export type ProfileFollowCounts = Views["profile_follow_counts"]["Row"];

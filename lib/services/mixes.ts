@@ -1,6 +1,21 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
-import type { Mix, MixInsert, MixUpdate, MixPlatform } from "@/types";
+import type {
+  Mix,
+  MixInsert,
+  MixUpdate,
+  MixPlatform,
+  MixWithCreator,
+} from "@/types";
+
+/** Shared select for mix list/search rows with embedded DJ profile. */
+export const MIX_LIST_SELECT = `
+  *,
+  creator:profiles!mixes_profile_id_fkey (
+    display_name,
+    slug
+  )
+`;
 
 export interface MixFilters {
   profileId?: string;
@@ -14,10 +29,12 @@ function supabase() {
   return createClient();
 }
 
-export async function getAll(filters: MixFilters = {}): Promise<Mix[]> {
+export async function getAll(
+  filters: MixFilters = {},
+): Promise<MixWithCreator[]> {
   let query = supabase()
     .from(TABLES.mixes)
-    .select("*")
+    .select(MIX_LIST_SELECT)
     .is("deleted_at", null);
 
   if (filters.profileId) {
@@ -52,8 +69,22 @@ export async function getAll(filters: MixFilters = {}): Promise<Mix[]> {
   return data ?? [];
 }
 
-export async function getByProfile(profileId: string): Promise<Mix[]> {
+export async function getByProfile(
+  profileId: string,
+): Promise<MixWithCreator[]> {
   return getAll({ profileId, sort: "order" });
+}
+
+export async function getById(id: string): Promise<Mix | null> {
+  const { data, error } = await supabase()
+    .from(TABLES.mixes)
+    .select("*")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
 }
 
 export async function create(data: MixInsert): Promise<Mix> {
@@ -108,8 +139,11 @@ export async function reorder(
 export const mixesService = {
   getAll,
   getByProfile,
+  getById,
   create,
   update,
   softDelete,
+  /** Alias for soft-delete (public mixes API). */
+  delete: softDelete,
   reorder,
 };

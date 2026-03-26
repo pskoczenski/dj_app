@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, SlidersHorizontal } from "lucide-react";
-import type { Mix } from "@/types";
+import type { MixWithCreator } from "@/types";
 
 const PAGE_SIZE = 12;
 
@@ -26,7 +26,7 @@ function MixesBrowser() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [mixes, setMixes] = useState<Mix[]>([]);
+  const [mixes, setMixes] = useState<MixWithCreator[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);

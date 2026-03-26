@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
 import { EVENT_LIST_WITH_LINEUP } from "@/lib/services/events";
-import type { Profile, EventWithLineupPreview, Mix } from "@/types";
+import { MIX_LIST_SELECT } from "@/lib/services/mixes";
+import type { Profile, EventWithLineupPreview, MixWithCreator } from "@/types";
 
 function supabase() {
   return createClient();
@@ -49,11 +50,11 @@ export async function searchEvents(
 export async function searchMixes(
   query: string,
   limit = 20,
-): Promise<Mix[]> {
+): Promise<MixWithCreator[]> {
   const term = `%${query}%`;
   const { data, error } = await supabase()
     .from(TABLES.mixes)
-    .select("*")
+    .select(MIX_LIST_SELECT)
     .is("deleted_at", null)
     .or(`title.ilike.${term},description.ilike.${term}`)
     .order("created_at", { ascending: false })

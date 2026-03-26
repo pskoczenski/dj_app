@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Search as SearchIcon } from "lucide-react";
-import type { Profile, EventWithLineupPreview, Mix } from "@/types";
+import type { Profile, EventWithLineupPreview, MixWithCreator } from "@/types";
 
 type TabValue = "all" | "djs" | "events" | "mixes";
 
@@ -37,7 +37,7 @@ function SearchBrowser() {
 
   const [djs, setDjs] = useState<Profile[]>([]);
   const [events, setEvents] = useState<EventWithLineupPreview[]>([]);
-  const [mixes, setMixes] = useState<Mix[]>([]);
+  const [mixes, setMixes] = useState<MixWithCreator[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -281,7 +281,7 @@ function DjResultsList({ profiles }: { profiles: Profile[] }) {
   );
 }
 
-function MixResultsList({ mixes }: { mixes: Mix[] }) {
+function MixResultsList({ mixes }: { mixes: MixWithCreator[] }) {
   return (
     <div className="flex flex-col gap-2">
       {mixes.map((m) => (

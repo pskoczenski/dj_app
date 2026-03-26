@@ -112,6 +112,13 @@ async function upsertGenreTags(genres: string[]): Promise<string[]> {
   return data ?? [];
 }
 
+/** Registers genre tag rows for autocomplete / counts (call when saving mixes or profiles with genres). */
+export async function syncGenreTags(genres: string[]): Promise<void> {
+  const normalized = genres.map((g) => g.trim()).filter(Boolean);
+  if (normalized.length === 0) return;
+  await upsertGenreTags(normalized);
+}
+
 export const profilesService = {
   getBySlug,
   getById,
@@ -119,4 +126,5 @@ export const profilesService = {
   update,
   search,
   getFollowCounts,
+  syncGenreTags,
 };
