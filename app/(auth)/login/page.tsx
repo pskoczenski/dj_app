@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -39,6 +39,17 @@ function LoginForm() {
   const [resetError, setResetError] = useState<string | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  /** Seconds until another reset email can be requested (anti-spam / rate limit). */
+  const [resetCooldown, setResetCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resetCooldown <= 0) return;
+    const timer = setTimeout(
+      () => setResetCooldown((c) => Math.max(0, c - 1)),
+      1000,
+    );
+    return () => clearTimeout(timer);
+  }, [resetCooldown]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -109,22 +120,53 @@ function LoginForm() {
 
   async function handleForgotSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (resetCooldown > 0) return;
+
     setResetError(null);
     setResetLoading(true);
+
     const supabase = createClient();
     const trimmed = resetEmail.trim();
+
     const { error: resetErr } = await supabase.auth.resetPasswordForEmail(
       trimmed,
       {
-        redirectTo: `${window.location.origin}/login`,
+        redirectTo: `${window.location.origin}/auth/reset-password`,
       },
     );
+
     setResetLoading(false);
+
     if (resetErr) {
-      setResetError(resetErr.message);
+      const msg = resetErr.message ?? "";
+      const status = "status" in resetErr ? (resetErr as { status?: number }).status : undefined;
+      if (
+        msg.toLowerCase().includes("rate limit") ||
+        status === 429
+      ) {
+        setResetError(
+          "Too many attempts. Please wait an hour and try again.",
+        );
+        setResetCooldown(3600);
+      } else {
+        setResetError(msg || "Could not send reset email.");
+      }
       return;
     }
+
     setResetSent(true);
+    setResetCooldown(60);
+  }
+
+  function formatResetCooldownLabel(seconds: number): string {
+    if (seconds <= 0) return "";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) {
+      return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+    return `${m}:${String(s).padStart(2, "0")}`;
   }
 
   return (
@@ -222,18 +264,20 @@ function LoginForm() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-bone">Reset your password</DialogTitle>
-            <DialogDescription className="text-stone">
-              Enter your account email and we&apos;ll send you a link to choose a
-              new password.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-md pr-10 pt-6">
+          {!resetSent && (
+            <DialogHeader>
+              <DialogTitle className="text-bone">Reset your password</DialogTitle>
+              <DialogDescription className="text-stone">
+                Enter your account email and we&apos;ll send you a link to choose a
+                new password.
+              </DialogDescription>
+            </DialogHeader>
+          )}
           {resetSent ? (
             <p className="text-sm text-stone" role="status">
-              Check your inbox for a reset link. If you don&apos;t see it, try
-              your spam folder.
+              Check your email for the password reset link. If you don&apos;t
+              see it, try your spam folder.
             </p>
           ) : (
             <form onSubmit={handleForgotSubmit} className="flex flex-col gap-4">
@@ -262,8 +306,15 @@ function LoginForm() {
                   placeholder="you@example.com"
                 />
               </div>
-              <Button type="submit" disabled={resetLoading}>
-                {resetLoading ? "Sending…" : "Send reset link"}
+              <Button
+                type="submit"
+                disabled={resetLoading || resetCooldown > 0}
+              >
+                {resetLoading
+                  ? "Sending…"
+                  : resetCooldown > 0
+                    ? `Resend in ${formatResetCooldownLabel(resetCooldown)}`
+                    : "Send reset link"}
               </Button>
             </form>
           )}

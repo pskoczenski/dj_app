@@ -126,10 +126,10 @@ describe("LoginPage", () => {
 
     expect(mockResetPasswordForEmail).toHaveBeenCalledWith(
       "recover@example.com",
-      { redirectTo: "http://localhost/login" },
+      { redirectTo: "http://localhost/auth/reset-password" },
     );
     expect(
-      await within(dialog).findByText(/check your inbox/i),
+      await within(dialog).findByText(/check your email for the password reset link/i),
     ).toBeInTheDocument();
   });
 });
