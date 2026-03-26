@@ -99,8 +99,17 @@ export function useMessages(conversationId: string) {
       setMessages((prev) => [optimistic, ...prev]);
       try {
         const sent = await messagesService.send(conversationId, trimmed, user.id);
-        setMessages((prev) => [sent, ...prev.filter((m) => m.id !== optimistic.id)]);
-        await markAsReadIfNew([sent]);
+        const sentWithSender: MessageWithSender = {
+          ...sent,
+          // `messagesService.send` may skip embedded sender profile data to avoid
+          // insert+RETURNING embed failures. Preserve the optimistic sender instead.
+          sender: sent.sender ?? optimistic.sender,
+        };
+        setMessages((prev) => [
+          sentWithSender,
+          ...prev.filter((m) => m.id !== optimistic.id),
+        ]);
+        await markAsReadIfNew([sentWithSender]);
       } catch (err) {
         setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
         throw err;

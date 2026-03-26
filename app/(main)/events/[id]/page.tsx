@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEvent } from "@/hooks/use-event";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { eventLineupService } from "@/lib/services/event-lineup";
+import { conversationsService } from "@/lib/services/conversations";
 import { CancelledBanner } from "@/components/events/cancelled-banner";
 import { ShareButton } from "@/components/events/share-button";
 import { LineupCard } from "@/components/events/lineup-card";
@@ -88,6 +89,21 @@ export default function EventDetailPage({
     }
   }
 
+  const canOpenGroupChat = isCreator || Boolean(userLineupEntry);
+
+  async function handleOpenGroupChat() {
+    if (!event) return;
+    try {
+      const conversationId = await conversationsService.createEventGroupThread(
+        event.id,
+        user?.id,
+      );
+      router.push(`/messages/${conversationId}`);
+    } catch {
+      toast.error("Could not open group chat.");
+    }
+  }
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       {event.status === "cancelled" && <CancelledBanner />}
@@ -109,6 +125,11 @@ export default function EventDetailPage({
         </h1>
         <div className="flex gap-2">
           <ShareButton title={event.title} />
+          {canOpenGroupChat && (
+            <Button variant="outline" size="sm" onClick={() => void handleOpenGroupChat()}>
+              Group Chat
+            </Button>
+          )}
           {isCreator && (
             <Link
               href={`/events/${event.id}/edit`}

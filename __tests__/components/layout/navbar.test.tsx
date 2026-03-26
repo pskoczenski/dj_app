@@ -17,6 +17,11 @@ jest.mock("@/lib/supabase/client", () => ({
   }),
 }));
 
+const mockUnreadCount = jest.fn();
+jest.mock("@/hooks/use-unread-count", () => ({
+  useUnreadCount: () => ({ count: mockUnreadCount() }),
+}));
+
 const mockUser: CurrentUser = {
   id: "user-1",
   displayName: "DJ Shadow",
@@ -26,7 +31,10 @@ const mockUser: CurrentUser = {
 };
 
 describe("Navbar", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUnreadCount.mockReturnValue(0);
+  });
 
   it("renders nav links", () => {
     render(<Navbar user={mockUser} />);
@@ -43,6 +51,10 @@ describe("Navbar", () => {
       "href",
       "/mixes",
     );
+    expect(screen.getByRole("link", { name: /messages/i })).toHaveAttribute(
+      "href",
+      "/messages",
+    );
   });
 
   it("renders search link", () => {
@@ -51,6 +63,12 @@ describe("Navbar", () => {
       "href",
       "/search",
     );
+  });
+
+  it("shows unread badge when unread count > 0", () => {
+    mockUnreadCount.mockReturnValue(12);
+    render(<Navbar user={mockUser} />);
+    expect(screen.getByText("9+")).toBeInTheDocument();
   });
 
   it("renders the logo linking to /home", () => {

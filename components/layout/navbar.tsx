@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search } from "lucide-react";
+import { MessageCircle, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUnreadCount } from "@/hooks/use-unread-count";
 import { AvatarDropdown } from "./avatar-dropdown";
 import type { CurrentUser } from "@/hooks/use-current-user";
 
@@ -19,6 +20,7 @@ interface NavbarProps {
 
 export function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
+  const { count: unread } = useUnreadCount();
 
   return (
     <header className="hidden border-b border-root-line bg-dark-moss md:block">
@@ -48,6 +50,18 @@ export function Navbar({ user }: NavbarProps) {
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-1">
+          <Link
+            href="/messages"
+            aria-label="Messages"
+            className="relative rounded-md p-2 text-stone transition-colors hover:text-bone"
+          >
+            <MessageCircle className="size-5" />
+            {unread > 0 ? (
+              <span className="absolute -right-0.5 -top-0.5 rounded-full bg-fern px-1 text-[10px] leading-4 text-bone">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            ) : null}
+          </Link>
           <Link
             href="/search"
             aria-label="Search"

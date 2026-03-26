@@ -62,15 +62,19 @@ export async function send(
       sender_id: senderId,
       body: trimmed,
     })
-    .select(
-      "*, sender:profiles!messages_sender_id_fkey(id,display_name,slug,profile_image_url)",
-    )
+    // Avoid requesting embedded sender profile data as part of the insert+RETURNING request.
+    // Embedded selects can fail (RLS/policy edge-cases) and surface as 500s, even though the
+    // underlying message insert may be fine.
+    .select("id,conversation_id,sender_id,body,created_at,deleted_at")
     .single();
   if (error) throw error;
 
   await conversationsService.markAsRead(conversationId, senderId);
 
-  return data as MessageWithSender;
+  return {
+    ...(data as MessageWithSender),
+    sender: null,
+  };
 }
 
 export async function deleteMessage(messageId: string): Promise<void> {

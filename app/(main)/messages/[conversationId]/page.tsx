@@ -1,0 +1,165 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { ComposeBar } from "@/components/messages/ComposeBar";
+import { MessageBubble } from "@/components/messages/MessageBubble";
+import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useConversations } from "@/hooks/use-conversations";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { useMessages } from "@/hooks/use-messages";
+import { conversationsService } from "@/lib/services/conversations";
+
+export default function ConversationPage({
+}: {
+  params?: Promise<{ conversationId: string }>;
+}) {
+  const { conversationId } = useParams<{ conversationId: string }>();
+  const { user } = useCurrentUser();
+  const { conversations } = useConversations();
+  const {
+    messages,
+    loading,
+    hasMore,
+    loadMore,
+    sendMessage,
+    sending,
+  } = useMessages(conversationId);
+  const [participantNames, setParticipantNames] = useState<string[]>([]);
+
+  const listRef = useRef<HTMLDivElement>(null);
+  const previousCount = useRef(0);
+
+  const conversation = useMemo(
+    () => conversations.find((c) => c.id === conversationId) ?? null,
+    [conversations, conversationId],
+  );
+
+  useEffect(() => {
+    if (!conversation || conversation.type !== "event_group") return;
+    conversationsService
+      .getParticipants(conversation.id)
+      .then((ps) => setParticipantNames(ps.map((p) => p.display_name)))
+      .catch(() => setParticipantNames([]));
+  }, [conversation]);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+    const onInitial = previousCount.current === 0;
+    if (onInitial || nearBottom || messages.length > previousCount.current) {
+      el.scrollTop = el.scrollHeight;
+    }
+    previousCount.current = messages.length;
+  }, [messages]);
+
+  if (loading && messages.length === 0) {
+    return (
+      <div className="flex justify-center py-20">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!conversation) {
+    return (
+      <EmptyState
+        title="Conversation not found"
+        description="You may not have access to this conversation."
+      />
+    );
+  }
+
+  const isDm = conversation.type === "dm";
+  const headerTitle = isDm
+    ? conversation.otherParticipant?.display_name ?? "Direct Message"
+    : conversation.event?.title ?? "Event Group Chat";
+  const headerHref = isDm
+    ? conversation.otherParticipant?.slug
+      ? `/dj/${conversation.otherParticipant.slug}`
+      : undefined
+    : conversation.event?.id
+      ? `/events/${conversation.event.id}`
+      : undefined;
+  const initials = headerTitle
+    .split(" ")
+    .map((w) => w[0] ?? "")
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <Link href="/messages" className="text-stone hover:text-bone" aria-label="Back to messages">
+          <ArrowLeft className="size-5" />
+        </Link>
+        <Avatar className="size-10">
+          {(isDm
+            ? conversation.otherParticipant?.profile_image_url
+            : conversation.event?.flyer_image_url) && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={
+                isDm
+                  ? conversation.otherParticipant?.profile_image_url ?? ""
+                  : conversation.event?.flyer_image_url ?? ""
+              }
+              alt={headerTitle}
+              className="size-full object-cover"
+            />
+          )}
+          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          {headerHref ? (
+            <Link href={headerHref} className="truncate text-sm font-semibold text-bone hover:underline">
+              {headerTitle}
+            </Link>
+          ) : (
+            <p className="truncate text-sm font-semibold text-bone">{headerTitle}</p>
+          )}
+          {!isDm && participantNames.length > 0 ? (
+            <p className="truncate text-xs text-fog">{participantNames.join(", ")}</p>
+          ) : null}
+        </div>
+      </div>
+
+      <div
+        ref={listRef}
+        className="min-h-[18rem] max-h-[calc(100vh-16rem)] overflow-y-auto rounded-default border border-root-line p-3"
+      >
+        {hasMore ? (
+          <div className="mb-3 flex justify-center">
+            <Button variant="outline" size="sm" onClick={() => void loadMore()}>
+              Load more
+            </Button>
+          </div>
+        ) : null}
+
+        <div className="flex flex-col gap-2">
+          {[...messages].reverse().map((message) => (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              isOwn={message.sender_id === user?.id}
+            />
+          ))}
+        </div>
+      </div>
+
+      <ComposeBar
+        sending={sending}
+        onSend={async (body) => {
+          await sendMessage(body);
+        }}
+      />
+    </div>
+  );
+}

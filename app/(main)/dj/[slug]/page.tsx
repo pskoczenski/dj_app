@@ -12,6 +12,7 @@ import { SocialLinks } from "@/components/profile/social-links";
 import { FollowButton } from "@/components/profile/follow-button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { MixCard } from "@/components/mixes/mix-card";
+import { QuickMessageDialog } from "@/components/messages/QuickMessageDialog";
 import { buttonVariants } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -204,12 +205,29 @@ export default function DjProfilePage({
               Edit Profile
             </Link>
           ) : currentUser ? (
-            <FollowButton
-              isFollowing={following}
-              onFollow={handleFollow}
-              onUnfollow={handleUnfollow}
-              loading={followLoading}
-            />
+            <div className="flex items-center gap-2">
+              <FollowButton
+                isFollowing={following}
+                onFollow={handleFollow}
+                onUnfollow={handleUnfollow}
+                loading={followLoading}
+              />
+              <QuickMessageDialog
+                recipientId={profile.id}
+                recipientName={profile.display_name}
+                recipientImageUrl={profile.profile_image_url}
+                trigger={
+                  <span
+                    className={buttonVariants({
+                      variant: "outline",
+                      size: "sm",
+                    })}
+                  >
+                    Message
+                  </span>
+                }
+              />
+            </div>
           ) : null}
         </div>
       </section>
