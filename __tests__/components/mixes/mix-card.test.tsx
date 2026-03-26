@@ -3,6 +3,20 @@ import userEvent from "@testing-library/user-event";
 import { MixCard } from "@/components/mixes/mix-card";
 import type { MixWithCreator } from "@/types";
 
+const mockPush = jest.fn();
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
+  usePathname: () => "/mixes",
+}));
+
+const mockToggleLike = jest.fn();
+jest.mock("@/lib/services/mix-likes", () => ({
+  mixLikesService: {
+    toggleLike: (...a: unknown[]) => mockToggleLike(...a),
+    getLikedMixIdsForUser: jest.fn(),
+  },
+}));
+
 const MOCK_MIX: MixWithCreator = {
   id: "mix-1",
   title: "Summer Vibes",
@@ -14,6 +28,7 @@ const MOCK_MIX: MixWithCreator = {
   cover_image_url: null,
   duration: "1:32:00",
   sort_order: 0,
+  likes_count: 7,
   created_at: "2025-01-01T00:00:00.000Z",
   updated_at: "2025-01-01T00:00:00.000Z",
   deleted_at: null,
@@ -21,12 +36,60 @@ const MOCK_MIX: MixWithCreator = {
 };
 
 describe("MixCard", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockToggleLike.mockResolvedValue({ liked: true, likesCount: 8 });
+  });
+
   it("renders the mix title and platform badge", () => {
     render(
       <MixCard mix={MOCK_MIX} expanded={false} onToggle={jest.fn()} />,
     );
     expect(screen.getByText("Summer Vibes")).toBeInTheDocument();
     expect(screen.getByText("SoundCloud")).toBeInTheDocument();
+  });
+
+  it("shows likes count and like control", () => {
+    render(
+      <MixCard mix={MOCK_MIX} expanded={false} onToggle={jest.fn()} />,
+    );
+    const likeBtn = screen.getByLabelText(/like this mix/i);
+    expect(likeBtn).toBeInTheDocument();
+    expect(likeBtn).toHaveTextContent("7");
+  });
+
+  it("redirects to login when unauthenticated user taps like", async () => {
+    const user = userEvent.setup();
+    render(
+      <MixCard mix={MOCK_MIX} expanded={false} onToggle={jest.fn()} />,
+    );
+
+    await user.click(screen.getByLabelText(/like this mix/i));
+
+    expect(mockPush).toHaveBeenCalledWith("/login?redirect=%2Fmixes");
+    expect(mockToggleLike).not.toHaveBeenCalled();
+  });
+
+  it("toggles like when authenticated", async () => {
+    const user = userEvent.setup();
+    const onLikeChange = jest.fn();
+    render(
+      <MixCard
+        mix={MOCK_MIX}
+        expanded={false}
+        onToggle={jest.fn()}
+        currentUserId="user-2"
+        onLikeChange={onLikeChange}
+      />,
+    );
+
+    await user.click(screen.getByLabelText(/like this mix/i));
+
+    expect(mockToggleLike).toHaveBeenCalledWith("mix-1", "user-2");
+    expect(onLikeChange).toHaveBeenCalledWith({
+      liked: true,
+      likesCount: 8,
+    });
   });
 
   it("renders creator name, profile link, and added date", () => {

@@ -1,9 +1,18 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { mixesService, type MixFilters } from "@/lib/services/mixes";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useLikedMixIds } from "@/hooks/use-liked-mix-ids";
 import { MixCard } from "@/components/mixes/mix-card";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -25,6 +34,7 @@ export default function MixesPage() {
 function MixesBrowser() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user: currentUser } = useCurrentUser();
 
   const [mixes, setMixes] = useState<MixWithCreator[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +53,25 @@ function MixesBrowser() {
   const debouncedSearch = useDebounce(search, 300);
   const pageRef = useRef(0);
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const mixIds = useMemo(() => mixes.map((m) => m.id), [mixes]);
+  const serverLikedIds = useLikedMixIds(mixIds, currentUser?.id);
+  const mixesListKey = mixIds.join(",");
+  const [optimisticLiked, setOptimisticLiked] = useState<
+    Record<string, boolean>
+  >({});
+
+  useEffect(() => {
+    setOptimisticLiked({});
+  }, [mixesListKey]);
+
+  const likedByMe = useCallback(
+    (mixId: string) =>
+      Object.hasOwn(optimisticLiked, mixId)
+        ? optimisticLiked[mixId]
+        : serverLikedIds.has(mixId),
+    [optimisticLiked, serverLikedIds],
+  );
 
   function buildFilters(): MixFilters {
     const filters: MixFilters = { sort };
@@ -211,6 +240,19 @@ function MixesBrowser() {
               mix={mix}
               expanded={expandedId === mix.id}
               onToggle={() => toggleExpand(mix.id)}
+              likedByMe={likedByMe(mix.id)}
+              currentUserId={currentUser?.id ?? null}
+              onLikeChange={(next) => {
+                setMixes((prev) =>
+                  prev.map((m) =>
+                    m.id === mix.id ? { ...m, likes_count: next.likesCount } : m,
+                  ),
+                );
+                setOptimisticLiked((prev) => ({
+                  ...prev,
+                  [mix.id]: next.liked,
+                }));
+              }}
             />
           ))}
         </div>

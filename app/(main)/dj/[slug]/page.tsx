@@ -1,9 +1,10 @@
 "use client";
 
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useProfile } from "@/hooks/use-profile";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useLikedMixIds } from "@/hooks/use-liked-mix-ids";
 import { followsService } from "@/lib/services/follows";
 import { mixesService } from "@/lib/services/mixes";
 import { ProfileHeader } from "@/components/profile/profile-header";
@@ -42,6 +43,25 @@ export default function DjProfilePage({
   const [mixesLoading, setMixesLoading] = useState(false);
   const [expandedMixId, setExpandedMixId] = useState<string | null>(null);
   const [mixToDelete, setMixToDelete] = useState<MixWithCreator | null>(null);
+
+  const mixIds = useMemo(() => mixes.map((m) => m.id), [mixes]);
+  const serverLikedIds = useLikedMixIds(mixIds, currentUser?.id);
+  const mixesListKey = mixIds.join(",");
+  const [optimisticLiked, setOptimisticLiked] = useState<
+    Record<string, boolean>
+  >({});
+
+  useEffect(() => {
+    setOptimisticLiked({});
+  }, [mixesListKey]);
+
+  const likedByMe = useCallback(
+    (mixId: string) =>
+      Object.hasOwn(optimisticLiked, mixId)
+        ? optimisticLiked[mixId]
+        : serverLikedIds.has(mixId),
+    [optimisticLiked, serverLikedIds],
+  );
 
   const isOwnProfile =
     profile != null && currentUser?.id === profile.id;
@@ -253,6 +273,21 @@ export default function DjProfilePage({
                     id === mix.id ? null : mix.id,
                   )
                 }
+                likedByMe={likedByMe(mix.id)}
+                currentUserId={currentUser?.id ?? null}
+                onLikeChange={(next) => {
+                  setMixes((prev) =>
+                    prev.map((m) =>
+                      m.id === mix.id
+                        ? { ...m, likes_count: next.likesCount }
+                        : m,
+                    ),
+                  );
+                  setOptimisticLiked((prev) => ({
+                    ...prev,
+                    [mix.id]: next.liked,
+                  }));
+                }}
                 manageMode={isOwnProfile}
                 disableMoveUp={index === 0}
                 disableMoveDown={index === mixes.length - 1}

@@ -7,6 +7,7 @@ export const TABLES = {
   events: "events",
   eventLineup: "event_lineup",
   mixes: "mixes",
+  mixLikes: "mix_likes",
   follows: "follows",
   genreTags: "genre_tags",
 } as const;

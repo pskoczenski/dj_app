@@ -223,6 +223,49 @@ export type Database = {
           },
         ]
       }
+      mix_likes: {
+        Row: {
+          created_at: string
+          id: string
+          mix_id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mix_id: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mix_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mix_likes_mix_id_fkey"
+            columns: ["mix_id"]
+            isOneToOne: false
+            referencedRelation: "mixes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mix_likes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profile_follow_counts"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "mix_likes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genre_tags: {
         Row: {
           created_at: string | null
@@ -254,6 +297,7 @@ export type Database = {
           embed_url: string
           genres: string[] | null
           id: string
+          likes_count: number
           platform: Database["public"]["Enums"]["mix_platform"]
           profile_id: string
           sort_order: number | null
@@ -269,6 +313,7 @@ export type Database = {
           embed_url: string
           genres?: string[] | null
           id?: string
+          likes_count?: number
           platform: Database["public"]["Enums"]["mix_platform"]
           profile_id: string
           sort_order?: number | null
@@ -284,6 +329,7 @@ export type Database = {
           embed_url?: string
           genres?: string[] | null
           id?: string
+          likes_count?: number
           platform?: Database["public"]["Enums"]["mix_platform"]
           profile_id?: string
           sort_order?: number | null

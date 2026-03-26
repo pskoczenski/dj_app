@@ -7,6 +7,7 @@ describe("Schema constants", () => {
       events: "events",
       eventLineup: "event_lineup",
       mixes: "mixes",
+      mixLikes: "mix_likes",
       follows: "follows",
       genreTags: "genre_tags",
     });

@@ -1,16 +1,17 @@
-import { readFileSync } from "fs";
+import { readFileSync, readdirSync } from "fs";
 import { join } from "path";
 import { TABLES, VIEWS } from "@/lib/db/schema-constants";
 
-const migrationPath = join(
-  process.cwd(),
-  "supabase/migrations/00001_initial_schema.sql"
-);
+const migrationsDir = join(process.cwd(), "supabase/migrations");
 
 let sql: string;
 
 beforeAll(() => {
-  sql = readFileSync(migrationPath, "utf-8");
+  sql = readdirSync(migrationsDir)
+    .filter((f) => f.endsWith(".sql"))
+    .sort()
+    .map((f) => readFileSync(join(migrationsDir, f), "utf-8"))
+    .join("\n");
 });
 
 describe("Migration file guardrails", () => {
