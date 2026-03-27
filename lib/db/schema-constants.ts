@@ -9,6 +9,8 @@ export const TABLES = {
   conversations: "conversations",
   conversationParticipants: "conversation_participants",
   messages: "messages",
+  comments: "comments",
+  commentLikes: "comment_likes",
   mixes: "mixes",
   mixLikes: "mix_likes",
   follows: "follows",
@@ -17,12 +19,14 @@ export const TABLES = {
 
 export const VIEWS = {
   profileFollowCounts: "profile_follow_counts",
+  commentCounts: "comment_counts",
 } as const;
 
 export const ENUMS = {
   profileType: "profile_type",
   eventStatus: "event_status",
   conversationType: "conversation_type",
+  commentableType: "commentable_type",
   mixPlatform: "mix_platform",
 } as const;
 

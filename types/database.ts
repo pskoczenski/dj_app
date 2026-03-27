@@ -268,6 +268,97 @@ export type Database = {
           },
         ]
       }
+      comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string | null
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string | null
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string | null
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comment_likes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profile_follow_counts"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "comment_likes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          body: string
+          commentable_id: string
+          commentable_type: Database["public"]["Enums"]["commentable_type"]
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          profile_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          body: string
+          commentable_id: string
+          commentable_type: Database["public"]["Enums"]["commentable_type"]
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          profile_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          body?: string
+          commentable_id?: string
+          commentable_type?: Database["public"]["Enums"]["commentable_type"]
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          profile_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profile_follow_counts"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "comments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string | null
@@ -550,6 +641,14 @@ export type Database = {
       }
     }
     Views: {
+      comment_counts: {
+        Row: {
+          commentable_id: string | null
+          commentable_type: Database["public"]["Enums"]["commentable_type"] | null
+          count: number | null
+        }
+        Relationships: []
+      }
       profile_follow_counts: {
         Row: {
           followers_count: number | null
@@ -564,6 +663,7 @@ export type Database = {
       upsert_genre_tags: { Args: { input_genres: string[] }; Returns: string[] }
     }
     Enums: {
+      commentable_type: "event" | "mix"
       conversation_type: "dm" | "event_group"
       event_status: "draft" | "published" | "cancelled"
       mix_platform:
@@ -701,6 +801,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      commentable_type: ["event", "mix"],
       conversation_type: ["dm", "event_group"],
       event_status: ["draft", "published", "cancelled"],
       mix_platform: [

@@ -48,4 +48,20 @@ describe("Migration file guardrails", () => {
   it("creates the update_updated_at trigger function", () => {
     expect(sql).toContain("CREATE OR REPLACE FUNCTION update_updated_at()");
   });
+
+  it("creates comments schema essentials", () => {
+    expect(sql).toContain("CREATE TYPE commentable_type AS ENUM ('event', 'mix')");
+    expect(sql).toContain("CREATE TABLE comments");
+    expect(sql).toContain("CREATE TABLE comment_likes");
+    expect(sql).toContain("UNIQUE(comment_id, profile_id)");
+    expect(sql).toContain("CREATE INDEX idx_comments_commentable");
+    expect(sql).toContain("CREATE TRIGGER comments_updated_at");
+  });
+
+  it("adds comments and comment_likes RLS policies", () => {
+    expect(sql).toContain("Authenticated users can view active comments");
+    expect(sql).toContain("Authors can update own comments");
+    expect(sql).toContain("Users can like comments as themselves");
+    expect(sql).toContain("Users can remove own comment likes");
+  });
 });

@@ -11,6 +11,8 @@ export type EventLineup = Tables["event_lineup"]["Row"];
 export type Conversation = Tables["conversations"]["Row"];
 export type ConversationParticipant = Tables["conversation_participants"]["Row"];
 export type Message = Tables["messages"]["Row"];
+export type Comment = Tables["comments"]["Row"];
+export type CommentLike = Tables["comment_likes"]["Row"];
 
 /** Embedded lineup row on event list/card queries (minimal profile fields). */
 export type EventLineupCardPreview = Pick<EventLineup, "sort_order"> & {
@@ -40,6 +42,7 @@ export type MixWithCreator = Mix & {
 export type Follow = Tables["follows"]["Row"];
 export type GenreTag = Tables["genre_tags"]["Row"];
 export type ProfileFollowCounts = Views["profile_follow_counts"]["Row"];
+export type CommentCounts = Views["comment_counts"]["Row"];
 
 export interface MessageWithSender extends Message {
   sender: Pick<Profile, "id" | "display_name" | "slug" | "profile_image_url"> | null;
@@ -59,6 +62,22 @@ export interface ConversationInboxItem {
   event: Pick<Event, "id" | "title" | "flyer_image_url"> | null;
 }
 
+export interface CommentWithAuthor {
+  id: string;
+  body: string;
+  created_at: string | null;
+  updated_at: string | null;
+  profile_id: string;
+  author: Pick<Profile, "display_name" | "slug" | "profile_image_url"> | null;
+  likeCount: number;
+  likedByMe: boolean;
+}
+
+export interface CommentLikeState {
+  liked: boolean;
+  likeCount: number;
+}
+
 // Insert types
 export type ProfileInsert = Tables["profiles"]["Insert"];
 export type EventInsert = Tables["events"]["Insert"];
@@ -76,4 +95,5 @@ export type MessageUpdate = Tables["messages"]["Update"];
 export type ProfileType = Enums["profile_type"];
 export type EventStatus = Enums["event_status"];
 export type ConversationType = Enums["conversation_type"];
+export type CommentableType = Enums["commentable_type"];
 export type MixPlatform = Enums["mix_platform"];

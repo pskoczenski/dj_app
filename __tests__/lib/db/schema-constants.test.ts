@@ -9,6 +9,8 @@ describe("Schema constants", () => {
       conversations: "conversations",
       conversationParticipants: "conversation_participants",
       messages: "messages",
+      comments: "comments",
+      commentLikes: "comment_likes",
       mixes: "mixes",
       mixLikes: "mix_likes",
       follows: "follows",
@@ -18,6 +20,7 @@ describe("Schema constants", () => {
 
   it("exports the follow counts view", () => {
     expect(VIEWS.profileFollowCounts).toBe("profile_follow_counts");
+    expect(VIEWS.commentCounts).toBe("comment_counts");
   });
 
   it("exports all enum type names", () => {
@@ -25,6 +28,7 @@ describe("Schema constants", () => {
       profileType: "profile_type",
       eventStatus: "event_status",
       conversationType: "conversation_type",
+      commentableType: "commentable_type",
       mixPlatform: "mix_platform",
     });
   });
