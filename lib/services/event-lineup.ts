@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
+import { conversationsService } from "@/lib/services/conversations";
 import type {
   EventLineup,
   EventLineupInsert,
@@ -48,16 +49,26 @@ export async function add(data: EventLineupInsert): Promise<EventLineup> {
     throw error;
   }
 
+  await conversationsService.syncEventGroupParticipants(created.event_id);
+
   return created;
 }
 
 export async function remove(id: string): Promise<void> {
-  const { error } = await supabase()
+  const client = supabase();
+  const { data: row, error: fetchErr } = await client
     .from(TABLES.eventLineup)
-    .delete()
-    .eq("id", id);
+    .select("event_id")
+    .eq("id", id)
+    .maybeSingle();
+  if (fetchErr) throw fetchErr;
 
+  const { error } = await client.from(TABLES.eventLineup).delete().eq("id", id);
   if (error) throw error;
+
+  if (row?.event_id) {
+    await conversationsService.syncEventGroupParticipants(row.event_id);
+  }
 }
 
 export async function reorder(

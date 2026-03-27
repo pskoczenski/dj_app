@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ComposeBar } from "@/components/messages/ComposeBar";
 import { MessageBubble } from "@/components/messages/MessageBubble";
+import { CancelledBanner } from "@/components/events/cancelled-banner";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -77,6 +78,13 @@ export default function ConversationPage({
   }
 
   const isDm = conversation.type === "dm";
+  const linkedEvent = !isDm ? conversation.event : null;
+  const showRemovedBanner = Boolean(linkedEvent?.deleted_at);
+  const showCancelledBanner =
+    Boolean(linkedEvent) &&
+    linkedEvent?.status === "cancelled" &&
+    !linkedEvent?.deleted_at;
+
   const headerTitle = isDm
     ? conversation.otherParticipant?.display_name ?? "Direct Message"
     : conversation.event?.title ?? "Event Group Chat";
@@ -130,6 +138,16 @@ export default function ConversationPage({
           ) : null}
         </div>
       </div>
+
+      {showRemovedBanner ? (
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-default border border-dried-blood/40 bg-dried-blood/10 px-4 py-3 text-sm font-medium text-dried-blood"
+        >
+          This event has been removed.
+        </div>
+      ) : null}
+      {showCancelledBanner ? <CancelledBanner /> : null}
 
       <div
         ref={listRef}

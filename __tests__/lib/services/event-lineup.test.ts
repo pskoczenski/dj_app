@@ -33,7 +33,14 @@ jest.mock("@/lib/supabase/client", () => ({
   createClient: () => mock.client,
 }));
 
+jest.mock("@/lib/services/conversations", () => ({
+  conversationsService: {
+    syncEventGroupParticipants: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
 import { eventLineupService } from "@/lib/services/event-lineup";
+import { conversationsService } from "@/lib/services/conversations";
 
 const MOCK_LINEUP_ITEM = {
   id: "lu-1",
@@ -85,6 +92,9 @@ describe("eventLineupService", () => {
         added_by: "user-2",
       });
       expect(result).toEqual(MOCK_LINEUP_ITEM);
+      expect(conversationsService.syncEventGroupParticipants).toHaveBeenCalledWith(
+        "evt-1",
+      );
     });
 
     it("throws a friendly error on unique violation", async () => {
@@ -110,16 +120,30 @@ describe("eventLineupService", () => {
   });
 
   describe("remove", () => {
-    it("deletes by id", async () => {
+    it("deletes by id and syncs group participants", async () => {
+      const selectChain = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({
+          data: { event_id: "evt-1" },
+          error: null,
+        }),
+      };
+      const deleteChain = {
+        delete: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ error: null }),
+      };
+      let n = 0;
       mock = chainMock();
-      const origFrom = mock.client.from;
-      mock.client.from = jest.fn((...args) => {
-        const b = origFrom(...args);
-        b.eq.mockResolvedValueOnce({ error: null });
-        return b;
-      }) as typeof origFrom;
+      mock.client.from = jest.fn(() => {
+        n += 1;
+        return n === 1 ? selectChain : deleteChain;
+      });
 
       await expect(eventLineupService.remove("lu-1")).resolves.toBeUndefined();
+      expect(conversationsService.syncEventGroupParticipants).toHaveBeenCalledWith(
+        "evt-1",
+      );
     });
   });
 

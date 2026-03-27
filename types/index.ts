@@ -59,7 +59,10 @@ export interface ConversationInboxItem {
     Profile,
     "id" | "display_name" | "slug" | "profile_image_url"
   > | null;
-  event: Pick<Event, "id" | "title" | "flyer_image_url"> | null;
+  event: Pick<
+    Event,
+    "id" | "title" | "flyer_image_url" | "status" | "deleted_at"
+  > | null;
 }
 
 export interface CommentWithAuthor {

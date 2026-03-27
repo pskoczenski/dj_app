@@ -1,6 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { EventForm } from "@/components/events/event-form";
+
+jest.mock("@/lib/services/conversations", () => ({
+  conversationsService: {
+    ensureEventGroupThread: jest.fn().mockResolvedValue("conv-1"),
+    syncEventGroupParticipants: jest.fn().mockResolvedValue(undefined),
+  },
+}));
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
@@ -34,7 +41,29 @@ jest.mock("@/lib/services/profiles", () => ({
 
 jest.mock("sonner", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 
+import { conversationsService } from "@/lib/services/conversations";
+
 describe("EventForm", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("ensures event group thread after publishing a new event", async () => {
+    const user = userEvent.setup();
+    render(<EventForm mode="create" currentUserId="user-1" />);
+
+    await user.type(screen.getByLabelText(/title/i), "Launch Party");
+    await user.type(screen.getByLabelText(/start date/i), "2025-08-01");
+    await user.click(screen.getByRole("button", { name: /publish/i }));
+
+    await waitFor(() => {
+      expect(conversationsService.ensureEventGroupThread).toHaveBeenCalledWith(
+        "new-evt",
+      );
+    });
+    expect(conversationsService.syncEventGroupParticipants).not.toHaveBeenCalled();
+  });
+
   it("renders title and start date fields", () => {
     render(<EventForm mode="create" currentUserId="user-1" />);
     expect(screen.getByLabelText(/title/i)).toBeInTheDocument();

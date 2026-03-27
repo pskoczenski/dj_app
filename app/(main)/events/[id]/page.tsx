@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEvent } from "@/hooks/use-event";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useConversations } from "@/hooks/use-conversations";
 import { eventLineupService } from "@/lib/services/event-lineup";
 import { conversationsService } from "@/lib/services/conversations";
 import { CancelledBanner } from "@/components/events/cancelled-banner";
@@ -47,6 +48,7 @@ export default function EventDetailPage({
   const router = useRouter();
   const { event, lineup, loading, error, refetch } = useEvent(id);
   const { user } = useCurrentUser();
+  const { conversations, refetch: refetchConversations } = useConversations();
 
   if (loading) {
     return (
@@ -70,6 +72,14 @@ export default function EventDetailPage({
     ? lineup.find((l) => l.profile_id === user.id)
     : undefined;
 
+  const eventGroupThread = conversations.find(
+    (c) => c.type === "event_group" && c.event_id === event.id,
+  );
+  const groupUnread = eventGroupThread?.unreadCount ?? 0;
+
+  const groupChatEligible =
+    event.status === "published" || event.status === "cancelled";
+
   const location = [event.venue, event.city, event.state, event.country]
     .filter(Boolean)
     .join(", ");
@@ -85,12 +95,14 @@ export default function EventDetailPage({
       await eventLineupService.remove(userLineupEntry.id);
       toast.success("You've been removed from the lineup.");
       refetch();
+      void refetchConversations();
     } catch {
       toast.error("Failed to remove yourself from the lineup.");
     }
   }
 
-  const canOpenGroupChat = isCreator || Boolean(userLineupEntry);
+  const canOpenGroupChat =
+    groupChatEligible && (isCreator || Boolean(userLineupEntry));
 
   async function handleOpenGroupChat() {
     if (!event) return;
@@ -127,8 +139,26 @@ export default function EventDetailPage({
         <div className="flex gap-2">
           <ShareButton title={event.title} />
           {canOpenGroupChat && (
-            <Button variant="outline" size="sm" onClick={() => void handleOpenGroupChat()}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => void handleOpenGroupChat()}
+              aria-label={
+                groupUnread > 0
+                  ? `Group chat, ${groupUnread} unread`
+                  : "Group chat"
+              }
+            >
               Group Chat
+              {groupUnread > 0 ? (
+                <Badge
+                  variant="secondary"
+                  className="min-w-6 px-1.5 text-xs tabular-nums"
+                >
+                  {groupUnread}
+                </Badge>
+              ) : null}
             </Button>
           )}
           {isCreator && (

@@ -3,6 +3,7 @@ import { TABLES } from "@/lib/db/schema-constants";
 import type {
   ConversationInboxItem,
   ConversationParticipant,
+  EventStatus,
   Profile,
 } from "@/types";
 
@@ -31,7 +32,7 @@ export async function getInbox(
   const { data: cpRows, error: cpError } = await supabase()
     .from(TABLES.conversationParticipants)
     .select(
-      "conversation_id,last_read_at,conversation:conversations(id,type,event_id,updated_at,created_by,event:events(id,title,flyer_image_url))",
+      "conversation_id,last_read_at,conversation:conversations(id,type,event_id,updated_at,created_by,event:events(id,title,flyer_image_url,status,deleted_at))",
     )
     .eq("profile_id", userId);
   if (cpError) throw cpError;
@@ -109,7 +110,13 @@ export async function getInbox(
       type: "dm" | "event_group";
       event_id: string | null;
       updated_at: string | null;
-      event?: { id: string; title: string; flyer_image_url: string | null } | null;
+      event?: {
+        id: string;
+        title: string;
+        flyer_image_url: string | null;
+        status: EventStatus;
+        deleted_at: string | null;
+      } | null;
     } | null;
     if (!conv) {
       throw new Error(`Conversation ${row.conversation_id} not found.`);
@@ -128,7 +135,15 @@ export async function getInbox(
       lastMessage: lastMessageByConversation.get(conv.id) ?? null,
       unreadCount: unreadCountByConversation.get(conv.id) ?? 0,
       otherParticipant,
-      event: conv.event ?? null,
+      event: conv.event
+        ? {
+            id: conv.event.id,
+            title: conv.event.title,
+            flyer_image_url: conv.event.flyer_image_url,
+            status: conv.event.status,
+            deleted_at: conv.event.deleted_at,
+          }
+        : null,
     };
   });
 
@@ -146,54 +161,145 @@ export async function getOrCreateDM(otherUserId: string): Promise<string> {
   return data;
 }
 
-export async function createEventGroupThread(
-  eventId: string,
-  currentUserId?: string,
-): Promise<string> {
-  const userId = await resolveCurrentUserId(currentUserId);
-  const sb = supabase();
-
-  const { data: existing, error: existingErr } = await sb
+async function findEventGroupConversationId(eventId: string): Promise<string | null> {
+  const { data, error } = await supabase()
     .from(TABLES.conversations)
     .select("id")
     .eq("type", "event_group")
     .eq("event_id", eventId)
     .maybeSingle();
-  if (existingErr) throw existingErr;
-  if (existing?.id) return existing.id;
+  if (error) throw error;
+  return data?.id ?? null;
+}
 
-  const { data: created, error: createErr } = await sb
-    .from(TABLES.conversations)
-    .insert({
-      type: "event_group",
-      event_id: eventId,
-      created_by: userId,
-    })
-    .select("id")
-    .single();
+/**
+ * Keeps event_group participants aligned with `events.created_by` + `event_lineup`.
+ * No-op if the event has no group thread yet. Never removes the event creator.
+ */
+export async function syncEventGroupParticipants(eventId: string): Promise<void> {
+  const sb = supabase();
+  const conversationId = await findEventGroupConversationId(eventId);
+  if (!conversationId) return;
 
-  if (createErr) {
-    if ((createErr as { code?: string }).code === "23505") {
-      const { data: raceRow, error: raceErr } = await sb
-        .from(TABLES.conversations)
-        .select("id")
-        .eq("type", "event_group")
-        .eq("event_id", eventId)
-        .single();
-      if (raceErr) throw raceErr;
-      return raceRow.id;
-    }
-    throw createErr;
+  const { data: eventRow, error: eErr } = await sb
+    .from(TABLES.events)
+    .select("created_by")
+    .eq("id", eventId)
+    .maybeSingle();
+  if (eErr) throw eErr;
+  if (!eventRow) return;
+
+  const { data: lineupRows, error: lErr } = await sb
+    .from(TABLES.eventLineup)
+    .select("profile_id")
+    .eq("event_id", eventId);
+  if (lErr) throw lErr;
+
+  const desired = new Set<string>([eventRow.created_by]);
+  for (const row of lineupRows ?? []) {
+    desired.add((row as { profile_id: string }).profile_id);
   }
 
+  const { data: participantRows, error: pErr } = await sb
+    .from(TABLES.conversationParticipants)
+    .select("profile_id")
+    .eq("conversation_id", conversationId);
+  if (pErr) throw pErr;
+
+  const current = new Set(
+    (participantRows ?? []).map((r: { profile_id: string }) => r.profile_id),
+  );
+
+  const creatorId = eventRow.created_by;
+  const toAdd = [...desired].filter((id) => !current.has(id));
+  const toRemove = [...current].filter((id) => !desired.has(id) && id !== creatorId);
+
+  if (toRemove.length > 0) {
+    const { error: dErr } = await sb
+      .from(TABLES.conversationParticipants)
+      .delete()
+      .eq("conversation_id", conversationId)
+      .in("profile_id", toRemove);
+    if (dErr) throw dErr;
+  }
+
+  if (toAdd.length > 0) {
+    const inserts = toAdd.map((profileId) => ({
+      conversation_id: conversationId,
+      profile_id: profileId,
+    }));
+    const { error: iErr } = await sb
+      .from(TABLES.conversationParticipants)
+      .upsert(inserts, {
+        onConflict: "conversation_id,profile_id",
+        ignoreDuplicates: true,
+      });
+    if (iErr) throw iErr;
+  }
+}
+
+/**
+ * Creates the event_group conversation when the event is published (idempotent),
+ * then syncs participants. Returns null for draft events or cancelled events
+ * that never had a thread. Requires the DB user to be allowed to create the
+ * conversation (`created_by = auth.uid()` on insert).
+ */
+export async function ensureEventGroupThread(eventId: string): Promise<string | null> {
+  const sb = supabase();
+  const { data: eventRow, error: evErr } = await sb
+    .from(TABLES.events)
+    .select("id,status,created_by")
+    .eq("id", eventId)
+    .maybeSingle();
+  if (evErr) throw evErr;
+  if (!eventRow) return null;
+
+  if (eventRow.status !== "published" && eventRow.status !== "cancelled") {
+    return null;
+  }
+
+  const existingId = await findEventGroupConversationId(eventId);
+  if (existingId) {
+    await syncEventGroupParticipants(eventId);
+    return existingId;
+  }
+
+  if (eventRow.status === "cancelled") {
+    return null;
+  }
+
+  const creatorId = eventRow.created_by;
   const { data: lineupRows, error: lineupErr } = await sb
     .from(TABLES.eventLineup)
     .select("profile_id")
     .eq("event_id", eventId);
   if (lineupErr) throw lineupErr;
 
-  const participantIds = new Set<string>([userId]);
-  for (const row of lineupRows ?? []) participantIds.add(row.profile_id);
+  const participantIds = new Set<string>([creatorId]);
+  for (const row of lineupRows ?? []) {
+    participantIds.add((row as { profile_id: string }).profile_id);
+  }
+
+  const { data: created, error: createErr } = await sb
+    .from(TABLES.conversations)
+    .insert({
+      type: "event_group",
+      event_id: eventId,
+      created_by: creatorId,
+    })
+    .select("id")
+    .single();
+
+  if (createErr) {
+    if ((createErr as { code?: string }).code === "23505") {
+      const reuse = await findEventGroupConversationId(eventId);
+      if (reuse) {
+        await syncEventGroupParticipants(eventId);
+        return reuse;
+      }
+    }
+    throw createErr;
+  }
 
   const inserts = [...participantIds].map((profileId) => ({
     conversation_id: created.id,
@@ -208,6 +314,18 @@ export async function createEventGroupThread(
   if (participantsErr) throw participantsErr;
 
   return created.id;
+}
+
+export async function createEventGroupThread(
+  eventId: string,
+  currentUserId?: string,
+): Promise<string> {
+  await resolveCurrentUserId(currentUserId);
+  const id = await ensureEventGroupThread(eventId);
+  if (!id) {
+    throw new Error("Group chat is not available for this event.");
+  }
+  return id;
 }
 
 export async function getParticipants(
@@ -248,6 +366,8 @@ export const conversationsService = {
   getInbox,
   getOrCreateDM,
   createEventGroupThread,
+  ensureEventGroupThread,
+  syncEventGroupParticipants,
   getParticipants,
   markAsRead,
 };

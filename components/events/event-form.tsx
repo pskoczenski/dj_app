@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { eventsService } from "@/lib/services/events";
 import { eventLineupService } from "@/lib/services/event-lineup";
+import { conversationsService } from "@/lib/services/conversations";
 import { storageService } from "@/lib/services/storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,11 +143,15 @@ export function EventForm({
 
         const created = await eventsService.create(payload);
         await saveLineup(created.id);
+        if (status === "published") {
+          await conversationsService.ensureEventGroupThread(created.id);
+        }
         toast.success(
           status === "published" ? "Event published!" : "Draft saved!",
         );
         router.push(`/events/${created.id}`);
       } else if (event) {
+        const prevStatus = event.status;
         const payload: EventUpdate = {
           title: title.trim(),
           description: description || null,
@@ -166,6 +171,13 @@ export function EventForm({
 
         await eventsService.update(event.id, payload);
         await saveLineup(event.id);
+        if (payload.status === "published") {
+          if (prevStatus !== "published") {
+            await conversationsService.ensureEventGroupThread(event.id);
+          } else {
+            await conversationsService.syncEventGroupParticipants(event.id);
+          }
+        }
         toast.success("Event updated!");
         router.push(`/events/${event.id}`);
       }

@@ -40,4 +40,62 @@ describe("conversationsService", () => {
     expect(eq1).toHaveBeenCalledWith("conversation_id", "conv-9");
     expect(eq2).toHaveBeenCalledWith("profile_id", "user-1");
   });
+
+  describe("syncEventGroupParticipants", () => {
+    it("returns early when no event_group conversation exists", async () => {
+      mockAuthGetUser.mockResolvedValue({
+        data: { user: { id: "user-1" } },
+        error: null,
+      });
+      const maybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
+      const eq2 = jest.fn().mockReturnValue({ maybeSingle });
+      const eq1 = jest.fn().mockReturnValue({ eq: eq2 });
+      const select = jest.fn().mockReturnValue({ eq: eq1 });
+      fromMock.mockReturnValueOnce({ select });
+
+      await conversationsService.syncEventGroupParticipants("evt-1");
+
+      expect(fromMock).toHaveBeenCalledWith("conversations");
+      expect(fromMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("ensureEventGroupThread", () => {
+    it("returns null for draft events without querying conversations", async () => {
+      mockAuthGetUser.mockResolvedValue({
+        data: { user: { id: "user-1" } },
+        error: null,
+      });
+      const maybeSingle = jest.fn().mockResolvedValue({
+        data: { id: "evt-1", status: "draft", created_by: "user-1" },
+        error: null,
+      });
+      const eq = jest.fn().mockReturnValue({ maybeSingle });
+      const select = jest.fn().mockReturnValue({ eq });
+      fromMock.mockReturnValueOnce({ select });
+
+      const id = await conversationsService.ensureEventGroupThread("evt-1");
+      expect(id).toBeNull();
+      expect(fromMock).toHaveBeenCalledTimes(1);
+      expect(fromMock).toHaveBeenCalledWith("events");
+    });
+  });
+
+  it("createEventGroupThread throws when chat cannot be created", async () => {
+    mockAuthGetUser.mockResolvedValue({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    const maybeSingle = jest.fn().mockResolvedValue({
+      data: { id: "evt-1", status: "draft", created_by: "user-1" },
+      error: null,
+    });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
+    fromMock.mockReturnValueOnce({ select });
+
+    await expect(
+      conversationsService.createEventGroupThread("evt-1", "user-1"),
+    ).rejects.toThrow(/not available/i);
+  });
 });
