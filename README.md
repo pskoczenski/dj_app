@@ -1,96 +1,200 @@
-# DJ Network
+## DJ Network — MVP
 
-A grassroots networking platform for DJs — discover events, share mixes, and connect with the community.
+DJ Network is a grassroots networking platform for DJs — discover events, share mixes, follow artists, search the network, and message other users.
 
 Built with **Next.js 16** (App Router), **Supabase** (Postgres, Auth, Storage), **Tailwind CSS v4**, and **shadcn/ui**.
 
-## Prerequisites
+---
 
-- Node.js 18+
-- npm 9+
-- [Supabase CLI](https://supabase.com/docs/guides/cli) (for local development or migrations)
-- A Supabase project (cloud or local)
+## Installation & Setup
 
-## Getting started
+- **Node.js**
+  - **Requirement**: Node.js **18+** (project dependencies are compatible with newer versions as well).
+
+- **Package manager**
+  - This repo uses **npm** scripts (`npm install`, `npm run dev`, etc.).
+
+- **Supabase**
+  - You can run against:
+    - **Option A — Cloud project** (recommended for shared dev), or
+    - **Option B — Local Supabase** via the Supabase CLI + Docker.
+
+---
+
+## Environment Configuration
+
+Create a `.env.local` file in the project root (Next.js convention) with at least:
 
 ```bash
-# 1. Install dependencies
-npm install
-
-# 2. Copy the example env file and fill in your Supabase credentials
-cp .env.local.example .env.local
+NEXT_PUBLIC_SUPABASE_URL="https://YOUR_PROJECT.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="public-anon-key"
 ```
 
-Edit `.env.local` with your project's values:
+Never commit real keys to git.
 
-```
-NEXT_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
-```
+---
 
-### Supabase setup
+## Supabase Setup (migrations, auth, storage)
 
-**Option A — Cloud project:**
+**Option A — Cloud project**
 
 ```bash
 supabase login
 supabase link --project-ref <your-project-ref>
-supabase db push        # applies all migrations
+supabase db push
 ```
 
-**Option B — Local with Docker:**
+**Option B — Local Supabase with Docker**
 
 ```bash
-supabase start          # spins up local Postgres, Auth, Storage
-supabase db reset       # applies migrations from scratch
+supabase start
+supabase db reset
 ```
 
 ### Storage buckets
 
-Migrations `00003_storage_buckets_and_policies.sql` and `00004_event_flyer_draft_storage_policies.sql` create three public storage buckets (`profile-images`, `event-flyers`, `mix-covers`) with RLS policies, including flyer uploads **before** an event exists (draft path under the user id). Apply with `supabase db push` or `supabase db reset`.
+Migrations create public storage buckets used by the app:
+- `profile-images`
+- `event-flyers` (supports draft uploads before the event exists)
+- `mix-covers`
 
-## Development
+Apply via `supabase db push` (cloud) or `supabase db reset` (local).
 
-```bash
-npm run dev             # starts Next.js at http://localhost:3000
-```
+---
 
-## Testing
+## Project Setup, Scripts & Tests
 
-```bash
-npm test                # runs Jest + React Testing Library
-npm run test:watch      # re-runs on file changes
-```
-
-## Production build
+Install dependencies:
 
 ```bash
-npm run build           # type-checks and builds for production
-npm start               # serves the production build
+npm install
 ```
 
-## Project structure
+Run the dev server:
 
+```bash
+npm run dev
 ```
-app/                    # Next.js App Router pages & layouts
-  (auth)/               #   login, signup
-  (main)/               #   authenticated shell (home, events, mixes, search, dj profiles)
+
+The app will be available at `http://localhost:3000`.
+
+- **Run tests**
+  - This project uses **Jest** + **React Testing Library**.
+  - Run the full suite:
+
+```bash
+npm test
+```
+
+Watch mode:
+
+```bash
+npm run test:watch
+```
+
+Production build:
+
+```bash
+npm run build
+npm start
+```
+
+---
+
+## High-Level Architecture
+
+- **Frontend**
+  - Next.js App Router pages and layouts under `app/`.
+  - Tailwind + `shadcn/ui` component primitives under `components/ui/`.
+  - Client-side data hooks in `hooks/` (e.g. `useCurrentUser`, `useProfile`, messaging hooks).
+
+- **Backend**
+  - Supabase Postgres for persistence.
+  - Row Level Security (RLS) is used extensively to enforce authorization.
+  - A small number of `SECURITY DEFINER` database functions are used for safe privileged operations (e.g. DM creation).
+  - Next.js Route Handlers are used where needed (e.g. `app/api/mix-oembed` to avoid CORS issues).
+
+- **Database**
+  - SQL migrations live in `supabase/migrations/`.
+  - Types live in `types/` (`types/database.ts` is the hand-maintained generated contract).
+
+---
+
+## Repo / File Structure (high level)
+
+```text
+app/                    Next.js App Router pages & layouts
+  (auth)/               login, signup
+  (main)/               authenticated shell (home, events, mixes, search, dj profiles, messages)
+  api/                  route handlers (e.g. oEmbed proxy)
 components/
-  ui/                   #   shadcn/ui primitives
-  shared/               #   reusable (EmptyState, LoadingSpinner, etc.)
-  layout/               #   navbar, mobile bars, avatar dropdown
-  events/               #   EventCard, EventForm, LineupBuilder, etc.
-  mixes/                #   MixEmbed, MixCard
-  profile/              #   ProfileHeader, FollowButton, SocialLinks
-  forms/                #   GenreTagInput, ImageUpload
-hooks/                  # Client-side data hooks (useCurrentUser, useProfile, etc.)
+  ui/                   shadcn/ui primitives
+  shared/               reusable UI (EmptyState, LoadingSpinner, etc.)
+  layout/               navbar, mobile bars, dropdowns
+  events/               EventCard, EventForm, LineupBuilder, etc.
+  mixes/                MixEmbed, MixCard, MixForm, etc.
+  messages/             inbox/conversation UI, quick-message dialog
+  profile/              ProfileHeader, FollowButton, SocialLinks
+  forms/                GenreTagInput, ImageUpload
+hooks/                  client-side data hooks
 lib/
-  auth/                 #   route helpers, session
-  db/                   #   schema constants
-  services/             #   profiles, events, mixes, follows, search, storage
-  supabase/             #   client / server / middleware helpers
-  utils/                #   embed URL transform, slug generation
-types/                  # Generated Supabase types
-supabase/migrations/    # SQL migrations (push with `supabase db push`)
-__tests__/              # Jest tests mirroring the source tree
+  auth/                 route helpers, session middleware helpers
+  db/                   schema constants
+  services/             supabase-backed services (profiles, events, mixes, follows, search, messaging)
+  supabase/             client/server helpers
+  utils/                formatting + URL helpers
+types/                  shared types and Supabase Database typings
+supabase/migrations/    SQL migrations (apply with `supabase db push`)
+__tests__/              Jest tests mirroring the source tree
+docs/                   design + tech specs (agent-step workflow)
 ```
+
+---
+
+## Core User Flows (happy paths)
+
+- **1. Sign up / Log in**
+  - Create an account and bootstrap a profile.
+  - Update profile details and upload a profile image.
+
+- **2. Discover DJs**
+  - Visit DJ profiles (`/dj/[slug]`).
+  - Follow/unfollow DJs to curate your home dashboard.
+
+- **3. Browse and share mixes**
+  - Add a mix URL; title/thumbnail can auto-fill via oEmbed for supported platforms.
+  - View mixes on DJ profiles and the mixes browse page.
+  - Like mixes (heart + count).
+
+- **4. Create and discover events**
+  - Create events with flyer uploads (including draft flyer support).
+  - Add a lineup and publish events.
+
+- **5. Message other users**
+  - From a DJ profile, open a quick compose dialog and send a DM.
+  - View inbox at `/messages` and open threads at `/messages/[conversationId]`.
+  - Event group threads exist for events (where enabled by lineup membership/creator rules).
+
+---
+
+## Development Workflow (Step-by-Step)
+
+This repo is built iteratively using agent-sized steps:
+- Tech steps live in `docs/tech_specs/`
+- Design references live in `docs/design_specs/`
+- Progress tracking lives in `docs/README.md` (separate from this project README)
+
+Start here:
+- `docs/tech_specs/00-INDEX.md`
+
+---
+
+## External Services Summary
+
+- **Supabase (Postgres + Auth + Storage)**
+  - Stores profiles, events, mixes, follows, and messages.
+  - Enforces authorization via RLS.
+  - Hosts storage buckets for images (profile images, event flyers, mix covers).
+
+- **Next.js**
+  - App Router UI + a small number of API route handlers (e.g. oEmbed proxy).
