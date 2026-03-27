@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
 import type {
+  CalendarEvent,
   Event,
   EventInsert,
   EventUpdate,
@@ -31,6 +32,46 @@ export interface EventFilters {
 
 function supabase() {
   return createClient();
+}
+
+const CALENDAR_EVENT_COLUMNS =
+  "id,title,start_date,end_date,start_time,end_time,venue,city,state,flyer_image_url,genres,status,created_by";
+
+/**
+ * Events that overlap `[startDate, endDate]` (inclusive ISO date strings).
+ * Mirrors list RLS: published for everyone, or any status for the creator when signed in.
+ */
+export async function getEventsByDateRange(
+  startDate: string,
+  endDate: string,
+): Promise<CalendarEvent[]> {
+  const sb = supabase();
+  const {
+    data: { user },
+  } = await sb.auth.getUser();
+
+  let query = sb
+    .from(TABLES.events)
+    .select(CALENDAR_EVENT_COLUMNS)
+    .is("deleted_at", null)
+    .lte("start_date", endDate)
+    .or(
+      `end_date.gte.${startDate},and(end_date.is.null,start_date.gte.${startDate})`,
+    );
+
+  if (user?.id) {
+    query = query.or(`status.eq.published,created_by.eq.${user.id}`);
+  } else {
+    query = query.eq("status", "published" as EventStatus);
+  }
+
+  query = query
+    .order("start_date", { ascending: true })
+    .order("start_time", { ascending: true, nullsFirst: false });
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []) as CalendarEvent[];
 }
 
 export async function getAll(
@@ -199,6 +240,7 @@ export const eventsService = {
   getById,
   getUpcoming,
   getByProfile,
+  getEventsByDateRange,
   create,
   update,
   softDelete,

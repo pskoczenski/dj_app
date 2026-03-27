@@ -8,6 +8,7 @@ function chainMock() {
     chain.lte = jest.fn().mockReturnValue(chain);
     chain.in = jest.fn().mockReturnValue(chain);
     chain.contains = jest.fn().mockReturnValue(chain);
+    chain.or = jest.fn().mockReturnValue(chain);
     chain.order = jest.fn().mockReturnValue(chain);
     chain.range = jest.fn().mockReturnValue(chain);
     chain.insert = jest.fn().mockReturnValue(chain);
@@ -28,6 +29,9 @@ function chainMock() {
         builders.push(b);
         return b;
       }),
+      auth: {
+        getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      },
     },
     builder: (n: number) => builders[n],
     builders,
@@ -210,6 +214,64 @@ describe("eventsService", () => {
       expect(result.status).toBe("cancelled");
       const builder = mock.builder(0);
       expect(builder.update).toHaveBeenCalledWith({ status: "cancelled" });
+    });
+  });
+
+  describe("getEventsByDateRange", () => {
+    const CALENDAR_SELECT =
+      "id,title,start_date,end_date,start_time,end_time,venue,city,state,flyer_image_url,genres,status,created_by";
+
+    it("builds overlap, visibility, sort, and published-only when logged out", async () => {
+      mock = chainMock();
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        (b as { then?: unknown }).then = (resolve: (v: unknown) => void) =>
+          resolve({ data: [], error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await eventsService.getEventsByDateRange("2026-04-01", "2026-04-30");
+
+      const builder = mock.builder(0);
+      expect(builder.select).toHaveBeenCalledWith(CALENDAR_SELECT);
+      expect(builder.is).toHaveBeenCalledWith("deleted_at", null);
+      expect(builder.lte).toHaveBeenCalledWith("start_date", "2026-04-30");
+      expect(builder.or).toHaveBeenNthCalledWith(
+        1,
+        "end_date.gte.2026-04-01,and(end_date.is.null,start_date.gte.2026-04-01)",
+      );
+      expect(builder.eq).toHaveBeenCalledWith("status", "published");
+      expect(builder.order).toHaveBeenNthCalledWith(1, "start_date", {
+        ascending: true,
+      });
+      expect(builder.order).toHaveBeenNthCalledWith(2, "start_time", {
+        ascending: true,
+        nullsFirst: false,
+      });
+    });
+
+    it("uses or(published, created_by) when authenticated", async () => {
+      mock = chainMock();
+      mock.client.auth.getUser = jest.fn().mockResolvedValue({
+        data: { user: { id: "user-99" } },
+        error: null,
+      });
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        (b as { then?: unknown }).then = (resolve: (v: unknown) => void) =>
+          resolve({ data: [], error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await eventsService.getEventsByDateRange("2026-05-01", "2026-05-31");
+
+      const builder = mock.builder(0);
+      expect(builder.or).toHaveBeenNthCalledWith(
+        2,
+        "status.eq.published,created_by.eq.user-99",
+      );
     });
   });
 

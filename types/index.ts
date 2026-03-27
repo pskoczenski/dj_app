@@ -7,6 +7,24 @@ type Enums = import("./database").Database["public"]["Enums"];
 // Row types
 export type Profile = Tables["profiles"]["Row"];
 export type Event = Tables["events"]["Row"];
+
+/** Subset of `Event` for calendar and date-range queries (Step 28). */
+export type CalendarEvent = Pick<
+  Event,
+  | "id"
+  | "title"
+  | "start_date"
+  | "end_date"
+  | "start_time"
+  | "end_time"
+  | "venue"
+  | "city"
+  | "state"
+  | "flyer_image_url"
+  | "genres"
+  | "status"
+  | "created_by"
+>;
 export type EventLineup = Tables["event_lineup"]["Row"];
 export type Conversation = Tables["conversations"]["Row"];
 export type ConversationParticipant = Tables["conversation_participants"]["Row"];
