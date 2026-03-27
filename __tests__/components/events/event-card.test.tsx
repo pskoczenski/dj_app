@@ -1,6 +1,29 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { EventCard } from "@/components/events/event-card";
 import type { EventWithLineupPreview } from "@/types";
+
+jest.mock("@/hooks/use-comment-count", () => ({
+  useCommentCount: () => ({ count: 3, loading: false }),
+}));
+
+jest.mock("@/hooks/use-comments", () => ({
+  useComments: () => ({
+    comments: [],
+    totalCount: 0,
+    loading: false,
+    hasMore: false,
+    loadMore: jest.fn(),
+    addComment: jest.fn().mockResolvedValue(undefined),
+    deleteComment: jest.fn(),
+    refetch: jest.fn(),
+    error: null,
+  }),
+}));
+
+jest.mock("@/hooks/use-current-user", () => ({
+  useCurrentUser: () => ({ user: { id: "u-test" } }),
+}));
 
 const MOCK_EVENT: EventWithLineupPreview = {
   id: "evt-1",
@@ -104,5 +127,20 @@ describe("EventCard", () => {
   it("renders semantic article wrapper", () => {
     render(<EventCard event={MOCK_EVENT} />);
     expect(screen.getByRole("article")).toBeInTheDocument();
+  });
+
+  it("renders comment count trigger and opens comments dialog", async () => {
+    const user = userEvent.setup();
+    render(<EventCard event={MOCK_EVENT} />);
+
+    const badge = screen.getByRole("button", { name: /3 comments/i });
+    expect(badge).toHaveTextContent("3");
+
+    await user.click(badge);
+
+    const dialog = screen.getByRole("dialog");
+    expect(
+      within(dialog).getByRole("heading", { name: /underground session/i }),
+    ).toBeInTheDocument();
   });
 });

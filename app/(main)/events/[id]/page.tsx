@@ -8,6 +8,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { eventLineupService } from "@/lib/services/event-lineup";
 import { conversationsService } from "@/lib/services/conversations";
 import { CancelledBanner } from "@/components/events/cancelled-banner";
+import { CommentCountModalTrigger } from "@/components/comments/comment-count-modal-trigger";
 import { ShareButton } from "@/components/events/share-button";
 import { LineupCard } from "@/components/events/lineup-card";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
@@ -188,6 +189,15 @@ export default function EventDetailPage({
           ))}
         </div>
       )}
+
+      <div>
+        <CommentCountModalTrigger
+          commentableType="event"
+          commentableId={event.id}
+          title={event.title}
+          variant="detail"
+        />
+      </div>
 
       {/* Ticket CTA */}
       {event.ticket_url && (

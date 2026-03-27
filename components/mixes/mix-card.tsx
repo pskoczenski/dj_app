@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MixEmbed } from "@/components/mixes/mix-embed";
+import { CommentCountModalTrigger } from "@/components/comments/comment-count-modal-trigger";
 import { mixLikesService } from "@/lib/services/mix-likes";
 import { cn } from "@/lib/utils";
 import {
@@ -242,13 +243,23 @@ export function MixCard({
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-1.5 pb-9 pt-0">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="outline" className="text-[10px] sm:text-xs">
-            {platformLabel(mix.platform)}
-          </Badge>
-          {mix.duration && (
-            <span className="text-xs text-fog">{mix.duration}</span>
-          )}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <Badge variant="outline" className="text-[10px] sm:text-xs">
+              {platformLabel(mix.platform)}
+            </Badge>
+            {mix.duration && (
+              <span className="text-xs text-fog">{mix.duration}</span>
+            )}
+          </div>
+          <CommentCountModalTrigger
+            commentableType="mix"
+            commentableId={mix.id}
+            title={mix.title}
+            variant="badge"
+            className="shrink-0"
+            stopPropagation
+          />
         </div>
         {mix.genres && mix.genres.length > 0 && (
           <div className="flex flex-wrap gap-1">

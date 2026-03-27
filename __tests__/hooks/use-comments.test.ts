@@ -121,5 +121,47 @@ describe("useComments", () => {
 
     expect(result.current.comments.map((c) => c.id)).toEqual(["c1", "c2"]);
   });
+
+  it("hasMore is true when totalCount exceeds loaded comments", async () => {
+    mockGetComments.mockResolvedValueOnce({
+      comments: [
+        {
+          id: "c1",
+          body: "only page one",
+          created_at: null,
+          updated_at: null,
+          profile_id: "u1",
+          author: null,
+          likeCount: 0,
+          likedByMe: false,
+        },
+      ],
+      totalCount: 10,
+    });
+    const { result } = renderHook(() => useComments("mix", "mix-1"));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.hasMore).toBe(true);
+  });
+
+  it("hasMore is false when all comments are loaded", async () => {
+    mockGetComments.mockResolvedValueOnce({
+      comments: [
+        {
+          id: "c1",
+          body: "a",
+          created_at: null,
+          updated_at: null,
+          profile_id: "u1",
+          author: null,
+          likeCount: 0,
+          likedByMe: false,
+        },
+      ],
+      totalCount: 1,
+    });
+    const { result } = renderHook(() => useComments("mix", "mix-1"));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.hasMore).toBe(false);
+  });
 });
 

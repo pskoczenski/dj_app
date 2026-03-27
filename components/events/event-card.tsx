@@ -5,6 +5,7 @@ import { Calendar, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CornerVineAccent } from "@/components/decorative/corner-vine-accent";
+import { CommentCountModalTrigger } from "@/components/comments/comment-count-modal-trigger";
 import { formatSetTime12h } from "@/lib/format-time";
 import type { EventWithLineupPreview } from "@/types";
 
@@ -56,59 +57,67 @@ export function EventCard({ event }: { event: EventWithLineupPreview }) {
 
   return (
     <article aria-labelledby={headingId}>
-      <Link href={`/events/${event.id}`} className="block">
       <Card variant="interactive" className="relative">
-        <CornerVineAccent
-          corner="top-right"
-          className="absolute right-2 top-2 h-8 w-8"
-          opacity={0.1}
-        />
-        {event.flyer_image_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={event.flyer_image_url}
-            alt={event.title}
-            className="aspect-[2/1] w-full object-cover"
+        <Link href={`/events/${event.id}`} className="block">
+          <CornerVineAccent
+            corner="top-right"
+            className="absolute right-2 top-2 h-8 w-8"
+            opacity={0.1}
           />
-        )}
-        <CardHeader>
-          <CardTitle id={headingId} className="text-bone">
-            {event.title}
-          </CardTitle>
-          {djNames.length > 0 && (
-            <p className="mt-1 text-sm leading-snug text-stone">
-              {djNames.join(" · ")}
-            </p>
+          {event.flyer_image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={event.flyer_image_url}
+              alt={event.title}
+              className="aspect-[2/1] w-full object-cover"
+            />
           )}
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          <div className="flex items-center gap-1.5 text-sm text-stone">
-            <Calendar className="size-4 shrink-0" />
-            <span>{formatEventDateTimeLine(event)}</span>
-          </div>
-          {location && (
+          <CardHeader>
+            <CardTitle id={headingId} className="text-bone">
+              {event.title}
+            </CardTitle>
+            {djNames.length > 0 && (
+              <p className="mt-1 text-sm leading-snug text-stone">
+                {djNames.join(" · ")}
+              </p>
+            )}
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2 pb-3">
             <div className="flex items-center gap-1.5 text-sm text-stone">
-              <MapPin className="size-4 shrink-0" />
-              <span>{location}</span>
+              <Calendar className="size-4 shrink-0" />
+              <span>{formatEventDateTimeLine(event)}</span>
             </div>
-          )}
-          {event.genres && event.genres.length > 0 && (
-            <div className="flex flex-wrap gap-1 pt-1">
-              {event.genres.map((g) => (
-                <Badge key={g} variant="secondary" className="text-xs">
-                  {g}
-                </Badge>
-              ))}
-            </div>
-          )}
-          {event.status !== "published" && (
-            <Badge variant={statusVariant(event.status)} className="mt-1 w-fit">
-              {event.status}
-            </Badge>
-          )}
-        </CardContent>
+            {location && (
+              <div className="flex items-center gap-1.5 text-sm text-stone">
+                <MapPin className="size-4 shrink-0" />
+                <span>{location}</span>
+              </div>
+            )}
+            {event.genres && event.genres.length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                {event.genres.map((g) => (
+                  <Badge key={g} variant="secondary" className="text-xs">
+                    {g}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            {event.status !== "published" && (
+              <Badge variant={statusVariant(event.status)} className="mt-1 w-fit">
+                {event.status}
+              </Badge>
+            )}
+          </CardContent>
+        </Link>
+        <div className="flex cursor-default items-center justify-end border-t border-root-line px-4 py-2">
+          <CommentCountModalTrigger
+            commentableType="event"
+            commentableId={event.id}
+            title={event.title}
+            variant="badge"
+          />
+        </div>
       </Card>
-      </Link>
     </article>
   );
 }

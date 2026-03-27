@@ -92,11 +92,15 @@ export function useComments(commentableType: CommentableType, commentableId: str
     }
   }, [comments]);
 
+  const hasMore =
+    Boolean(commentableId) && totalCount > 0 && comments.length < totalCount;
+
   return {
     comments,
     totalCount,
     loading,
     error,
+    hasMore,
     loadMore,
     addComment,
     deleteComment,

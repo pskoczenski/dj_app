@@ -1,7 +1,29 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MixCard } from "@/components/mixes/mix-card";
 import type { MixWithCreator } from "@/types";
+
+jest.mock("@/hooks/use-comment-count", () => ({
+  useCommentCount: () => ({ count: 9, loading: false }),
+}));
+
+jest.mock("@/hooks/use-comments", () => ({
+  useComments: () => ({
+    comments: [],
+    totalCount: 0,
+    loading: false,
+    hasMore: false,
+    loadMore: jest.fn(),
+    addComment: jest.fn().mockResolvedValue(undefined),
+    deleteComment: jest.fn(),
+    refetch: jest.fn(),
+    error: null,
+  }),
+}));
+
+jest.mock("@/hooks/use-current-user", () => ({
+  useCurrentUser: () => ({ user: { id: "u-test" } }),
+}));
 
 const mockPush = jest.fn();
 jest.mock("next/navigation", () => ({
@@ -183,5 +205,21 @@ describe("MixCard", () => {
 
     await user.click(screen.getByRole("button", { name: /delete mix/i }));
     expect(onDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders comment count and opens comments modal without toggling expand", async () => {
+    const user = userEvent.setup();
+    const onToggle = jest.fn();
+    render(
+      <MixCard mix={MOCK_MIX} expanded={false} onToggle={onToggle} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /9 comments/i }));
+
+    expect(onToggle).not.toHaveBeenCalled();
+    const dialog = screen.getByRole("dialog");
+    expect(
+      within(dialog).getByRole("heading", { name: /summer vibes/i }),
+    ).toBeInTheDocument();
   });
 });
