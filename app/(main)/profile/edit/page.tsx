@@ -15,11 +15,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { CharacterCounter } from "@/components/shared/character-counter";
 import { GenreTagInput } from "@/components/forms/genre-tag-input";
 import { ImageUpload } from "@/components/forms/image-upload";
-import { CitySelect } from "@/components/forms/city-select";
+import { CityAutocomplete } from "@/components/forms/city-autocomplete";
+import { citiesService } from "@/lib/services/cities";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { storageService } from "@/lib/services/storage";
 import { toast } from "sonner";
-import type { Profile, ProfileType } from "@/types";
+import type { City, Profile, ProfileType } from "@/types";
 
 const BIO_MAX = 1500;
 
@@ -55,7 +56,7 @@ export default function EditProfilePage() {
   const [displayName, setDisplayName] = useState("");
   const [slug, setSlug] = useState("");
   const [bio, setBio] = useState("");
-  const [cityId, setCityId] = useState("");
+  const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [country, setCountry] = useState("");
   const [genres, setGenres] = useState<string[]>([]);
   const [profileType, setProfileType] = useState<ProfileType>("dj");
@@ -121,7 +122,15 @@ export default function EditProfilePage() {
         setDisplayName(p.display_name);
         setSlug(p.slug);
         setBio(p.bio ?? "");
-        setCityId(p.city_id ?? "");
+        setSelectedCity(p.cities ?? null);
+        if (p.city_id && !p.cities) {
+          try {
+            const c = await citiesService.getById(p.city_id);
+            if (!cancelled) setSelectedCity(c);
+          } catch {
+            if (!cancelled) setSelectedCity(null);
+          }
+        }
         setCountry(p.country ?? "");
         setGenres(p.genres ?? []);
         setProfileType(p.profile_type);
@@ -165,14 +174,14 @@ export default function EditProfilePage() {
     if (displayName.length > 50) e.displayName = "Display name must be 50 characters or less.";
     if (!slug) e.slug = "Slug is required.";
     if (bio.length > BIO_MAX) e.bio = `Bio must be ${BIO_MAX} characters or less.`;
-    if (!cityId) e.cityId = "City is required.";
+    if (!selectedCity) e.cityId = "City is required.";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!validate() || !profile || slugWarning) return;
+    if (!validate() || !profile || slugWarning || !selectedCity) return;
 
     setSaving(true);
     try {
@@ -180,7 +189,7 @@ export default function EditProfilePage() {
         display_name: displayName,
         slug,
         bio: bio || null,
-        city_id: cityId,
+        city_id: selectedCity.id,
         country: country || null,
         genres: genres.length > 0 ? genres : null,
         profile_type: profileType,
@@ -263,10 +272,10 @@ export default function EditProfilePage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="City" id="profile-city-id" error={errors.cityId}>
-            <CitySelect
+            <CityAutocomplete
               id="profile-city-id"
-              value={cityId}
-              onChange={setCityId}
+              value={selectedCity}
+              onChange={setSelectedCity}
               aria-label="Home city"
             />
           </Field>

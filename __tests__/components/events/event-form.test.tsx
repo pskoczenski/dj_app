@@ -39,23 +39,38 @@ jest.mock("@/lib/services/profiles", () => ({
   },
 }));
 
+const mockCitySearch = jest.fn().mockResolvedValue([
+  {
+    id: "city-pdx",
+    name: "Portland",
+    state_name: "Oregon",
+    state_code: "OR",
+    created_at: "2025-01-01",
+  },
+]);
+
 jest.mock("@/lib/services/cities", () => ({
   citiesService: {
-    listAll: jest.fn().mockResolvedValue([
-      {
-        id: "city-pdx",
-        name: "Portland",
-        state_name: "Oregon",
-        state_code: "OR",
-        created_at: "2025-01-01",
-      },
-    ]),
+    search: (...a: unknown[]) => mockCitySearch(...a),
+    getById: jest.fn().mockResolvedValue(null),
   },
 }));
 
 jest.mock("sonner", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 
 import { conversationsService } from "@/lib/services/conversations";
+import { eventsService } from "@/lib/services/events";
+
+async function selectCityWithAutocomplete(
+  user: ReturnType<typeof userEvent.setup>,
+  label: RegExp,
+) {
+  const input = await screen.findByLabelText(label);
+  await user.type(input, "po");
+  await waitFor(() => expect(mockCitySearch).toHaveBeenCalled());
+  const option = await screen.findByRole("option", { name: /portland,\s*or/i });
+  await user.click(option);
+}
 
 describe("EventForm", () => {
   beforeEach(() => {
@@ -68,8 +83,7 @@ describe("EventForm", () => {
 
     await user.type(screen.getByLabelText(/title/i), "Launch Party");
     await user.type(screen.getByLabelText(/start date/i), "2025-08-01");
-    const citySel = await screen.findByLabelText(/event city/i);
-    await user.selectOptions(citySel, "city-pdx");
+    await selectCityWithAutocomplete(user, /event city/i);
     await user.click(screen.getByRole("button", { name: /publish/i }));
 
     await waitFor(() => {
@@ -111,8 +125,7 @@ describe("EventForm", () => {
       screen.getByLabelText(/start date/i),
       "2025-08-01",
     );
-    const citySel = await screen.findByLabelText(/event city/i);
-    await user.selectOptions(citySel, "city-pdx");
+    await selectCityWithAutocomplete(user, /event city/i);
 
     const publishBtn = screen.getByRole("button", { name: /publish/i });
     expect(publishBtn).toBeEnabled();
@@ -151,6 +164,22 @@ describe("EventForm", () => {
       "href",
       "/dj/dj-alpha",
     );
+  });
+
+  it("includes city_id in create payload when publishing", async () => {
+    const user = userEvent.setup();
+    render(<EventForm mode="create" currentUserId="user-1" />);
+
+    await user.type(screen.getByLabelText(/title/i), "Launch Party");
+    await user.type(screen.getByLabelText(/start date/i), "2025-08-01");
+    await selectCityWithAutocomplete(user, /event city/i);
+    await user.click(screen.getByRole("button", { name: /publish/i }));
+
+    await waitFor(() => {
+      expect(eventsService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ city_id: "city-pdx" }),
+      );
+    });
   });
 
   it("shows Cancel Event button in edit mode", () => {

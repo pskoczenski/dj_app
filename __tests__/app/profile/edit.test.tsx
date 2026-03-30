@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import EditProfilePage from "@/app/(main)/profile/edit/page";
 
@@ -10,17 +10,26 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace }),
 }));
 
+const mockCitySearch = jest.fn().mockResolvedValue([
+  {
+    id: "city-bk",
+    name: "Brooklyn",
+    state_name: "New York",
+    state_code: "NY",
+    created_at: "2024-01-01",
+  },
+]);
+
 jest.mock("@/lib/services/cities", () => ({
   citiesService: {
-    listAll: jest.fn().mockResolvedValue([
-      {
-        id: "city-bk",
-        name: "Brooklyn",
-        state_name: "New York",
-        state_code: "NY",
-        created_at: "2024-01-01",
-      },
-    ]),
+    search: (...a: unknown[]) => mockCitySearch(...a),
+    getById: jest.fn().mockResolvedValue({
+      id: "city-bk",
+      name: "Brooklyn",
+      state_name: "New York",
+      state_code: "NY",
+      created_at: "2024-01-01",
+    }),
   },
 }));
 
@@ -129,6 +138,54 @@ describe("EditProfilePage", () => {
 
     expect(screen.getByRole("radio", { name: /dj/i })).toBeChecked();
     expect(screen.getByRole("radio", { name: /promoter/i })).not.toBeChecked();
+  });
+
+  it("uses city combobox instead of separate city/state fields", async () => {
+    render(<EditProfilePage />);
+    await screen.findByLabelText(/display name/i);
+
+    expect(screen.getByLabelText(/home city/i)).toHaveAttribute(
+      "role",
+      "combobox",
+    );
+    expect(
+      screen.queryByRole("textbox", { name: /state/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows validation when city is cleared", async () => {
+    const user = userEvent.setup();
+    render(<EditProfilePage />);
+    await screen.findByLabelText(/display name/i);
+
+    await user.clear(screen.getByLabelText(/home city/i));
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    expect(await screen.findByText(/city is required/i)).toBeInTheDocument();
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("submits with city_id when user selects a city from autocomplete", async () => {
+    const user = userEvent.setup();
+    render(<EditProfilePage />);
+    await screen.findByLabelText(/display name/i);
+
+    const cityInput = screen.getByLabelText(/home city/i);
+    await user.clear(cityInput);
+    await user.type(cityInput, "br");
+    await waitFor(() => expect(mockCitySearch).toHaveBeenCalled());
+    await user.click(
+      await screen.findByRole("option", { name: /brooklyn,\s*ny/i }),
+    );
+
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    await waitFor(() => {
+      expect(mockUpdate).toHaveBeenCalledWith(
+        "user-1",
+        expect.objectContaining({ city_id: "city-bk" }),
+      );
+    });
   });
 
   it("submits the form and redirects", async () => {

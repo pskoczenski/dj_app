@@ -35,6 +35,8 @@ const EVENT_LINEUP_BLOCK = `
   )
 `;
 
+const EVENT_ROW_WITH_CITY = `*, ${CITY_EMBED_LEFT}`;
+
 /** Inner join cities when filtering by `cities.state_code` (PostgREST requirement). */
 export function eventListWithLineupSelect(innerCity: boolean): string {
   const city = innerCity ? CITY_EMBED_INNER : CITY_EMBED_LEFT;
@@ -259,11 +261,11 @@ export async function create(data: EventInsert): Promise<Event> {
   const { data: created, error } = await supabase()
     .from(TABLES.events)
     .insert(data)
-    .select()
+    .select(EVENT_ROW_WITH_CITY)
     .single();
 
   if (error) throw error;
-  return created;
+  return created as Event;
 }
 
 export async function update(
@@ -274,11 +276,11 @@ export async function update(
     .from(TABLES.events)
     .update(data)
     .eq("id", id)
-    .select()
+    .select(EVENT_ROW_WITH_CITY)
     .single();
 
   if (error) throw error;
-  return updated;
+  return updated as Event;
 }
 
 export async function softDelete(id: string): Promise<void> {

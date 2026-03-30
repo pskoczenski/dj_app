@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { eventsService } from "@/lib/services/events";
 import { eventLineupService } from "@/lib/services/event-lineup";
@@ -11,14 +11,22 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { GenreTagInput } from "@/components/forms/genre-tag-input";
 import { ImageUpload } from "@/components/forms/image-upload";
-import { CitySelect } from "@/components/forms/city-select";
+import { CityAutocomplete } from "@/components/forms/city-autocomplete";
+import { citiesService } from "@/lib/services/cities";
 import {
   LineupBuilder,
   type LineupEntry,
 } from "@/components/events/lineup-builder";
 import { LineupCard } from "@/components/events/lineup-card";
 import { toast } from "sonner";
-import type { Event, EventInsert, EventUpdate, EventLineup, EventStatus } from "@/types";
+import type {
+  City,
+  Event,
+  EventInsert,
+  EventUpdate,
+  EventLineup,
+  EventStatus,
+} from "@/types";
 
 /** Minimal row shape for LineupCard preview from builder state. */
 function lineupEntryToCardProps(entry: LineupEntry): {
@@ -75,7 +83,9 @@ export function EventForm({
   const [startTime, setStartTime] = useState(event?.start_time ?? "");
   const [endTime, setEndTime] = useState(event?.end_time ?? "");
   const [venue, setVenue] = useState(event?.venue ?? "");
-  const [cityId, setCityId] = useState(event?.city_id ?? "");
+  const [selectedCity, setSelectedCity] = useState<City | null>(
+    event?.cities ?? null,
+  );
   const [country, setCountry] = useState(event?.country ?? "");
   const [ticketUrl, setTicketUrl] = useState(event?.ticket_url ?? "");
   const [genres, setGenres] = useState<string[]>(event?.genres ?? []);
@@ -87,16 +97,38 @@ export function EventForm({
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!event) {
+      setSelectedCity(null);
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (event.cities) {
+      setSelectedCity(event.cities);
+    } else if (event.city_id) {
+      void citiesService.getById(event.city_id).then((c) => {
+        if (!cancelled) setSelectedCity(c);
+      });
+    } else {
+      setSelectedCity(null);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [event?.id, event?.city_id, event?.cities?.id]);
+
   const isValid =
     title.trim().length > 0 &&
     startDate.length > 0 &&
-    cityId.length > 0;
+    selectedCity !== null;
 
   function validate(): boolean {
     const e: Record<string, string> = {};
     if (!title.trim()) e.title = "Title is required.";
     if (!startDate) e.startDate = "Start date is required.";
-    if (!cityId) e.cityId = "City is required.";
+    if (!selectedCity) e.cityId = "City is required.";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -122,7 +154,7 @@ export function EventForm({
   }
 
   async function handleSubmit(status: EventStatus) {
-    if (!validate()) return;
+    if (!validate() || !selectedCity) return;
     setSaving(true);
 
     try {
@@ -135,7 +167,7 @@ export function EventForm({
           start_time: startTime || null,
           end_time: endTime || null,
           venue: venue || null,
-          city_id: cityId,
+          city_id: selectedCity.id,
           country: country || null,
           ticket_url: ticketUrl || null,
           genres: genres.length > 0 ? genres : null,
@@ -163,7 +195,7 @@ export function EventForm({
           start_time: startTime || null,
           end_time: endTime || null,
           venue: venue || null,
-          city_id: cityId,
+          city_id: selectedCity.id,
           country: country || null,
           ticket_url: ticketUrl || null,
           genres: genres.length > 0 ? genres : null,
@@ -334,10 +366,10 @@ export function EventForm({
           >
             City
           </label>
-          <CitySelect
+          <CityAutocomplete
             id="event-city-id"
-            value={cityId}
-            onChange={setCityId}
+            value={selectedCity}
+            onChange={setSelectedCity}
             aria-label="Event city"
           />
           {errors.cityId ? (

@@ -57,7 +57,7 @@ export async function update(
     .from(TABLES.profiles)
     .update(rest)
     .eq("id", id)
-    .select()
+    .select(PROFILE_WITH_CITY)
     .single();
 
   if (error) throw error;
