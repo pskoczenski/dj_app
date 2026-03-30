@@ -152,6 +152,36 @@ describe("eventsService", () => {
       expect(builder.contains).toHaveBeenCalledWith("genres", ["techno"]);
     });
 
+    it("applies cityId filter when provided", async () => {
+      mock = chainMock();
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        (b as any).then = (resolve: (v: unknown) => void) =>
+          resolve({ data: [], error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await eventsService.getAll({ cityId: "city-1" });
+      const builder = mock.builder(0);
+      expect(builder.eq).toHaveBeenCalledWith("city_id", "city-1");
+    });
+
+    it("does not apply city_id filter when cityId omitted", async () => {
+      mock = chainMock();
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        (b as any).then = (resolve: (v: unknown) => void) =>
+          resolve({ data: [], error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await eventsService.getAll();
+      const builder = mock.builder(0);
+      expect(builder.eq).not.toHaveBeenCalledWith("city_id", expect.anything());
+    });
+
     it("sorts by latest when specified", async () => {
       mock = chainMock();
       const origFrom = mock.client.from;
@@ -260,6 +290,42 @@ describe("eventsService", () => {
         ascending: true,
         nullsFirst: false,
       });
+    });
+
+    it("applies cityId when provided", async () => {
+      mock = chainMock();
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        (b as { then?: unknown }).then = (resolve: (v: unknown) => void) =>
+          resolve({ data: [], error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await eventsService.getEventsByDateRange("2026-04-01", "2026-04-30", {
+        cityId: "city-x",
+      });
+
+      const builder = mock.builder(0);
+      expect(builder.eq).toHaveBeenCalledWith("city_id", "city-x");
+    });
+
+    it("does not filter by city when cityId omitted", async () => {
+      mock = chainMock();
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        (b as { then?: unknown }).then = (resolve: (v: unknown) => void) =>
+          resolve({ data: [], error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await eventsService.getEventsByDateRange("2026-04-01", "2026-04-30");
+      const builder = mock.builder(0);
+      const cityFilters = (builder.eq as jest.Mock).mock.calls.filter(
+        (c: unknown[]) => c[0] === "city_id",
+      );
+      expect(cityFilters).toHaveLength(0);
     });
 
     it("uses or(published, created_by) when authenticated", async () => {

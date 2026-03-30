@@ -54,6 +54,8 @@ export interface EventFilters {
   dateFrom?: string;
   dateTo?: string;
   state?: string;
+  /** When set, restricts results to this `city_id` (optional browse filter). */
+  cityId?: string;
   genre?: string;
   sort?: "soonest" | "latest" | "added";
   range?: [number, number];
@@ -97,6 +99,7 @@ function toCalendarEvent(
 export async function getEventsByDateRange(
   startDate: string,
   endDate: string,
+  options: { cityId?: string } = {},
 ): Promise<CalendarEvent[]> {
   const sb = supabase();
   const {
@@ -111,6 +114,10 @@ export async function getEventsByDateRange(
     .or(
       `end_date.gte.${startDate},and(end_date.is.null,start_date.gte.${startDate})`,
     );
+
+  if (options.cityId) {
+    query = query.eq("city_id", options.cityId);
+  }
 
   if (user?.id) {
     query = query.or(`status.eq.published,created_by.eq.${user.id}`);
@@ -150,6 +157,9 @@ export async function getAll(
   }
   if (filters.genre) {
     query = query.contains("genres", [filters.genre]);
+  }
+  if (filters.cityId) {
+    query = query.eq("city_id", filters.cityId);
   }
 
   switch (filters.sort) {

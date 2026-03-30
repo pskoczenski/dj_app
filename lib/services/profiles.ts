@@ -78,14 +78,23 @@ export async function update(
   return updated;
 }
 
-export async function search(query: string, limit = 10): Promise<Profile[]> {
+export async function search(
+  query: string,
+  options: { limit?: number; cityId?: string } = {},
+): Promise<Profile[]> {
+  const limit = options.limit ?? 10;
   const term = `%${query}%`;
-  const { data, error } = await supabase()
+  let q = supabase()
     .from(TABLES.profiles)
     .select(PROFILE_WITH_CITY)
     .is("deleted_at", null)
-    .or(`display_name.ilike.${term},slug.ilike.${term}`)
-    .limit(limit);
+    .or(`display_name.ilike.${term},slug.ilike.${term}`);
+
+  if (options.cityId) {
+    q = q.eq("city_id", options.cityId);
+  }
+
+  const { data, error } = await q.limit(limit);
 
   if (error) throw error;
   return data ?? [];

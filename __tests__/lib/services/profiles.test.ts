@@ -11,10 +11,12 @@ function chainMock() {
     const chain: Record<string, jest.Mock> = {};
     chain.select = jest.fn().mockReturnValue(chain);
     chain.eq = jest.fn().mockReturnValue(chain);
+    chain.or = jest.fn().mockReturnValue(chain);
     chain.is = jest.fn().mockReturnValue(chain);
     chain.update = jest.fn().mockReturnValue(chain);
     chain.maybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
     chain.single = jest.fn().mockResolvedValue({ data: null, error: null });
+    chain.limit = jest.fn().mockResolvedValue({ data: [], error: null });
     return chain;
   };
 
@@ -143,6 +145,28 @@ describe("profilesService", () => {
 
       const result = await profilesService.getCurrent();
       expect(result).toBeNull();
+    });
+  });
+
+  describe("search", () => {
+    it("applies cityId when provided", async () => {
+      mock = chainMock();
+      await profilesService.search("dj", { cityId: "city-1" });
+
+      const b = mock.builder(0);
+      expect(b.eq).toHaveBeenCalledWith("city_id", "city-1");
+      expect(b.limit).toHaveBeenCalledWith(10);
+    });
+
+    it("does not apply city_id when cityId omitted", async () => {
+      mock = chainMock();
+      await profilesService.search("dj");
+
+      const b = mock.builder(0);
+      const cityCalls = (b.eq as jest.Mock).mock.calls.filter(
+        (c: unknown[]) => c[0] === "city_id",
+      );
+      expect(cityCalls).toHaveLength(0);
     });
   });
 
