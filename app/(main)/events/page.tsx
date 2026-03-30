@@ -9,10 +9,23 @@ import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { CalendarDays, List, Search, SlidersHorizontal } from "lucide-react";
+import { EventCalendar } from "@/components/events/event-calendar";
 import type { EventWithLineupPreview } from "@/types";
 
 const PAGE_SIZE = 12;
+
+/** Order-independent compare so we skip redundant router.replace (avoids RSC refetch loops). */
+function areQueryStringsEqual(a: string, b: string): boolean {
+  const entries = (qs: string) =>
+    [...new URLSearchParams(qs).entries()].sort(([k1, v1], [k2, v2]) =>
+      k1 === k2 ? v1.localeCompare(v2) : k1.localeCompare(k2),
+    );
+  const ea = entries(a);
+  const eb = entries(b);
+  if (ea.length !== eb.length) return false;
+  return ea.every(([k, v], i) => k === eb[i][0] && v === eb[i][1]);
+}
 
 export default function EventsPage() {
   return (
@@ -38,6 +51,19 @@ function EventsBrowser() {
     (searchParams.get("sort") as EventFilters["sort"]) ?? "soonest",
   );
   const [showFilters, setShowFilters] = useState(false);
+
+  const viewMode =
+    searchParams.get("view") === "calendar" ? "calendar" : "list";
+
+  const searchParamsString = searchParams.toString();
+
+  function setViewMode(mode: "list" | "calendar") {
+    const params = new URLSearchParams(searchParams.toString());
+    if (mode === "calendar") params.set("view", "calendar");
+    else params.delete("view");
+    const qs = params.toString();
+    router.replace(`/events${qs ? `?${qs}` : ""}`, { scroll: false });
+  }
 
   const pageRef = useRef(0);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -94,16 +120,20 @@ function EventsBrowser() {
     fetchPage(0, false);
   }, [fetchPage]);
 
-  // Sync to URL
+  // Sync local filters to URL (only replace when query actually changes — avoids navigation loops)
   useEffect(() => {
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     if (stateFilter) params.set("state", stateFilter);
     if (genreFilter) params.set("genre", genreFilter);
     if (sort && sort !== "soonest") params.set("sort", sort);
-    const qs = params.toString();
-    router.replace(`/events${qs ? `?${qs}` : ""}`, { scroll: false });
-  }, [search, stateFilter, genreFilter, sort, router]);
+    if (new URLSearchParams(searchParamsString).get("view") === "calendar") {
+      params.set("view", "calendar");
+    }
+    const nextQs = params.toString();
+    if (areQueryStringsEqual(nextQs, searchParamsString)) return;
+    router.replace(`/events${nextQs ? `?${nextQs}` : ""}`, { scroll: false });
+  }, [search, stateFilter, genreFilter, sort, router, searchParamsString]);
 
   // Infinite scroll via IntersectionObserver
   useEffect(() => {
@@ -126,85 +156,125 @@ function EventsBrowser() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-display text-2xl font-bold text-bone">Events</h1>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowFilters((v) => !v)}
-          aria-label="Toggle filters"
-        >
-          <SlidersHorizontal className="mr-1.5 size-4" />
-          Filters
-        </Button>
-      </div>
-
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fog" />
-        <Input
-          placeholder="Search events by title, venue, or city…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-          aria-label="Search events"
-        />
-      </div>
-
-      {/* Filters */}
-      {showFilters && (
-        <div className="flex flex-wrap gap-3">
-          <Input
-            placeholder="State (e.g. CA)"
-            value={stateFilter}
-            onChange={(e) => setStateFilter(e.target.value)}
-            className="w-32"
-            aria-label="Filter by state"
-          />
-          <Input
-            placeholder="Genre"
-            value={genreFilter}
-            onChange={(e) => setGenreFilter(e.target.value)}
-            className="w-40"
-            aria-label="Filter by genre"
-          />
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as EventFilters["sort"])}
-            className="rounded-default border border-root-line bg-deep-loam px-3 py-2 text-sm text-bone"
-            aria-label="Sort events"
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            className="flex rounded-default border border-root-line p-0.5"
+            role="group"
+            aria-label="Events view mode"
           >
-            <option value="soonest">Soonest</option>
-            <option value="latest">Latest</option>
-            <option value="added">Recently Added</option>
-          </select>
+            <Button
+              type="button"
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="sm"
+              className="gap-1.5"
+              aria-pressed={viewMode === "list"}
+              onClick={() => setViewMode("list")}
+              aria-label="List view"
+            >
+              <List className="size-4 shrink-0" aria-hidden />
+              <span className="hidden sm:inline">List</span>
+            </Button>
+            <Button
+              type="button"
+              variant={viewMode === "calendar" ? "secondary" : "ghost"}
+              size="sm"
+              className="gap-1.5"
+              aria-pressed={viewMode === "calendar"}
+              onClick={() => setViewMode("calendar")}
+              aria-label="Calendar view"
+            >
+              <CalendarDays className="size-4 shrink-0" aria-hidden />
+              <span className="hidden sm:inline">Calendar</span>
+            </Button>
+          </div>
+          {viewMode === "list" ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowFilters((v) => !v)}
+              aria-label="Toggle filters"
+            >
+              <SlidersHorizontal className="mr-1.5 size-4" />
+              Filters
+            </Button>
+          ) : null}
         </div>
-      )}
+      </div>
 
-      {/* Results */}
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <LoadingSpinner size="lg" />
-        </div>
-      ) : events.length === 0 ? (
-        <EmptyState
-          title="No events found"
-          description="Try adjusting your search or filters."
-        />
+      {viewMode === "list" ? (
+        <>
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fog" />
+            <Input
+              placeholder="Search events by title, venue, or city…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+              aria-label="Search events"
+            />
+          </div>
+
+          {/* Filters */}
+          {showFilters && (
+            <div className="flex flex-wrap gap-3">
+              <Input
+                placeholder="State (e.g. CA)"
+                value={stateFilter}
+                onChange={(e) => setStateFilter(e.target.value)}
+                className="w-32"
+                aria-label="Filter by state"
+              />
+              <Input
+                placeholder="Genre"
+                value={genreFilter}
+                onChange={(e) => setGenreFilter(e.target.value)}
+                className="w-40"
+                aria-label="Filter by genre"
+              />
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as EventFilters["sort"])}
+                className="rounded-default border border-root-line bg-deep-loam px-3 py-2 text-sm text-bone"
+                aria-label="Sort events"
+              >
+                <option value="soonest">Soonest</option>
+                <option value="latest">Latest</option>
+                <option value="added">Recently Added</option>
+              </select>
+            </div>
+          )}
+
+          {/* Results */}
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <LoadingSpinner size="lg" />
+            </div>
+          ) : events.length === 0 ? (
+            <EmptyState
+              title="No events found"
+              description="Try adjusting your search or filters."
+            />
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {events.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          )}
+
+          {/* Infinite scroll sentinel */}
+          <div ref={sentinelRef} className="h-4" />
+          {loadingMore && (
+            <div className="flex justify-center py-4">
+              <LoadingSpinner size="sm" />
+            </div>
+          )}
+        </>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
-      )}
-
-      {/* Infinite scroll sentinel */}
-      <div ref={sentinelRef} className="h-4" />
-      {loadingMore && (
-        <div className="flex justify-center py-4">
-          <LoadingSpinner size="sm" />
-        </div>
+        <EventCalendar />
       )}
     </div>
   );

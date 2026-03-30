@@ -1,0 +1,335 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useCalendarEvents } from "@/hooks/use-calendar-events";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EventPreviewModal } from "@/components/events/event-preview-modal";
+import { EventCalendarDayModal } from "@/components/events/event-calendar-day-modal";
+import type { CalendarEvent } from "@/types";
+
+const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+const MAX_DESKTOP_TITLES = 3;
+const MAX_MOBILE_DOTS = 4;
+
+function startOfCalendarGrid(month: Date): Date {
+  const y = month.getFullYear();
+  const m = month.getMonth();
+  const first = new Date(y, m, 1);
+  const offsetToMonday = (first.getDay() + 6) % 7;
+  return new Date(y, m, 1 - offsetToMonday);
+}
+
+function endOfCalendarGrid(month: Date): Date {
+  const y = month.getFullYear();
+  const m = month.getMonth();
+  const last = new Date(y, m + 1, 0);
+  const daysToSunday = (7 - last.getDay()) % 7;
+  return new Date(y, m, last.getDate() + daysToSunday);
+}
+
+function enumerateInclusive(start: Date, end: Date): Date[] {
+  const out: Date[] = [];
+  const cur = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const endTime = new Date(
+    end.getFullYear(),
+    end.getMonth(),
+    end.getDate(),
+  ).getTime();
+  while (cur.getTime() <= endTime) {
+    out.push(new Date(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return out;
+}
+
+function toISODate(d: Date): string {
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${mo}-${day}`;
+}
+
+function sameCalendarDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function formatMonthYear(month: Date): string {
+  return month.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
+
+function formatDayShort(d: Date): string {
+  return d.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+}
+
+function formatAriaEventDate(ev: CalendarEvent): string {
+  return new Date(ev.start_date + "T12:00:00").toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const fn = () => setReduced(mq.matches);
+    mq.addEventListener("change", fn);
+    return () => mq.removeEventListener("change", fn);
+  }, []);
+  return reduced;
+}
+
+export function EventCalendar({ initialMonth }: { initialMonth?: Date }) {
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const base = initialMonth ?? new Date();
+    return new Date(base.getFullYear(), base.getMonth(), 1);
+  });
+  const reducedMotion = usePrefersReducedMotion();
+
+  const gridStart = useMemo(
+    () => startOfCalendarGrid(currentMonth),
+    [currentMonth],
+  );
+  const gridEnd = useMemo(() => endOfCalendarGrid(currentMonth), [currentMonth]);
+  const startDate = useMemo(() => toISODate(gridStart), [gridStart]);
+  const endDate = useMemo(() => toISODate(gridEnd), [gridEnd]);
+
+  const { eventsByDate, loading, error } = useCalendarEvents(startDate, endDate);
+
+  const weeks = useMemo(() => {
+    const days = enumerateInclusive(gridStart, gridEnd);
+    const rows: Date[][] = [];
+    for (let i = 0; i < days.length; i += 7) {
+      rows.push(days.slice(i, i + 7));
+    }
+    return rows;
+  }, [gridStart, gridEnd]);
+
+  const today = new Date();
+  const nowMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const isViewingCurrentMonth = sameCalendarDay(currentMonth, nowMonthStart);
+
+  function goPrev() {
+    setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1));
+  }
+
+  function goNext() {
+    setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1));
+  }
+
+  function goToday() {
+    const n = new Date();
+    setCurrentMonth(new Date(n.getFullYear(), n.getMonth(), 1));
+  }
+
+  const monthKey = `${currentMonth.getFullYear()}-${currentMonth.getMonth()}`;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={goPrev}
+          aria-label="Previous month"
+          className="shrink-0 text-bone hover:bg-forest-shadow/80"
+        >
+          <ChevronLeft className="size-5" />
+        </Button>
+        <div
+          aria-live="polite"
+          className="min-w-0 flex-1 text-center font-display text-lg font-semibold tracking-tight text-bone"
+        >
+          {formatMonthYear(currentMonth)}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {!isViewingCurrentMonth ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={goToday}
+              className="text-xs"
+            >
+              Today
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={goNext}
+            aria-label="Next month"
+            className="text-bone hover:bg-forest-shadow/80"
+          >
+            <ChevronRight className="size-5" />
+          </Button>
+        </div>
+      </div>
+
+      {error ? (
+        <p className="text-center text-sm text-dried-blood" role="alert">
+          Could not load calendar events.
+        </p>
+      ) : null}
+
+      <div
+        className={cn(
+          "overflow-hidden rounded-default border border-root-line bg-dark-moss/80 shadow-default",
+          !reducedMotion && "motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200",
+        )}
+        key={monthKey}
+      >
+        <div
+          role="grid"
+          aria-label="Event calendar"
+          className="flex flex-col"
+        >
+          <div
+            role="row"
+            className="grid grid-cols-7 border-b border-root-line bg-forest-shadow/50"
+          >
+            {DOW.map((label) => (
+              <div
+                key={label}
+                role="columnheader"
+                className="px-1 py-2 text-center text-[10px] font-medium uppercase tracking-wide text-fog md:text-xs"
+              >
+                {label}
+              </div>
+            ))}
+          </div>
+
+          {weeks.map((week, wi) => (
+            <div
+              key={week[0]!.getTime()}
+              role="row"
+              className="grid grid-cols-7 border-b border-root-line last:border-b-0"
+            >
+              {week.map((dayDate) => {
+                const key = toISODate(dayDate);
+                const inMonth =
+                  dayDate.getMonth() === currentMonth.getMonth() &&
+                  dayDate.getFullYear() === currentMonth.getFullYear();
+                const dayEvents = eventsByDate.get(key) ?? [];
+                const isTodayCell = sameCalendarDay(dayDate, today);
+                const visibleDesktop = dayEvents.slice(0, MAX_DESKTOP_TITLES);
+                const overflow = dayEvents.length - visibleDesktop.length;
+
+                return (
+                  <div
+                    key={key}
+                    role="gridcell"
+                    className={cn(
+                      "relative flex min-h-[5.5rem] flex-col gap-0.5 border-r border-root-line p-1 last:border-r-0 md:min-h-[7.5rem]",
+                      !inMonth && "bg-forest-shadow/30",
+                    )}
+                  >
+                    <div className="flex shrink-0 justify-between gap-1">
+                      <span
+                        className={cn(
+                          "flex size-7 shrink-0 items-center justify-center text-xs font-medium tabular-nums md:text-sm",
+                          !inMonth && "text-fog",
+                          inMonth && !isTodayCell && "text-stone",
+                          isTodayCell &&
+                            "rounded-full bg-neon-moss/25 text-bone ring-1 ring-neon-moss/50",
+                        )}
+                      >
+                        {dayDate.getDate()}
+                      </span>
+                    </div>
+
+                    {loading && inMonth ? (
+                      <div className="mt-1 space-y-1">
+                        <Skeleton className="h-2 w-full rounded-sm" />
+                        <Skeleton className="hidden h-2 w-4/5 rounded-sm md:block" />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mt-1 hidden min-h-0 flex-1 flex-col gap-0.5 md:flex">
+                          {visibleDesktop.map((ev) => (
+                            <EventPreviewModal
+                              key={ev.id}
+                              event={ev}
+                              trigger={
+                                <button
+                                  type="button"
+                                  className="w-full truncate rounded-default border-l-2 border-neon-moss/70 bg-transparent py-0.5 pl-1.5 text-left text-[11px] text-bone hover:bg-forest-shadow/70 focus-visible:ring-2 focus-visible:ring-neon-moss/50 md:text-xs"
+                                  title={ev.title}
+                                  aria-label={`View event: ${ev.title}, ${formatAriaEventDate(ev)}`}
+                                >
+                                  {ev.title}
+                                </button>
+                              }
+                            />
+                          ))}
+                          {overflow > 0 ? (
+                            <EventCalendarDayModal
+                              date={dayDate}
+                              events={dayEvents}
+                              trigger={
+                                <button
+                                  type="button"
+                                  className="text-left text-[10px] font-medium text-neon-moss hover:underline focus-visible:ring-2 focus-visible:ring-neon-moss/50 md:text-xs"
+                                  aria-label={`Show ${overflow} more events on ${formatDayShort(dayDate)}`}
+                                >
+                                  +{overflow} more
+                                </button>
+                              }
+                            />
+                          ) : null}
+                        </div>
+
+                        <div className="mt-auto flex flex-col gap-1 md:hidden">
+                          {dayEvents.length > 0 ? (
+                            <>
+                              <div
+                                className="flex flex-wrap items-center gap-1"
+                                aria-hidden
+                              >
+                                {dayEvents
+                                  .slice(0, MAX_MOBILE_DOTS)
+                                  .map((ev) => (
+                                    <span
+                                      key={ev.id}
+                                      className="size-1.5 shrink-0 rounded-full bg-neon-moss"
+                                    />
+                                  ))}
+                              </div>
+                              <EventCalendarDayModal
+                                date={dayDate}
+                                events={dayEvents}
+                                trigger={
+                                  <button
+                                    type="button"
+                                    className="w-full rounded-default border border-root-line py-1 text-[10px] text-fog hover:bg-forest-shadow/80 focus-visible:ring-2 focus-visible:ring-neon-moss/50"
+                                    aria-label={`Open ${dayEvents.length} events on ${formatDayShort(dayDate)}`}
+                                  >
+                                    View day
+                                  </button>
+                                }
+                              />
+                            </>
+                          ) : null}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
