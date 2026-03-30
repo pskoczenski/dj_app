@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { AvatarDropdown } from "@/components/layout/avatar-dropdown";
+import { LocationIndicator } from "@/components/layout/location-indicator";
 import type { CurrentUser } from "@/hooks/use-current-user";
 
 interface MobileTopBarProps {
@@ -19,6 +20,7 @@ export function MobileTopBar({ user }: MobileTopBarProps) {
         DJ Network
       </Link>
       <div className="flex shrink-0 items-center gap-0.5">
+        <LocationIndicator />
         <Link
           href="/search"
           aria-label="Search"

@@ -6,6 +6,7 @@ import { MessageCircle, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUnreadCount } from "@/hooks/use-unread-count";
 import { AvatarDropdown } from "./avatar-dropdown";
+import { LocationIndicator } from "./location-indicator";
 import type { CurrentUser } from "@/hooks/use-current-user";
 
 const NAV_LINKS = [
@@ -50,6 +51,7 @@ export function Navbar({ user }: NavbarProps) {
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-1">
+          <LocationIndicator />
           <Link
             href="/messages"
             aria-label="Messages"
