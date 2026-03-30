@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CharacterCounter } from "@/components/shared/character-counter";
 import { GenreTagInput } from "@/components/forms/genre-tag-input";
 import { ImageUpload } from "@/components/forms/image-upload";
+import { CitySelect } from "@/components/forms/city-select";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { storageService } from "@/lib/services/storage";
 import { toast } from "sonner";
@@ -54,8 +55,7 @@ export default function EditProfilePage() {
   const [displayName, setDisplayName] = useState("");
   const [slug, setSlug] = useState("");
   const [bio, setBio] = useState("");
-  const [city, setCity] = useState("");
-  const [stateField, setStateField] = useState("");
+  const [cityId, setCityId] = useState("");
   const [country, setCountry] = useState("");
   const [genres, setGenres] = useState<string[]>([]);
   const [profileType, setProfileType] = useState<ProfileType>("dj");
@@ -121,8 +121,7 @@ export default function EditProfilePage() {
         setDisplayName(p.display_name);
         setSlug(p.slug);
         setBio(p.bio ?? "");
-        setCity(p.city ?? "");
-        setStateField(p.state ?? "");
+        setCityId(p.city_id ?? "");
         setCountry(p.country ?? "");
         setGenres(p.genres ?? []);
         setProfileType(p.profile_type);
@@ -166,6 +165,7 @@ export default function EditProfilePage() {
     if (displayName.length > 50) e.displayName = "Display name must be 50 characters or less.";
     if (!slug) e.slug = "Slug is required.";
     if (bio.length > BIO_MAX) e.bio = `Bio must be ${BIO_MAX} characters or less.`;
+    if (!cityId) e.cityId = "City is required.";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -180,8 +180,7 @@ export default function EditProfilePage() {
         display_name: displayName,
         slug,
         bio: bio || null,
-        city: city || null,
-        state: stateField || null,
+        city_id: cityId,
         country: country || null,
         genres: genres.length > 0 ? genres : null,
         profile_type: profileType,
@@ -262,21 +261,13 @@ export default function EditProfilePage() {
           <CharacterCounter value={bio} max={BIO_MAX} className="mt-1" />
         </Field>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="City" id="city">
-            <Input
-              id="city"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="e.g. Brooklyn"
-            />
-          </Field>
-          <Field label="State" id="state">
-            <Input
-              id="state"
-              value={stateField}
-              onChange={(e) => setStateField(e.target.value)}
-              placeholder="e.g. NY"
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="City" id="profile-city-id" error={errors.cityId}>
+            <CitySelect
+              id="profile-city-id"
+              value={cityId}
+              onChange={setCityId}
+              aria-label="Home city"
             />
           </Field>
           <Field label="Country" id="country">

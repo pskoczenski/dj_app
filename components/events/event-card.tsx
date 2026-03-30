@@ -49,7 +49,7 @@ function statusVariant(status: string) {
 }
 
 export function EventCard({ event }: { event: EventWithLineupPreview }) {
-  const location = [event.venue, event.city, event.state]
+  const location = [event.venue, event.cities?.name, event.cities?.state_code]
     .filter(Boolean)
     .join(", ");
   const headingId = `event-title-${event.id}`;

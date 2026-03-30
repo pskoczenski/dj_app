@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { GenreTagInput } from "@/components/forms/genre-tag-input";
 import { ImageUpload } from "@/components/forms/image-upload";
+import { CitySelect } from "@/components/forms/city-select";
 import {
   LineupBuilder,
   type LineupEntry,
@@ -74,8 +75,7 @@ export function EventForm({
   const [startTime, setStartTime] = useState(event?.start_time ?? "");
   const [endTime, setEndTime] = useState(event?.end_time ?? "");
   const [venue, setVenue] = useState(event?.venue ?? "");
-  const [city, setCity] = useState(event?.city ?? "");
-  const [stateField, setStateField] = useState(event?.state ?? "");
+  const [cityId, setCityId] = useState(event?.city_id ?? "");
   const [country, setCountry] = useState(event?.country ?? "");
   const [ticketUrl, setTicketUrl] = useState(event?.ticket_url ?? "");
   const [genres, setGenres] = useState<string[]>(event?.genres ?? []);
@@ -87,12 +87,16 @@ export function EventForm({
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const isValid = title.trim().length > 0 && startDate.length > 0;
+  const isValid =
+    title.trim().length > 0 &&
+    startDate.length > 0 &&
+    cityId.length > 0;
 
   function validate(): boolean {
     const e: Record<string, string> = {};
     if (!title.trim()) e.title = "Title is required.";
     if (!startDate) e.startDate = "Start date is required.";
+    if (!cityId) e.cityId = "City is required.";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -131,8 +135,7 @@ export function EventForm({
           start_time: startTime || null,
           end_time: endTime || null,
           venue: venue || null,
-          city: city || null,
-          state: stateField || null,
+          city_id: cityId,
           country: country || null,
           ticket_url: ticketUrl || null,
           genres: genres.length > 0 ? genres : null,
@@ -160,8 +163,7 @@ export function EventForm({
           start_time: startTime || null,
           end_time: endTime || null,
           venue: venue || null,
-          city: city || null,
-          state: stateField || null,
+          city_id: cityId,
           country: country || null,
           ticket_url: ticketUrl || null,
           genres: genres.length > 0 ? genres : null,
@@ -325,31 +327,22 @@ export function EventForm({
             onChange={(e) => setVenue(e.target.value)}
           />
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 sm:col-span-2">
           <label
-            htmlFor="event-city"
+            htmlFor="event-city-id"
             className="text-sm font-medium text-bone"
           >
             City
           </label>
-          <Input
-            id="event-city"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
+          <CitySelect
+            id="event-city-id"
+            value={cityId}
+            onChange={setCityId}
+            aria-label="Event city"
           />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor="event-state"
-            className="text-sm font-medium text-bone"
-          >
-            State
-          </label>
-          <Input
-            id="event-state"
-            value={stateField}
-            onChange={(e) => setStateField(e.target.value)}
-          />
+          {errors.cityId ? (
+            <p className="text-sm text-destructive">{errors.cityId}</p>
+          ) : null}
         </div>
         <div className="flex flex-col gap-1">
           <label

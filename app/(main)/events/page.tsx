@@ -93,7 +93,7 @@ function EventsBrowser() {
               (e) =>
                 e.title.toLowerCase().includes(search.toLowerCase()) ||
                 e.venue?.toLowerCase().includes(search.toLowerCase()) ||
-                e.city?.toLowerCase().includes(search.toLowerCase()),
+                e.cities?.name?.toLowerCase().includes(search.toLowerCase()),
             )
           : data;
 

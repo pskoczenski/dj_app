@@ -271,8 +271,11 @@ function DjResultsList({ profiles }: { profiles: Profile[] }) {
               <p className="text-sm font-medium text-bone">{p.display_name}</p>
               <p className="text-xs text-fog">@{p.slug}</p>
             </div>
-            {p.city && (
-              <span className="text-xs text-fog">{p.city}{p.state ? `, ${p.state}` : ""}</span>
+            {p.cities && (
+              <span className="text-xs text-fog">
+                {p.cities.name}
+                {p.cities.state_code ? `, ${p.cities.state_code}` : ""}
+              </span>
             )}
           </Link>
         );

@@ -15,6 +15,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarPlus, Music, AlertCircle } from "lucide-react";
 import type { EventWithLineupPreview, MixWithCreator } from "@/types";
+import { DEFAULT_SIGNUP_CITY_ID } from "@/lib/db/default-city";
 
 export default function HomePage() {
   const { user, profile, hasAuthSession, loading: userLoading } =
@@ -42,7 +43,7 @@ export default function HomePage() {
     async function load() {
       try {
         const [nearby, gigs, mixes, fc] = await Promise.all([
-          eventsService.getUpcoming(profile!.state ?? undefined),
+          eventsService.getUpcoming(profile!.cities?.state_code ?? undefined),
           eventsService.getByProfile(user!.id),
           mixesService.getAll({ sort: "newest", range: [0, 5] }),
           profilesService.getFollowCounts(user!.id),
@@ -106,7 +107,8 @@ export default function HomePage() {
     );
   }
 
-  const profileIncomplete = !profile.bio || !profile.city;
+  const profileIncomplete =
+    !profile.bio || profile.city_id === DEFAULT_SIGNUP_CITY_ID;
   const initials = user.displayName
     .split(" ")
     .map((w) => w[0])
@@ -202,9 +204,9 @@ export default function HomePage() {
           <h2 className="mb-3 font-display text-xl font-bold text-bone">
             Events Near You
           </h2>
-          {!profile?.state && (
+          {profile?.city_id === DEFAULT_SIGNUP_CITY_ID && (
             <p className="mb-3 text-sm text-fog">
-              Set your state in{" "}
+              Choose your home city in{" "}
               <Link href="/profile/edit" className="underline">
                 profile settings
               </Link>{" "}

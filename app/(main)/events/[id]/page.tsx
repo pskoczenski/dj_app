@@ -80,7 +80,12 @@ export default function EventDetailPage({
   const groupChatEligible =
     event.status === "published" || event.status === "cancelled";
 
-  const location = [event.venue, event.city, event.state, event.country]
+  const location = [
+    event.venue,
+    event.cities?.name,
+    event.cities?.state_code,
+    event.country,
+  ]
     .filter(Boolean)
     .join(", ");
 
