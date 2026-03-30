@@ -3,6 +3,7 @@ import { TABLES, VIEWS, ENUMS } from "@/lib/db/schema-constants";
 describe("Schema constants", () => {
   it("exports all required table names", () => {
     expect(TABLES).toEqual({
+      cities: "cities",
       profiles: "profiles",
       events: "events",
       eventLineup: "event_lineup",

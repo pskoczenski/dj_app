@@ -64,4 +64,16 @@ describe("Migration file guardrails", () => {
     expect(sql).toContain("Users can like comments as themselves");
     expect(sql).toContain("Users can remove own comment likes");
   });
+
+  it("adds cities table with trigram index and authenticated read policy", () => {
+    expect(sql).toContain("CREATE TABLE cities");
+    expect(sql).toContain("CREATE EXTENSION IF NOT EXISTS pg_trgm");
+    expect(sql).toContain("gin (name gin_trgm_ops)");
+    expect(sql).toContain("idx_cities_name_state");
+    expect(sql).toContain("Cities are readable by authenticated users");
+    expect(sql).toContain("profiles");
+    expect(sql).toContain("city_id");
+    expect(sql).toContain("ALTER TABLE profiles");
+    expect(sql).toContain("DROP COLUMN city");
+  });
 });

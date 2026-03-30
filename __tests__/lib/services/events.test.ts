@@ -44,7 +44,7 @@ jest.mock("@/lib/supabase/client", () => ({
   createClient: () => mock.client,
 }));
 
-import { eventsService, EVENT_LIST_WITH_LINEUP } from "@/lib/services/events";
+import { eventsService, eventListWithLineupSelect } from "@/lib/services/events";
 
 const MOCK_EVENT = {
   id: "evt-1",
@@ -53,8 +53,14 @@ const MOCK_EVENT = {
   start_date: "2025-06-15",
   status: "published",
   deleted_at: null,
-  city: "Portland",
-  state: "OR",
+  city_id: "city-portland",
+  cities: {
+    id: "city-portland",
+    name: "Portland",
+    state_code: "OR",
+    state_name: "Oregon",
+    created_at: "2025-01-01",
+  },
   country: "US",
   description: null,
   end_date: null,
@@ -93,7 +99,9 @@ describe("eventsService", () => {
       expect(result).toEqual([MOCK_EVENT]);
       expect(mock.client.from).toHaveBeenCalledWith("events");
       const builder = mock.builder(0);
-      expect(builder.select).toHaveBeenCalledWith(EVENT_LIST_WITH_LINEUP);
+      expect(builder.select).toHaveBeenCalledWith(
+        eventListWithLineupSelect(false),
+      );
     });
 
     it("applies dateFrom filter via gte", async () => {
@@ -123,8 +131,10 @@ describe("eventsService", () => {
 
       await eventsService.getAll({ state: "OR" });
       const builder = mock.builder(0);
-      // eq is called twice: once for status, once for state
-      expect(builder.eq).toHaveBeenCalledWith("state", "OR");
+      expect(builder.select).toHaveBeenCalledWith(
+        eventListWithLineupSelect(true),
+      );
+      expect(builder.eq).toHaveBeenCalledWith("cities.state_code", "OR");
     });
 
     it("applies genre filter via contains", async () => {
@@ -192,6 +202,7 @@ describe("eventsService", () => {
         title: "Underground Session",
         start_date: "2025-06-15",
         created_by: "user-1",
+        city_id: "city-portland",
       });
       expect(result).toEqual(MOCK_EVENT);
     });
@@ -219,7 +230,7 @@ describe("eventsService", () => {
 
   describe("getEventsByDateRange", () => {
     const CALENDAR_SELECT =
-      "id,title,start_date,end_date,start_time,end_time,venue,city,state,flyer_image_url,genres,status,created_by";
+      "id,title,start_date,end_date,start_time,end_time,venue,flyer_image_url,genres,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
 
     it("builds overlap, visibility, sort, and published-only when logged out", async () => {
       mock = chainMock();

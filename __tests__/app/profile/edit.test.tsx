@@ -10,6 +10,20 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace }),
 }));
 
+jest.mock("@/lib/services/cities", () => ({
+  citiesService: {
+    listAll: jest.fn().mockResolvedValue([
+      {
+        id: "city-bk",
+        name: "Brooklyn",
+        state_name: "New York",
+        state_code: "NY",
+        created_at: "2024-01-01",
+      },
+    ]),
+  },
+}));
+
 jest.mock("@/hooks/use-current-user", () => ({
   useCurrentUser: () => ({
     user: {
@@ -24,8 +38,14 @@ jest.mock("@/hooks/use-current-user", () => ({
       display_name: "DJ Shadow",
       slug: "dj-shadow",
       bio: "Bio text",
-      city: "Brooklyn",
-      state: "NY",
+      city_id: "city-bk",
+      cities: {
+        id: "city-bk",
+        name: "Brooklyn",
+        state_name: "New York",
+        state_code: "NY",
+        created_at: "2024-01-01",
+      },
       country: "US",
       genres: ["house"],
       profile_type: "dj",
@@ -47,8 +67,14 @@ jest.mock("@/lib/services/profiles", () => ({
       display_name: "DJ Shadow",
       slug: "dj-shadow",
       bio: "Bio text",
-      city: "Brooklyn",
-      state: "NY",
+      city_id: "city-bk",
+      cities: {
+        id: "city-bk",
+        name: "Brooklyn",
+        state_name: "New York",
+        state_code: "NY",
+        created_at: "2024-01-01",
+      },
       country: "US",
       genres: ["house"],
       profile_type: "dj",

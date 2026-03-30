@@ -39,6 +39,20 @@ jest.mock("@/lib/services/profiles", () => ({
   },
 }));
 
+jest.mock("@/lib/services/cities", () => ({
+  citiesService: {
+    listAll: jest.fn().mockResolvedValue([
+      {
+        id: "city-pdx",
+        name: "Portland",
+        state_name: "Oregon",
+        state_code: "OR",
+        created_at: "2025-01-01",
+      },
+    ]),
+  },
+}));
+
 jest.mock("sonner", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 
 import { conversationsService } from "@/lib/services/conversations";
@@ -54,6 +68,8 @@ describe("EventForm", () => {
 
     await user.type(screen.getByLabelText(/title/i), "Launch Party");
     await user.type(screen.getByLabelText(/start date/i), "2025-08-01");
+    const citySel = await screen.findByLabelText(/event city/i);
+    await user.selectOptions(citySel, "city-pdx");
     await user.click(screen.getByRole("button", { name: /publish/i }));
 
     await waitFor(() => {
@@ -86,7 +102,7 @@ describe("EventForm", () => {
     expect(publishBtn).toBeDisabled();
   });
 
-  it("enables publish when title and start date are filled", async () => {
+  it("enables publish when title, start date, and city are filled", async () => {
     const user = userEvent.setup();
     render(<EventForm mode="create" currentUserId="user-1" />);
 
@@ -95,6 +111,8 @@ describe("EventForm", () => {
       screen.getByLabelText(/start date/i),
       "2025-08-01",
     );
+    const citySel = await screen.findByLabelText(/event city/i);
+    await user.selectOptions(citySel, "city-pdx");
 
     const publishBtn = screen.getByRole("button", { name: /publish/i });
     expect(publishBtn).toBeEnabled();
@@ -147,7 +165,14 @@ describe("EventForm", () => {
           status: "published",
           created_by: "user-1",
           deleted_at: null,
-          city: null,
+          city_id: "city-pdx",
+          cities: {
+            id: "city-pdx",
+            name: "Portland",
+            state_name: "Oregon",
+            state_code: "OR",
+            created_at: "2025-01-01",
+          },
           country: null,
           description: null,
           end_date: null,
@@ -160,7 +185,6 @@ describe("EventForm", () => {
           longitude: null,
           ticket_url: null,
           venue: null,
-          state: null,
           created_at: "2025-01-01",
           updated_at: "2025-01-01",
         }}
