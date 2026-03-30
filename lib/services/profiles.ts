@@ -11,10 +11,13 @@ function supabase() {
   return createClient();
 }
 
+const PROFILE_WITH_CITY =
+  "*, cities:city_id(id, name, state_name, state_code, created_at)";
+
 export async function getBySlug(slug: string): Promise<Profile | null> {
   const { data, error } = await supabase()
     .from(TABLES.profiles)
-    .select("*")
+    .select(PROFILE_WITH_CITY)
     .eq("slug", slug)
     .is("deleted_at", null)
     .maybeSingle();
@@ -26,7 +29,7 @@ export async function getBySlug(slug: string): Promise<Profile | null> {
 export async function getById(id: string): Promise<Profile | null> {
   const { data, error } = await supabase()
     .from(TABLES.profiles)
-    .select("*")
+    .select(PROFILE_WITH_CITY)
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -79,7 +82,7 @@ export async function search(query: string, limit = 10): Promise<Profile[]> {
   const term = `%${query}%`;
   const { data, error } = await supabase()
     .from(TABLES.profiles)
-    .select("*")
+    .select(PROFILE_WITH_CITY)
     .is("deleted_at", null)
     .or(`display_name.ilike.${term},slug.ilike.${term}`)
     .limit(limit);

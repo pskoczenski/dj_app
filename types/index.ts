@@ -4,11 +4,17 @@ type Tables = import("./database").Database["public"]["Tables"];
 type Views = import("./database").Database["public"]["Views"];
 type Enums = import("./database").Database["public"]["Enums"];
 
-// Row types
-export type Profile = Tables["profiles"]["Row"];
-export type Event = Tables["events"]["Row"];
+export type City = Tables["cities"]["Row"];
 
-/** Subset of `Event` for calendar and date-range queries (Step 28). */
+/** Profile/event rows as returned from list/detail queries with FK embed. */
+export type Profile = Tables["profiles"]["Row"] & {
+  cities?: City | null;
+};
+export type Event = Tables["events"]["Row"] & {
+  cities?: City | null;
+};
+
+/** Calendar list shape (flat city/state for UI; mapped in `eventsService.getEventsByDateRange`). */
 export type CalendarEvent = Pick<
   Event,
   | "id"
@@ -18,13 +24,15 @@ export type CalendarEvent = Pick<
   | "start_time"
   | "end_time"
   | "venue"
-  | "city"
-  | "state"
   | "flyer_image_url"
   | "genres"
   | "status"
   | "created_by"
->;
+  | "city_id"
+> & {
+  city: string | null;
+  state: string | null;
+};
 export type EventLineup = Tables["event_lineup"]["Row"];
 export type Conversation = Tables["conversations"]["Row"];
 export type ConversationParticipant = Tables["conversation_participants"]["Row"];

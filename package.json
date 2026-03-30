@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "generate:cities-seed": "node scripts/generate-cities-seed-sql.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

@@ -9,9 +9,23 @@ import type {
   EventWithLineupPreview,
 } from "@/types";
 
-/** Supabase select for browse/card rows: event fields plus lineup DJs (ordered client-side by sort_order). */
-export const EVENT_LIST_WITH_LINEUP = `
-  *,
+const CITY_EMBED_LEFT = `cities:city_id (
+    id,
+    name,
+    state_name,
+    state_code,
+    created_at
+  )`;
+
+const CITY_EMBED_INNER = `cities!inner (
+    id,
+    name,
+    state_name,
+    state_code,
+    created_at
+  )`;
+
+const EVENT_LINEUP_BLOCK = `
   event_lineup (
     sort_order,
     profile:profiles!event_lineup_profile_id_fkey (
@@ -20,6 +34,19 @@ export const EVENT_LIST_WITH_LINEUP = `
     )
   )
 `;
+
+/** Inner join cities when filtering by `cities.state_code` (PostgREST requirement). */
+export function eventListWithLineupSelect(innerCity: boolean): string {
+  const city = innerCity ? CITY_EMBED_INNER : CITY_EMBED_LEFT;
+  return `
+  *,
+  ${city},
+  ${EVENT_LINEUP_BLOCK}
+`;
+}
+
+/** Default browse select (left join on city). */
+export const EVENT_LIST_WITH_LINEUP = eventListWithLineupSelect(false);
 
 export interface EventFilters {
   dateFrom?: string;
@@ -34,8 +61,32 @@ function supabase() {
   return createClient();
 }
 
-const CALENDAR_EVENT_COLUMNS =
-  "id,title,start_date,end_date,start_time,end_time,venue,city,state,flyer_image_url,genres,status,created_by";
+const CALENDAR_SELECT =
+  "id,title,start_date,end_date,start_time,end_time,venue,flyer_image_url,genres,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
+
+function toCalendarEvent(
+  row: Record<string, unknown> & {
+    cities?: { name?: string; state_code?: string } | null;
+  },
+): CalendarEvent {
+  const c = row.cities;
+  return {
+    id: row.id as string,
+    title: row.title as string,
+    start_date: row.start_date as string,
+    end_date: (row.end_date as string | null) ?? null,
+    start_time: (row.start_time as string | null) ?? null,
+    end_time: (row.end_time as string | null) ?? null,
+    venue: (row.venue as string | null) ?? null,
+    flyer_image_url: (row.flyer_image_url as string | null) ?? null,
+    genres: (row.genres as string[] | null) ?? null,
+    status: row.status as CalendarEvent["status"],
+    created_by: row.created_by as string,
+    city_id: row.city_id as string,
+    city: c?.name ?? null,
+    state: c?.state_code ?? null,
+  };
+}
 
 /**
  * Events that overlap `[startDate, endDate]` (inclusive ISO date strings).
@@ -52,7 +103,7 @@ export async function getEventsByDateRange(
 
   let query = sb
     .from(TABLES.events)
-    .select(CALENDAR_EVENT_COLUMNS)
+    .select(CALENDAR_SELECT)
     .is("deleted_at", null)
     .lte("start_date", endDate)
     .or(
@@ -71,15 +122,18 @@ export async function getEventsByDateRange(
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []) as CalendarEvent[];
+  return (data ?? []).map((r) =>
+    toCalendarEvent(r as Parameters<typeof toCalendarEvent>[0]),
+  );
 }
 
 export async function getAll(
   filters: EventFilters = {},
 ): Promise<EventWithLineupPreview[]> {
+  const innerCity = Boolean(filters.state);
   let query = supabase()
     .from(TABLES.events)
-    .select(EVENT_LIST_WITH_LINEUP)
+    .select(eventListWithLineupSelect(innerCity))
     .is("deleted_at", null)
     .eq("status", "published" as EventStatus);
 
@@ -90,7 +144,7 @@ export async function getAll(
     query = query.lte("start_date", filters.dateTo);
   }
   if (filters.state) {
-    query = query.eq("state", filters.state);
+    query = query.eq("cities.state_code", filters.state);
   }
   if (filters.genre) {
     query = query.contains("genres", [filters.genre]);
@@ -115,39 +169,42 @@ export async function getAll(
 
   const { data, error } = await query;
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as unknown as EventWithLineupPreview[];
 }
 
 export async function getById(id: string): Promise<Event | null> {
   const { data, error } = await supabase()
     .from(TABLES.events)
-    .select("*, profiles!events_created_by_fkey(id, display_name, slug, profile_image_url)")
+    .select(
+      "*, cities:city_id(id, name, state_name, state_code, created_at), profiles!events_created_by_fkey(id, display_name, slug, profile_image_url)",
+    )
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
 
   if (error) throw error;
-  return data;
+  return data as Event | null;
 }
 
 export async function getUpcoming(state?: string): Promise<EventWithLineupPreview[]> {
   const today = new Date().toISOString().split("T")[0];
 
+  const innerCity = Boolean(state);
   let query = supabase()
     .from(TABLES.events)
-    .select(EVENT_LIST_WITH_LINEUP)
+    .select(eventListWithLineupSelect(innerCity))
     .is("deleted_at", null)
     .eq("status", "published" as EventStatus)
     .gte("start_date", today)
     .order("start_date", { ascending: true });
 
   if (state) {
-    query = query.eq("state", state);
+    query = query.eq("cities.state_code", state);
   }
 
   const { data, error } = await query;
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as unknown as EventWithLineupPreview[];
 }
 
 export async function getByProfile(profileId: string): Promise<EventWithLineupPreview[]> {
@@ -169,6 +226,8 @@ export async function getByProfile(profileId: string): Promise<EventWithLineupPr
 
   if (createdError) throw createdError;
 
+  const createdList = (createdEvents ?? []) as unknown as EventWithLineupPreview[];
+
   let lineupEvents: EventWithLineupPreview[] = [];
   if (lineupEventIds.length > 0) {
     const { data, error } = await supabase()
@@ -179,12 +238,12 @@ export async function getByProfile(profileId: string): Promise<EventWithLineupPr
       .order("start_date", { ascending: true });
 
     if (error) throw error;
-    lineupEvents = data ?? [];
+    lineupEvents = (data ?? []) as unknown as EventWithLineupPreview[];
   }
 
   const seen = new Set<string>();
   const merged: EventWithLineupPreview[] = [];
-  for (const event of [...(createdEvents ?? []), ...lineupEvents]) {
+  for (const event of [...createdList, ...lineupEvents]) {
     if (!seen.has(event.id)) {
       seen.add(event.id);
       merged.push(event);

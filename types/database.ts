@@ -83,9 +83,33 @@ export type Database = {
           },
         ]
       }
+      cities: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          state_code: string
+          state_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          state_code: string
+          state_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          state_code?: string
+          state_name?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
-          city: string | null
+          city_id: string
           country: string | null
           created_at: string | null
           created_by: string
@@ -101,7 +125,6 @@ export type Database = {
           longitude: number | null
           start_date: string
           start_time: string | null
-          state: string | null
           status: Database["public"]["Enums"]["event_status"]
           ticket_url: string | null
           title: string
@@ -109,7 +132,7 @@ export type Database = {
           venue: string | null
         }
         Insert: {
-          city?: string | null
+          city_id: string
           country?: string | null
           created_at?: string | null
           created_by: string
@@ -125,7 +148,6 @@ export type Database = {
           longitude?: number | null
           start_date: string
           start_time?: string | null
-          state?: string | null
           status?: Database["public"]["Enums"]["event_status"]
           ticket_url?: string | null
           title: string
@@ -133,7 +155,7 @@ export type Database = {
           venue?: string | null
         }
         Update: {
-          city?: string | null
+          city_id?: string
           country?: string | null
           created_at?: string | null
           created_by?: string
@@ -149,7 +171,6 @@ export type Database = {
           longitude?: number | null
           start_date?: string
           start_time?: string | null
-          state?: string | null
           status?: Database["public"]["Enums"]["event_status"]
           ticket_url?: string | null
           title?: string
@@ -157,6 +178,13 @@ export type Database = {
           venue?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "events_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "events_created_by_fkey"
             columns: ["created_by"]
@@ -591,7 +619,7 @@ export type Database = {
       profiles: {
         Row: {
           bio: string | null
-          city: string | null
+          city_id: string
           country: string | null
           created_at: string | null
           deleted_at: string | null
@@ -602,12 +630,11 @@ export type Database = {
           profile_type: Database["public"]["Enums"]["profile_type"]
           slug: string
           social_links: Json | null
-          state: string | null
           updated_at: string | null
         }
         Insert: {
           bio?: string | null
-          city?: string | null
+          city_id: string
           country?: string | null
           created_at?: string | null
           deleted_at?: string | null
@@ -618,12 +645,11 @@ export type Database = {
           profile_type?: Database["public"]["Enums"]["profile_type"]
           slug: string
           social_links?: Json | null
-          state?: string | null
           updated_at?: string | null
         }
         Update: {
           bio?: string | null
-          city?: string | null
+          city_id?: string
           country?: string | null
           created_at?: string | null
           deleted_at?: string | null
@@ -634,10 +660,17 @@ export type Database = {
           profile_type?: Database["public"]["Enums"]["profile_type"]
           slug?: string
           social_links?: Json | null
-          state?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -3,6 +3,7 @@
  * Changing these must also update the SQL migration.
  */
 export const TABLES = {
+  cities: "cities",
   profiles: "profiles",
   events: "events",
   eventLineup: "event_lineup",

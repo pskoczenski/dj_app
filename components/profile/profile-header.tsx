@@ -23,7 +23,11 @@ export function ProfileHeader({
     .slice(0, 2)
     .toUpperCase();
 
-  const location = [profile.city, profile.state, profile.country]
+  const locCity = profile.cities;
+  const location = [
+    locCity ? `${locCity.name}, ${locCity.state_code}` : null,
+    profile.country,
+  ]
     .filter(Boolean)
     .join(", ");
 

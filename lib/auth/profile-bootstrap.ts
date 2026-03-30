@@ -2,6 +2,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { generateUniqueSlug } from "@/lib/utils/slug";
 import type { ProfileType } from "@/types";
+import { DEFAULT_SIGNUP_CITY_ID } from "@/lib/db/default-city";
 
 /** Display name + profile type from auth user metadata (same defaults as login/signup). */
 export function profileDefaultsFromAuthUser(user: User): {
@@ -50,6 +51,7 @@ export async function ensureProfileForUser({
     display_name: safeName,
     slug,
     profile_type: profileType,
+    city_id: DEFAULT_SIGNUP_CITY_ID,
   });
 
   if (insertError) throw insertError;

@@ -15,16 +15,18 @@ export async function searchDjs(
   const term = `%${query}%`;
   const { data, error } = await supabase()
     .from(TABLES.profiles)
-    .select("*")
+    .select(
+      "*, cities:city_id(id, name, state_name, state_code, created_at)",
+    )
     .is("deleted_at", null)
     .or(
-      `display_name.ilike.${term},bio.ilike.${term},city.ilike.${term}`,
+      `display_name.ilike.${term},bio.ilike.${term},cities.name.ilike.${term}`,
     )
     .order("created_at", { ascending: false })
     .limit(limit);
 
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as unknown as Profile[];
 }
 
 export async function searchEvents(
@@ -38,13 +40,13 @@ export async function searchEvents(
     .is("deleted_at", null)
     .eq("status", "published")
     .or(
-      `title.ilike.${term},description.ilike.${term},venue.ilike.${term},city.ilike.${term}`,
+      `title.ilike.${term},description.ilike.${term},venue.ilike.${term},cities.name.ilike.${term}`,
     )
     .order("created_at", { ascending: false })
     .limit(limit);
 
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as unknown as EventWithLineupPreview[];
 }
 
 export async function searchMixes(
