@@ -44,7 +44,7 @@ describe("useCalendarEvents", () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(mockGetByRange).toHaveBeenCalledWith("2026-04-01", "2026-04-30");
+    expect(mockGetByRange).toHaveBeenCalledWith("2026-04-01", "2026-04-30", {});
     expect(result.current.events).toHaveLength(1);
     expect(result.current.events[0]?.id).toBe("e1");
     expect(result.current.eventsByDate.get("2026-04-15")).toHaveLength(1);
@@ -63,7 +63,11 @@ describe("useCalendarEvents", () => {
     rerender({ start: "2026-05-01", end: "2026-05-31" });
 
     await waitFor(() =>
-      expect(mockGetByRange).toHaveBeenLastCalledWith("2026-05-01", "2026-05-31"),
+      expect(mockGetByRange).toHaveBeenLastCalledWith(
+        "2026-05-01",
+        "2026-05-31",
+        {},
+      ),
     );
     expect(mockGetByRange).toHaveBeenCalledTimes(2);
   });
@@ -157,6 +161,18 @@ describe("useCalendarEvents", () => {
     expect(result.current.events[0]?.id).toBe("fresh");
   });
 
+  it("passes cityId to getEventsByDateRange when provided", async () => {
+    const cityId = "11111111-1111-4111-8111-111111111111";
+    renderHook(() =>
+      useCalendarEvents("2026-04-01", "2026-04-30", { cityId }),
+    );
+
+    await waitFor(() => expect(mockGetByRange).toHaveBeenCalled());
+    expect(mockGetByRange).toHaveBeenCalledWith("2026-04-01", "2026-04-30", {
+      cityId,
+    });
+  });
+
   it("refetch calls the service again", async () => {
     const { result } = renderHook(() =>
       useCalendarEvents("2026-04-01", "2026-04-30"),
@@ -170,5 +186,6 @@ describe("useCalendarEvents", () => {
     });
 
     expect(mockGetByRange).toHaveBeenCalledTimes(2);
+    expect(mockGetByRange).toHaveBeenLastCalledWith("2026-04-01", "2026-04-30", {});
   });
 });

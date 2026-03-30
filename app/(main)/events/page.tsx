@@ -2,13 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Suspense } from "react";
 import { eventsService, type EventFilters } from "@/lib/services/events";
+import { useLocation } from "@/hooks/use-location";
 import { EventCard } from "@/components/events/event-card";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { CalendarDays, List, Search, SlidersHorizontal } from "lucide-react";
 import { EventCalendar } from "@/components/events/event-calendar";
 import type { EventWithLineupPreview } from "@/types";
@@ -38,6 +41,7 @@ export default function EventsPage() {
 function EventsBrowser() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { activeCity } = useLocation();
 
   const [events, setEvents] = useState<EventWithLineupPreview[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,23 +71,26 @@ function EventsBrowser() {
 
   const pageRef = useRef(0);
   const sentinelRef = useRef<HTMLDivElement>(null);
-
-  function buildFilters(): EventFilters {
-    const filters: EventFilters = { sort };
-    if (stateFilter) filters.state = stateFilter;
-    if (genreFilter) filters.genre = genreFilter;
-    return filters;
-  }
+  const listSectionRef = useRef<HTMLDivElement>(null);
+  const prevCityIdRef = useRef<string | null>(null);
 
   const fetchPage = useCallback(
     async (page: number, append: boolean) => {
       if (append) setLoadingMore(true);
-      else setLoading(true);
+      else {
+        setLoading(true);
+        setEvents([]);
+      }
 
       try {
         const from = page * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
-        const filters = buildFilters();
+        const filters: EventFilters = {
+          sort,
+          cityId: activeCity.id,
+        };
+        if (stateFilter) filters.state = stateFilter;
+        if (genreFilter) filters.genre = genreFilter;
         filters.range = [from, to];
 
         const data = await eventsService.getAll(filters);
@@ -110,8 +117,7 @@ function EventsBrowser() {
         setLoadingMore(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [search, stateFilter, genreFilter, sort],
+    [search, stateFilter, genreFilter, sort, activeCity.id],
   );
 
   useEffect(() => {
@@ -119,6 +125,24 @@ function EventsBrowser() {
     setHasMore(true);
     fetchPage(0, false);
   }, [fetchPage]);
+
+  useEffect(() => {
+    if (viewMode !== "list") {
+      prevCityIdRef.current = activeCity.id;
+      return;
+    }
+    if (prevCityIdRef.current === null) {
+      prevCityIdRef.current = activeCity.id;
+      return;
+    }
+    if (prevCityIdRef.current !== activeCity.id) {
+      listSectionRef.current?.scrollIntoView({
+        block: "start",
+        behavior: "auto",
+      });
+    }
+    prevCityIdRef.current = activeCity.id;
+  }, [activeCity.id, viewMode]);
 
   // Sync local filters to URL (only replace when query actually changes — avoids navigation loops)
   useEffect(() => {
@@ -248,22 +272,41 @@ function EventsBrowser() {
           )}
 
           {/* Results */}
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <LoadingSpinner size="lg" />
-            </div>
-          ) : events.length === 0 ? (
-            <EmptyState
-              title="No events found"
-              description="Try adjusting your search or filters."
-            />
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {events.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
-          )}
+          <div ref={listSectionRef}>
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <LoadingSpinner size="lg" />
+              </div>
+            ) : events.length === 0 ? (
+              search.trim() ? (
+                <EmptyState
+                  title="No events found"
+                  description="Try adjusting your search or filters."
+                />
+              ) : (
+                <EmptyState
+                  title={`No events in ${activeCity.name} yet.`}
+                  description="Check back soon or create one in your area."
+                  action={
+                    <Link
+                      href="/events/create"
+                      className={cn(
+                        buttonVariants({ variant: "secondary", size: "sm" }),
+                      )}
+                    >
+                      Create an event
+                    </Link>
+                  }
+                />
+              )
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {events.map((event) => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Infinite scroll sentinel */}
           <div ref={sentinelRef} className="h-4" />

@@ -4,10 +4,12 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useLocation } from "@/hooks/use-location";
 import { searchService } from "@/lib/services/search";
 import { EventCard } from "@/components/events/event-card";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -28,6 +30,7 @@ export default function SearchPage() {
 function SearchBrowser() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { activeCity } = useLocation();
 
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [tab, setTab] = useState<TabValue>(
@@ -40,36 +43,43 @@ function SearchBrowser() {
   const [mixes, setMixes] = useState<MixWithCreator[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  /** When true, DJ + event search is scoped to `activeCity`; mixes are never scoped. */
+  const [scopeToActiveCity, setScopeToActiveCity] = useState(true);
 
-  const runSearch = useCallback(async (q: string) => {
-    if (q.length < 2) {
-      setDjs([]);
-      setEvents([]);
-      setMixes([]);
-      setHasSearched(false);
-      return;
-    }
-    setLoading(true);
-    setHasSearched(true);
-    try {
-      const [d, e, m] = await Promise.all([
-        searchService.searchDjs(q),
-        searchService.searchEvents(q),
-        searchService.searchMixes(q),
-      ]);
-      setDjs(d);
-      setEvents(e);
-      setMixes(m);
-    } catch {
-      // Non-fatal
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const runSearch = useCallback(
+    async (q: string, cityScoped: boolean) => {
+      if (q.length < 2) {
+        setDjs([]);
+        setEvents([]);
+        setMixes([]);
+        setHasSearched(false);
+        return;
+      }
+      setLoading(true);
+      setHasSearched(true);
+      const locationOpts =
+        cityScoped && activeCity.id ? { cityId: activeCity.id } : {};
+      try {
+        const [d, e, m] = await Promise.all([
+          searchService.searchDjs(q, locationOpts),
+          searchService.searchEvents(q, locationOpts),
+          searchService.searchMixes(q),
+        ]);
+        setDjs(d);
+        setEvents(e);
+        setMixes(m);
+      } catch {
+        // Non-fatal
+      } finally {
+        setLoading(false);
+      }
+    },
+    [activeCity.id],
+  );
 
   useEffect(() => {
-    runSearch(debouncedQuery);
-  }, [debouncedQuery, runSearch]);
+    void runSearch(debouncedQuery, scopeToActiveCity);
+  }, [debouncedQuery, scopeToActiveCity, runSearch]);
 
   // Sync to URL
   useEffect(() => {
@@ -96,6 +106,31 @@ function SearchBrowser() {
           className="pl-10"
           aria-label="Search"
         />
+      </div>
+
+      <div
+        className="flex flex-wrap gap-2"
+        role="group"
+        aria-label="Search location scope"
+      >
+        <Button
+          type="button"
+          variant={scopeToActiveCity ? "secondary" : "outline"}
+          size="sm"
+          onClick={() => setScopeToActiveCity(true)}
+          aria-pressed={scopeToActiveCity}
+        >
+          In {activeCity.name}
+        </Button>
+        <Button
+          type="button"
+          variant={!scopeToActiveCity ? "secondary" : "outline"}
+          size="sm"
+          onClick={() => setScopeToActiveCity(false)}
+          aria-pressed={!scopeToActiveCity}
+        >
+          All cities
+        </Button>
       </div>
 
       {/* Tabs */}

@@ -2,6 +2,28 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { EventCalendar } from "@/components/events/event-calendar";
 
+jest.mock("@/hooks/use-location", () => ({
+  useLocation: () => ({
+    activeCity: {
+      id: "city-cal",
+      name: "Portland",
+      state_name: "Oregon",
+      state_code: "OR",
+      created_at: "2025-01-01",
+    },
+    homeCity: {
+      id: "city-cal",
+      name: "Portland",
+      state_name: "Oregon",
+      state_code: "OR",
+      created_at: "2025-01-01",
+    },
+    isExploring: false,
+    setActiveCity: jest.fn(),
+    resetToHome: jest.fn(),
+  }),
+}));
+
 beforeAll(() => {
   window.matchMedia = jest.fn().mockImplementation((q: string) => ({
     matches: false,
@@ -104,6 +126,7 @@ describe("EventCalendar", () => {
     const firstRange = mockUseCalendarEvents.mock.calls[0];
     expect(firstRange?.[0]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(firstRange?.[1]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(firstRange?.[2]).toEqual({ cityId: "city-cal" });
 
     await user.click(screen.getByRole("button", { name: /next month/i }));
 
@@ -134,6 +157,22 @@ describe("EventCalendar", () => {
 
     expect(
       screen.getByRole("button", { name: /show 2 more events on april 15/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows city-scoped empty copy when the month has no events", () => {
+    mockUseCalendarEvents.mockReturnValue({
+      events: [],
+      eventsByDate: new Map(),
+      loading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    render(<EventCalendar initialMonth={new Date(2026, 3, 1)} />);
+
+    expect(
+      screen.getByText(/no events in portland this month/i),
     ).toBeInTheDocument();
   });
 

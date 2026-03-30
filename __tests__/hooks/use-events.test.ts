@@ -43,6 +43,19 @@ describe("useEvents", () => {
     expect(mockGetAll).toHaveBeenCalledWith({ state: "OR", sort: "soonest" });
   });
 
+  it("passes cityId in filters to getAll", async () => {
+    mockGetAll.mockResolvedValueOnce([]);
+
+    const cityId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const { result } = renderHook(() =>
+      useEvents({ sort: "soonest", cityId }),
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(mockGetAll).toHaveBeenCalledWith({ sort: "soonest", cityId });
+  });
+
   it("captures errors", async () => {
     mockGetAll.mockRejectedValueOnce(new Error("fetch failed"));
 

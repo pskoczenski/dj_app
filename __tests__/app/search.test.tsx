@@ -1,5 +1,8 @@
-import { render, screen, act } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { render, screen, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { LocationProvider } from "@/lib/location/location-provider";
+import type { City } from "@/types";
 
 const mockSearchDjs = jest.fn().mockResolvedValue([]);
 const mockSearchEvents = jest.fn().mockResolvedValue([]);
@@ -20,6 +23,22 @@ jest.mock("next/navigation", () => ({
 
 import SearchPage from "@/app/(main)/search/page";
 
+const homeCity: City = {
+  id: "city-pdx",
+  name: "Portland",
+  state_name: "Oregon",
+  state_code: "OR",
+  created_at: "2025-01-01",
+};
+
+function renderSearch(ui: ReactNode = <SearchPage />) {
+  return render(
+    <LocationProvider homeCity={homeCity} initialOverrideCity={null}>
+      {ui}
+    </LocationProvider>,
+  );
+}
+
 describe("SearchPage", () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -31,7 +50,7 @@ describe("SearchPage", () => {
   });
 
   it("renders search input and tab triggers", () => {
-    render(<SearchPage />);
+    renderSearch();
     expect(screen.getByLabelText("Search")).toBeInTheDocument();
     expect(screen.getByText("All")).toBeInTheDocument();
     expect(screen.getByText("DJs")).toBeInTheDocument();
@@ -40,7 +59,7 @@ describe("SearchPage", () => {
   });
 
   it("shows prompt text before first search", () => {
-    render(<SearchPage />);
+    renderSearch();
     expect(
       screen.getByText(/start typing to search/i),
     ).toBeInTheDocument();
@@ -48,7 +67,7 @@ describe("SearchPage", () => {
 
   it("debounces search — does not call service during 300ms", async () => {
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-    render(<SearchPage />);
+    renderSearch();
 
     await user.type(screen.getByLabelText("Search"), "hou");
 
@@ -60,7 +79,7 @@ describe("SearchPage", () => {
 
   it("calls all search services after 300ms debounce", async () => {
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-    render(<SearchPage />);
+    renderSearch();
 
     await user.type(screen.getByLabelText("Search"), "house");
 
@@ -69,8 +88,12 @@ describe("SearchPage", () => {
       jest.advanceTimersByTime(350);
     });
 
-    expect(mockSearchDjs).toHaveBeenCalledWith("house");
-    expect(mockSearchEvents).toHaveBeenCalledWith("house");
+    expect(mockSearchDjs).toHaveBeenCalledWith("house", {
+      cityId: homeCity.id,
+    });
+    expect(mockSearchEvents).toHaveBeenCalledWith("house", {
+      cityId: homeCity.id,
+    });
     expect(mockSearchMixes).toHaveBeenCalledWith("house");
   });
 
@@ -104,7 +127,7 @@ describe("SearchPage", () => {
     mockSearchEvents.mockResolvedValueOnce([]);
     mockSearchMixes.mockResolvedValueOnce([]);
 
-    render(<SearchPage />);
+    renderSearch();
 
     await user.type(screen.getByLabelText("Search"), "house");
 
@@ -113,5 +136,37 @@ describe("SearchPage", () => {
     });
 
     expect(await screen.findByText("DJ House")).toBeInTheDocument();
+  });
+
+  it("scopes DJs and events to active city by default; mixes are unscoped", async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    renderSearch();
+
+    await user.type(screen.getByLabelText("Search"), "techno");
+    await act(async () => {
+      jest.advanceTimersByTime(350);
+    });
+
+    expect(mockSearchMixes).toHaveBeenCalledWith("techno");
+    expect(mockSearchMixes.mock.calls[0]?.length).toBe(1);
+  });
+
+  it("All cities passes no cityId for DJs and events", async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    renderSearch();
+
+    await user.type(screen.getByLabelText("Search"), "house");
+    await act(async () => {
+      jest.advanceTimersByTime(350);
+    });
+    jest.clearAllMocks();
+
+    await user.click(screen.getByRole("button", { name: /^all cities$/i }));
+
+    await waitFor(() => {
+      expect(mockSearchDjs).toHaveBeenCalledWith("house", {});
+      expect(mockSearchEvents).toHaveBeenCalledWith("house", {});
+      expect(mockSearchMixes).toHaveBeenCalledWith("house");
+    });
   });
 });

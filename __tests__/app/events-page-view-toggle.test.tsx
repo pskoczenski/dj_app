@@ -11,9 +11,11 @@ jest.mock("next/navigation", () => ({
   useSearchParams: () => searchParams,
 }));
 
+const mockGetAll = jest.fn().mockResolvedValue([]);
+
 jest.mock("@/lib/services/events", () => ({
   eventsService: {
-    getAll: jest.fn().mockResolvedValue([]),
+    getAll: (...args: unknown[]) => mockGetAll(...args),
     getEventsByDateRange: jest.fn().mockResolvedValue([]),
   },
 }));
@@ -50,6 +52,28 @@ jest.mock("@/hooks/use-current-user", () => ({
   useCurrentUser: () => ({ user: null }),
 }));
 
+jest.mock("@/hooks/use-location", () => ({
+  useLocation: () => ({
+    activeCity: {
+      id: "city-test",
+      name: "Test City",
+      state_name: "Oregon",
+      state_code: "OR",
+      created_at: "2025-01-01",
+    },
+    homeCity: {
+      id: "city-test",
+      name: "Test City",
+      state_name: "Oregon",
+      state_code: "OR",
+      created_at: "2025-01-01",
+    },
+    isExploring: false,
+    setActiveCity: jest.fn(),
+    resetToHome: jest.fn(),
+  }),
+}));
+
 beforeAll(() => {
   window.matchMedia = jest.fn().mockImplementation((q: string) => ({
     matches: false,
@@ -76,6 +100,7 @@ beforeAll(() => {
 describe("Events page view toggle", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetAll.mockResolvedValue([]);
     searchParams = new URLSearchParams();
   });
 
@@ -99,6 +124,21 @@ describe("Events page view toggle", () => {
       expect.stringContaining("view=calendar"),
       expect.any(Object),
     );
+  });
+
+  it("loads events with active city id in filters", async () => {
+    render(
+      <Suspense fallback={null}>
+        <EventsPage />
+      </Suspense>,
+    );
+
+    await screen.findByRole("button", { name: /list view/i });
+
+    expect(mockGetAll).toHaveBeenCalled();
+    expect(mockGetAll.mock.calls[0]?.[0]).toMatchObject({
+      cityId: "city-test",
+    });
   });
 
   it("shows calendar as selected when URL has view=calendar", async () => {

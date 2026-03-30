@@ -5,7 +5,15 @@ import { buildEventsByDateMap } from "@/lib/calendar-events-map";
 import { eventsService } from "@/lib/services/events";
 import type { CalendarEvent } from "@/types";
 
-export function useCalendarEvents(startDate: string, endDate: string) {
+export type UseCalendarEventsOptions = {
+  cityId?: string;
+};
+
+export function useCalendarEvents(
+  startDate: string,
+  endDate: string,
+  options: UseCalendarEventsOptions = {},
+) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [eventsByDate, setEventsByDate] = useState<
     Map<string, CalendarEvent[]>
@@ -19,7 +27,11 @@ export function useCalendarEvents(startDate: string, endDate: string) {
     setLoading(true);
     setError(null);
     try {
-      const data = await eventsService.getEventsByDateRange(startDate, endDate);
+      const data = await eventsService.getEventsByDateRange(
+        startDate,
+        endDate,
+        options.cityId ? { cityId: options.cityId } : {},
+      );
       if (id !== requestIdRef.current) return;
       setEvents(data);
       setEventsByDate(buildEventsByDateMap(data));
@@ -33,7 +45,7 @@ export function useCalendarEvents(startDate: string, endDate: string) {
         setLoading(false);
       }
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, options.cityId]);
 
   useEffect(() => {
     void runFetch();

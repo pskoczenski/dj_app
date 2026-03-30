@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCalendarEvents } from "@/hooks/use-calendar-events";
+import { useLocation } from "@/hooks/use-location";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -88,6 +89,7 @@ function usePrefersReducedMotion(): boolean {
 }
 
 export function EventCalendar({ initialMonth }: { initialMonth?: Date }) {
+  const { activeCity } = useLocation();
   const [currentMonth, setCurrentMonth] = useState(() => {
     const base = initialMonth ?? new Date();
     return new Date(base.getFullYear(), base.getMonth(), 1);
@@ -102,7 +104,11 @@ export function EventCalendar({ initialMonth }: { initialMonth?: Date }) {
   const startDate = useMemo(() => toISODate(gridStart), [gridStart]);
   const endDate = useMemo(() => toISODate(gridEnd), [gridEnd]);
 
-  const { eventsByDate, loading, error } = useCalendarEvents(startDate, endDate);
+  const { events, eventsByDate, loading, error } = useCalendarEvents(
+    startDate,
+    endDate,
+    { cityId: activeCity.id },
+  );
 
   const weeks = useMemo(() => {
     const days = enumerateInclusive(gridStart, gridEnd);
@@ -330,6 +336,12 @@ export function EventCalendar({ initialMonth }: { initialMonth?: Date }) {
           ))}
         </div>
       </div>
+
+      {!error && !loading && events.length === 0 ? (
+        <p className="text-center text-sm text-stone" role="status">
+          No events in {activeCity.name} this month.
+        </p>
+      ) : null}
     </div>
   );
 }

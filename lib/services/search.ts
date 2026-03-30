@@ -8,12 +8,19 @@ function supabase() {
   return createClient();
 }
 
+export type SearchServiceOptions = {
+  limit?: number;
+  /** When set, restricts DJ and event search to this `city_id`. */
+  cityId?: string;
+};
+
 export async function searchDjs(
   query: string,
-  limit = 20,
+  options: SearchServiceOptions = {},
 ): Promise<Profile[]> {
+  const limit = options.limit ?? 20;
   const term = `%${query}%`;
-  const { data, error } = await supabase()
+  let q = supabase()
     .from(TABLES.profiles)
     .select(
       "*, cities:city_id(id, name, state_name, state_code, created_at)",
@@ -21,7 +28,13 @@ export async function searchDjs(
     .is("deleted_at", null)
     .or(
       `display_name.ilike.${term},bio.ilike.${term},cities.name.ilike.${term}`,
-    )
+    );
+
+  if (options.cityId) {
+    q = q.eq("city_id", options.cityId);
+  }
+
+  const { data, error } = await q
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -31,17 +44,24 @@ export async function searchDjs(
 
 export async function searchEvents(
   query: string,
-  limit = 20,
+  options: SearchServiceOptions = {},
 ): Promise<EventWithLineupPreview[]> {
+  const limit = options.limit ?? 20;
   const term = `%${query}%`;
-  const { data, error } = await supabase()
+  let q = supabase()
     .from(TABLES.events)
     .select(EVENT_LIST_WITH_LINEUP)
     .is("deleted_at", null)
     .eq("status", "published")
     .or(
       `title.ilike.${term},description.ilike.${term},venue.ilike.${term},cities.name.ilike.${term}`,
-    )
+    );
+
+  if (options.cityId) {
+    q = q.eq("city_id", options.cityId);
+  }
+
+  const { data, error } = await q
     .order("created_at", { ascending: false })
     .limit(limit);
 
