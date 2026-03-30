@@ -1,6 +1,6 @@
 ## DJ Network — MVP
 
-DJ Network is a grassroots networking platform for DJs — discover events, share mixes, follow artists, search the network, and message other users.
+DJ Network is a grassroots networking platform for DJs — discover events, share mixes, follow artists, search the network, and message other users. **Browse** can follow your **active city**: events (list + calendar) and search (DJs + events) respect **`useLocation` / `activeCity`**; home and mixes are not city-filtered.
 
 Built with **Next.js 16** (App Router), **Supabase** (Postgres, Auth, Storage), **Tailwind CSS v4**, and **shadcn/ui**.
 
@@ -140,7 +140,8 @@ hooks/                  client-side data hooks
 lib/
   auth/                 route helpers, session middleware helpers
   db/                   schema constants
-  services/             supabase-backed services (profiles, events, mixes, follows, search, messaging)
+  location/             active-city cookie, LocationProvider, types (browse/search filtering)
+  services/             supabase-backed services (profiles, events, mixes, cities, follows, search, messaging, …)
   supabase/             client/server helpers
   utils/                formatting + URL helpers
 types/                  shared types and Supabase Database typings
@@ -169,6 +170,7 @@ docs/                   design + tech specs (agent-step workflow)
 - **4. Create and discover events**
   - Create events with flyer uploads (including draft flyer support).
   - Add a lineup and publish events.
+  - Pick an **active city** in the nav; the events **list** and **calendar** show published events in that city. Search can stay **in city** or switch to **all cities** for DJs/events (mixes are always global).
 
 - **5. Message other users**
   - From a DJ profile, open a quick compose dialog and send a DM.
