@@ -15,6 +15,7 @@ const PROTECTED_PREFIXES = [
   "/home",
   "/events",
   "/dj",
+  "/messages",
   "/profile",
   "/mixes",
   "/search",

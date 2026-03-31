@@ -27,6 +27,8 @@ describe("isProtectedPath", () => {
     "/events/abc-123",
     "/events/abc-123/edit",
     "/dj/cool-dj",
+    "/messages",
+    "/messages/abc-123",
     "/profile/edit",
     "/mixes",
     "/search",

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TABLES } from "@/lib/db/schema-constants";
 import { DEFAULT_SIGNUP_CITY_ID } from "@/lib/db/default-city";
@@ -16,6 +17,10 @@ async function resolveHomeCity(): Promise<City> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
 
   if (user) {
     const { data: profile } = await supabase
