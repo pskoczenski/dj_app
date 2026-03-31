@@ -135,7 +135,7 @@ components/
   mixes/                MixEmbed, MixCard, MixForm, etc.
   messages/             inbox/conversation UI, quick-message dialog
   profile/              ProfileHeader, FollowButton, SocialLinks
-  forms/                GenreTagInput, ImageUpload
+  forms/                GenreSelect, ImageUpload
 hooks/                  client-side data hooks
 lib/
   auth/                 route helpers, session middleware helpers

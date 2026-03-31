@@ -97,7 +97,7 @@ components/
   messages/       — QuickMessageDialog, ComposeBar, etc.
   comments/       — CommentsModal, CommentList, etc.
   profile/        — ProfileHeader, FollowButton, SocialLinks
-  forms/          — GenreTagInput, ImageUpload
+  forms/          — GenreSelect, ImageUpload
 ```
 
 Place new components in the appropriate feature directory. If a component is used across multiple features, put it in `shared/`.
