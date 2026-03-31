@@ -30,7 +30,7 @@ export function Navbar({ user }: NavbarProps) {
           href="/home"
           className="shrink-0 font-display text-lg font-bold tracking-wide text-bone"
         >
-          DJ Network
+          Dreamtree
         </Link>
 
         <div className="flex items-center gap-1">

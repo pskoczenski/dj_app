@@ -17,7 +17,7 @@ export function MobileTopBar({ user }: MobileTopBarProps) {
         href="/home"
         className="min-w-0 flex-1 truncate font-display text-base font-bold tracking-wide text-bone"
       >
-        DJ Network
+        Dreamtree
       </Link>
       <div className="flex shrink-0 items-center gap-0.5">
         <LocationIndicator />
