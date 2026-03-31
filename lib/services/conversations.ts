@@ -13,6 +13,12 @@ function supabase() {
   return createClient();
 }
 
+function newConversationId(): string {
+  // Avoid INSERT ... RETURNING on conversations because SELECT RLS requires
+  // participant membership, which is only established after participant upsert.
+  return crypto.randomUUID();
+}
+
 async function resolveCurrentUserId(currentUserId?: string): Promise<string> {
   if (currentUserId) return currentUserId;
   const {
@@ -280,15 +286,15 @@ export async function ensureEventGroupThread(eventId: string): Promise<string | 
     participantIds.add((row as { profile_id: string }).profile_id);
   }
 
-  const { data: created, error: createErr } = await sb
+  const conversationId = newConversationId();
+  const { error: createErr } = await sb
     .from(TABLES.conversations)
     .insert({
+      id: conversationId,
       type: "event_group",
       event_id: eventId,
       created_by: creatorId,
-    })
-    .select("id")
-    .single();
+    });
 
   if (createErr) {
     if ((createErr as { code?: string }).code === "23505") {
@@ -302,7 +308,7 @@ export async function ensureEventGroupThread(eventId: string): Promise<string | 
   }
 
   const inserts = [...participantIds].map((profileId) => ({
-    conversation_id: created.id,
+    conversation_id: conversationId,
     profile_id: profileId,
   }));
   const { error: participantsErr } = await sb
@@ -313,7 +319,7 @@ export async function ensureEventGroupThread(eventId: string): Promise<string | 
     });
   if (participantsErr) throw participantsErr;
 
-  return created.id;
+  return conversationId;
 }
 
 export async function createEventGroupThread(
