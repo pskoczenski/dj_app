@@ -14,14 +14,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CharacterCounter } from "@/components/shared/character-counter";
-import { GenreTagInput } from "@/components/forms/genre-tag-input";
+import { GenreSelect } from "@/components/forms/genre-select";
 import { ImageUpload } from "@/components/forms/image-upload";
 import { CityAutocomplete } from "@/components/forms/city-autocomplete";
 import { citiesService } from "@/lib/services/cities";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { storageService } from "@/lib/services/storage";
 import { toast } from "sonner";
-import type { City, Profile, ProfileType } from "@/types";
+import type { City, Genre, Profile, ProfileType } from "@/types";
 
 const BIO_MAX = 1500;
 
@@ -59,7 +59,7 @@ export default function EditProfilePage() {
   const [bio, setBio] = useState("");
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [country, setCountry] = useState("");
-  const [genres, setGenres] = useState<string[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<Genre[]>([]);
   const [profileType, setProfileType] = useState<ProfileType>("dj");
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
@@ -133,7 +133,16 @@ export default function EditProfilePage() {
           }
         }
         setCountry(p.country ?? "");
-        setGenres(p.genres ?? []);
+        if (p.genre_ids && p.genre_ids.length > 0) {
+          try {
+            const resolved = await genresService.getByIds(p.genre_ids);
+            if (!cancelled) setSelectedGenres(resolved);
+          } catch {
+            if (!cancelled) setSelectedGenres([]);
+          }
+        } else {
+          setSelectedGenres([]);
+        }
         setProfileType(p.profile_type);
         setSocialLinks(
           typeof p.social_links === "object" && p.social_links !== null
@@ -186,7 +195,7 @@ export default function EditProfilePage() {
 
     setSaving(true);
     try {
-      const genre_ids = await genresService.resolveLabelsToIds(genres);
+      const genre_ids = selectedGenres.map((g) => g.id);
       await profilesService.update(profile.id, {
         display_name: displayName,
         slug,
@@ -293,9 +302,12 @@ export default function EditProfilePage() {
 
         {/* Genres */}
         <Field label="Genres" id="genres">
-          <div className="rounded-default border border-root-line bg-dark-moss p-2">
-            <GenreTagInput value={genres} onChange={setGenres} max={10} />
-          </div>
+          <GenreSelect
+            label="Genres"
+            value={selectedGenres}
+            onChange={setSelectedGenres}
+            maxSelections={10}
+          />
         </Field>
 
         {/* Profile type */}

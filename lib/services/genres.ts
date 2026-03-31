@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
+import type { Genre } from "@/types";
 
 function supabase() {
   return createClient();
@@ -73,6 +74,83 @@ export async function getIdToNameMap(ids: string[]): Promise<Map<string, string>
   return new Map((data ?? []).map((g) => [g.id, g.name] as const));
 }
 
+export async function getAll(): Promise<Genre[]> {
+  const { data, error } = await supabase()
+    .from(TABLES.genres)
+    .select("id, slug, name")
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []) as Genre[];
+}
+
+function notInIds(query: any, ids: string[]) {
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (unique.length === 0) return query;
+  // PostgREST expects `in.(a,b,c)` format; Supabase `.not("id","in", "(...)" )`
+  // works for UUID arrays.
+  return query.not("id", "in", `(${unique.join(",")})`);
+}
+
+export async function search(
+  query: string,
+  options: { limit?: number; excludeIds?: string[] } = {},
+): Promise<Genre[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const limit = options.limit ?? 15;
+  const excludeIds = options.excludeIds ?? [];
+
+  // Prefix-first query, then (if needed) substring fallback.
+  const prefixQuery = notInIds(
+    supabase()
+      .from(TABLES.genres)
+      .select("id, slug, name")
+      .ilike("name", `${q}%`)
+      .order("name", { ascending: true })
+      .limit(limit),
+    excludeIds,
+  );
+
+  const { data: prefix, error: prefixError } = await prefixQuery;
+  if (prefixError) throw prefixError;
+  const prefixRows = (prefix ?? []) as Genre[];
+  if (prefixRows.length >= limit) return prefixRows;
+
+  const already = new Set(prefixRows.map((g) => g.id));
+  const remaining = limit - prefixRows.length;
+
+  const fallbackQuery = notInIds(
+    supabase()
+      .from(TABLES.genres)
+      .select("id, slug, name")
+      .ilike("name", `%${q}%`)
+      .order("name", { ascending: true })
+      .limit(remaining),
+    [...excludeIds, ...already],
+  );
+
+  const { data: fallback, error: fallbackError } = await fallbackQuery;
+  if (fallbackError) throw fallbackError;
+
+  return [...prefixRows, ...((fallback ?? []) as Genre[])];
+}
+
+export async function getByIds(genreIds: string[]): Promise<Genre[]> {
+  const ids = [...new Set(genreIds.filter(Boolean))];
+  if (ids.length === 0) return [];
+
+  const { data, error } = await supabase()
+    .from(TABLES.genres)
+    .select("id, slug, name")
+    .in("id", ids);
+
+  if (error) throw error;
+  const rows = (data ?? []) as Genre[];
+  const byId = new Map(rows.map((g) => [g.id, g] as const));
+  return genreIds.map((id) => byId.get(id)).filter((g): g is Genre => Boolean(g));
+}
+
 /** Attach `genres: string[]` display labels from `genre_ids` for each row. */
 export async function hydrateGenreLabels<T extends { genre_ids?: string[] | null }>(
   rows: T[],
@@ -92,6 +170,9 @@ export async function hydrateGenreLabels<T extends { genre_ids?: string[] | null
 
 export const genresService = {
   labelToSlug,
+  search,
+  getAll,
+  getByIds,
   resolveLabelsToIds,
   resolveFilterTokenToId,
   getIdToNameMap,

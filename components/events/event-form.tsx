@@ -9,7 +9,7 @@ import { storageService } from "@/lib/services/storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { GenreTagInput } from "@/components/forms/genre-tag-input";
+import { GenreSelect } from "@/components/forms/genre-select";
 import { ImageUpload } from "@/components/forms/image-upload";
 import { CityAutocomplete } from "@/components/forms/city-autocomplete";
 import { citiesService } from "@/lib/services/cities";
@@ -27,6 +27,7 @@ import type {
   EventUpdate,
   EventLineup,
   EventStatus,
+  Genre,
 } from "@/types";
 
 /** Minimal row shape for LineupCard preview from builder state. */
@@ -89,7 +90,7 @@ export function EventForm({
   );
   const [country, setCountry] = useState(event?.country ?? "");
   const [ticketUrl, setTicketUrl] = useState(event?.ticket_url ?? "");
-  const [genres, setGenres] = useState<string[]>(event?.genres ?? []);
+  const [selectedGenres, setSelectedGenres] = useState<Genre[]>([]);
   const [flyerUrl, setFlyerUrl] = useState<string | null>(
     event?.flyer_image_url ?? null,
   );
@@ -97,6 +98,21 @@ export function EventForm({
 
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (mode !== "edit" || !event?.genre_ids || event.genre_ids.length === 0) {
+      setSelectedGenres([]);
+      return;
+    }
+    let alive = true;
+    void genresService.getByIds(event.genre_ids).then((g) => {
+      if (!alive) return;
+      setSelectedGenres(g);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [mode, event?.id, event?.genre_ids]);
 
   useEffect(() => {
     let cancelled = false;
@@ -160,7 +176,7 @@ export function EventForm({
 
     try {
       if (mode === "create") {
-        const genre_ids = await genresService.resolveLabelsToIds(genres);
+        const genre_ids = selectedGenres.map((g) => g.id);
         const payload: EventInsert = {
           title: title.trim(),
           description: description || null,
@@ -188,7 +204,7 @@ export function EventForm({
         );
         router.push(`/events/${created.id}`);
       } else if (event) {
-        const genre_ids = await genresService.resolveLabelsToIds(genres);
+        const genre_ids = selectedGenres.map((g) => g.id);
         const prevStatus = event.status;
         const payload: EventUpdate = {
           title: title.trim(),
@@ -413,8 +429,12 @@ export function EventForm({
 
       {/* Genres */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-bone">Genres</label>
-        <GenreTagInput value={genres} onChange={setGenres} max={10} />
+        <GenreSelect
+          label="Genres"
+          value={selectedGenres}
+          onChange={setSelectedGenres}
+          maxSelections={10}
+        />
       </div>
 
       {/* Lineup */}

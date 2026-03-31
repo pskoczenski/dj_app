@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { mixesService } from "@/lib/services/mixes";
 import { genresService } from "@/lib/services/genres";
@@ -10,13 +10,13 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { GenreTagInput } from "@/components/forms/genre-tag-input";
+import { GenreSelect } from "@/components/forms/genre-select";
 import { ImageUpload } from "@/components/forms/image-upload";
 import { MixEmbed } from "@/components/mixes/mix-embed";
 import { ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Constants } from "@/types/database";
-import type { Mix, MixInsert, MixUpdate, MixPlatform } from "@/types";
+import type { Genre, Mix, MixInsert, MixUpdate, MixPlatform } from "@/types";
 
 const MIX_PLATFORMS = Constants.public.Enums.mix_platform;
 
@@ -28,14 +28,6 @@ const PLATFORM_LABELS: Record<MixPlatform, string> = {
   apple_music: "Apple Music",
   other: "Other",
 };
-
-function genresKey(genres: string[]): string {
-  return [...genres]
-    .map((g) => g.trim())
-    .filter(Boolean)
-    .sort()
-    .join("\0");
-}
 
 function isValidHttpUrl(s: string): boolean {
   try {
@@ -59,20 +51,13 @@ export function MixForm({ mode, mix, profileId, profileSlug }: MixFormProps) {
   const manualCoverRef = useRef(false);
   const lastRemoteThumbRef = useRef<string | null>(null);
 
-  const initialGenresKey = useMemo(
-    () => genresKey(mix?.genres ?? []),
-    [mix?.genres],
-  );
-  const initialGenresRef = useRef(initialGenresKey);
-  initialGenresRef.current = initialGenresKey;
-
   const [embedUrl, setEmbedUrl] = useState(mix?.embed_url ?? "");
   const [title, setTitle] = useState(mix?.title ?? "");
   const [description, setDescription] = useState(mix?.description ?? "");
   const [platform, setPlatform] = useState<MixPlatform>(
     mix?.platform ?? "other",
   );
-  const [genres, setGenres] = useState<string[]>(mix?.genres ?? []);
+  const [selectedGenres, setSelectedGenres] = useState<Genre[]>([]);
   const [coverUrl, setCoverUrl] = useState<string | null>(
     mix?.cover_image_url ?? null,
   );
@@ -85,6 +70,21 @@ export function MixForm({ mode, mix, profileId, profileSlug }: MixFormProps) {
 
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (mode !== "edit" || !mix?.genre_ids || mix.genre_ids.length === 0) {
+      setSelectedGenres([]);
+      return;
+    }
+    let alive = true;
+    void genresService.getByIds(mix.genre_ids).then((g) => {
+      if (!alive) return;
+      setSelectedGenres(g);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [mode, mix?.id, mix?.genre_ids]);
 
   useEffect(() => {
     return () => {
@@ -208,7 +208,7 @@ export function MixForm({ mode, mix, profileId, profileSlug }: MixFormProps) {
             -1,
           ) + 1;
 
-        const genre_ids = await genresService.resolveLabelsToIds(genres);
+        const genre_ids = selectedGenres.map((g) => g.id);
         const payload: MixInsert = {
           profile_id: profileId,
           title: title.trim(),
@@ -277,7 +277,7 @@ export function MixForm({ mode, mix, profileId, profileSlug }: MixFormProps) {
 
       if (!mix) return;
 
-      const genre_ids = await genresService.resolveLabelsToIds(genres);
+      const genre_ids = selectedGenres.map((g) => g.id);
       const payload: MixUpdate = {
         title: title.trim(),
         embed_url: embedUrl.trim(),
@@ -394,8 +394,12 @@ export function MixForm({ mode, mix, profileId, profileSlug }: MixFormProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-bone">Genres</span>
-        <GenreTagInput value={genres} onChange={setGenres} max={10} />
+        <GenreSelect
+          label="Genres"
+          value={selectedGenres}
+          onChange={setSelectedGenres}
+          maxSelections={10}
+        />
       </div>
 
       <div>
