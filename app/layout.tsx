@@ -29,8 +29,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | DJ Network",
-    default: "DJ Network",
+    template: "%s | Dreamtree",
+    default: "Dreamtree",
   },
   description: "A grassroots DJ networking platform",
 };
