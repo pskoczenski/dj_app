@@ -118,7 +118,7 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           flyer_image_url: string | null
-          genres: string[] | null
+          genre_ids: string[]
           google_place_id: string | null
           id: string
           latitude: number | null
@@ -141,7 +141,7 @@ export type Database = {
           end_date?: string | null
           end_time?: string | null
           flyer_image_url?: string | null
-          genres?: string[] | null
+          genre_ids?: string[]
           google_place_id?: string | null
           id?: string
           latitude?: number | null
@@ -164,7 +164,7 @@ export type Database = {
           end_date?: string | null
           end_time?: string | null
           flyer_image_url?: string | null
-          genres?: string[] | null
+          genre_ids?: string[]
           google_place_id?: string | null
           id?: string
           latitude?: number | null
@@ -529,24 +529,24 @@ export type Database = {
           },
         ]
       }
-      genre_tags: {
+      genres: {
         Row: {
-          created_at: string | null
           id: string
           name: string
-          usage_count: number | null
+          slug: string
+          created_at: string
         }
         Insert: {
-          created_at?: string | null
           id?: string
           name: string
-          usage_count?: number | null
+          slug: string
+          created_at?: string
         }
         Update: {
-          created_at?: string | null
           id?: string
           name?: string
-          usage_count?: number | null
+          slug?: string
+          created_at?: string
         }
         Relationships: []
       }
@@ -558,7 +558,7 @@ export type Database = {
           description: string | null
           duration: string | null
           embed_url: string
-          genres: string[] | null
+          genre_ids: string[]
           id: string
           likes_count: number
           platform: Database["public"]["Enums"]["mix_platform"]
@@ -574,7 +574,7 @@ export type Database = {
           description?: string | null
           duration?: string | null
           embed_url: string
-          genres?: string[] | null
+          genre_ids?: string[]
           id?: string
           likes_count?: number
           platform: Database["public"]["Enums"]["mix_platform"]
@@ -590,7 +590,7 @@ export type Database = {
           description?: string | null
           duration?: string | null
           embed_url?: string
-          genres?: string[] | null
+          genre_ids?: string[]
           id?: string
           likes_count?: number
           platform?: Database["public"]["Enums"]["mix_platform"]
@@ -624,7 +624,7 @@ export type Database = {
           created_at: string | null
           deleted_at: string | null
           display_name: string
-          genres: string[] | null
+          genre_ids: string[]
           id: string
           profile_image_url: string | null
           profile_type: Database["public"]["Enums"]["profile_type"]
@@ -639,7 +639,7 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           display_name: string
-          genres?: string[] | null
+          genre_ids?: string[]
           id: string
           profile_image_url?: string | null
           profile_type?: Database["public"]["Enums"]["profile_type"]
@@ -654,7 +654,7 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           display_name?: string
-          genres?: string[] | null
+          genre_ids?: string[]
           id?: string
           profile_image_url?: string | null
           profile_type?: Database["public"]["Enums"]["profile_type"]
@@ -693,7 +693,6 @@ export type Database = {
     }
     Functions: {
       get_or_create_dm: { Args: { other_user_id: string }; Returns: string }
-      upsert_genre_tags: { Args: { input_genres: string[] }; Returns: string[] }
     }
     Enums: {
       commentable_type: "event" | "mix"

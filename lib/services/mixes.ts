@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
+import { genresService } from "@/lib/services/genres";
 import type {
   Mix,
   MixInsert,
@@ -32,6 +33,12 @@ function supabase() {
 export async function getAll(
   filters: MixFilters = {},
 ): Promise<MixWithCreator[]> {
+  let genreFilterId: string | null = null;
+  if (filters.genre) {
+    genreFilterId = await genresService.resolveFilterTokenToId(filters.genre);
+    if (!genreFilterId) return [];
+  }
+
   let query = supabase()
     .from(TABLES.mixes)
     .select(MIX_LIST_SELECT)
@@ -43,8 +50,8 @@ export async function getAll(
   if (filters.platform) {
     query = query.eq("platform", filters.platform);
   }
-  if (filters.genre) {
-    query = query.contains("genres", [filters.genre]);
+  if (genreFilterId) {
+    query = query.contains("genre_ids", [genreFilterId]);
   }
 
   switch (filters.sort) {
@@ -66,7 +73,7 @@ export async function getAll(
 
   const { data, error } = await query;
   if (error) throw error;
-  return data ?? [];
+  return genresService.hydrateGenreLabels((data ?? []) as MixWithCreator[]);
 }
 
 export async function getByProfile(
@@ -84,7 +91,9 @@ export async function getById(id: string): Promise<Mix | null> {
     .maybeSingle();
 
   if (error) throw error;
-  return data;
+  if (!data) return null;
+  const [m] = await genresService.hydrateGenreLabels([data as Mix]);
+  return m as Mix;
 }
 
 export async function create(data: MixInsert): Promise<Mix> {
@@ -95,7 +104,8 @@ export async function create(data: MixInsert): Promise<Mix> {
     .single();
 
   if (error) throw error;
-  return created;
+  const [m] = await genresService.hydrateGenreLabels([created as Mix]);
+  return m as Mix;
 }
 
 export async function update(id: string, data: MixUpdate): Promise<Mix> {
@@ -107,7 +117,8 @@ export async function update(id: string, data: MixUpdate): Promise<Mix> {
     .single();
 
   if (error) throw error;
-  return updated;
+  const [m] = await genresService.hydrateGenreLabels([updated as Mix]);
+  return m as Mix;
 }
 
 export async function softDelete(id: string): Promise<void> {

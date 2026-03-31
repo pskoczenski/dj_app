@@ -15,7 +15,7 @@ export const TABLES = {
   mixes: "mixes",
   mixLikes: "mix_likes",
   follows: "follows",
-  genreTags: "genre_tags",
+  genres: "genres",
 } as const;
 
 export const VIEWS = {

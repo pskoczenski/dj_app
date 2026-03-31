@@ -15,7 +15,7 @@ describe("Schema constants", () => {
       mixes: "mixes",
       mixLikes: "mix_likes",
       follows: "follows",
-      genreTags: "genre_tags",
+      genres: "genres",
     });
   });
 

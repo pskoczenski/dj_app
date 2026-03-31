@@ -35,6 +35,19 @@ jest.mock("@/lib/supabase/client", () => ({
   createClient: () => mock.client,
 }));
 
+jest.mock("@/lib/services/genres", () => ({
+  genresService: {
+    hydrateGenreLabels: jest.fn(async (rows: Record<string, unknown>[]) =>
+      rows.map((r) => ({ ...r, genres: [] as string[] })),
+    ),
+    resolveFilterTokenToId: jest.fn(),
+    resolveLabelsToIds: jest.fn(),
+    getIdToNameMap: jest.fn(),
+    labelToSlug: jest.fn(),
+  },
+}));
+
+import { genresService } from "@/lib/services/genres";
 import { mixesService } from "@/lib/services/mixes";
 
 describe("mixesService", () => {
@@ -63,19 +76,25 @@ describe("mixesService", () => {
       expect(builder.order).toHaveBeenCalledWith("created_at", { ascending: false });
     });
 
-    it("applies genre filter", async () => {
+    it("applies genre filter via genre_ids", async () => {
+      jest.mocked(genresService.resolveFilterTokenToId).mockResolvedValueOnce(
+        "11111111-1111-4111-8111-111111111111",
+      );
       mock = chainMock();
       const origFrom = mock.client.from;
       mock.client.from = jest.fn((...args) => {
         const b = origFrom(...args);
-        (b as any).then = (resolve: (v: unknown) => void) =>
+        (b as { then?: unknown }).then = (resolve: (v: unknown) => void) =>
           resolve({ data: [], error: null });
         return b;
       }) as typeof origFrom;
 
       await mixesService.getAll({ genre: "house" });
       const builder = mock.builder(0);
-      expect(builder.contains).toHaveBeenCalledWith("genres", ["house"]);
+      expect(genresService.resolveFilterTokenToId).toHaveBeenCalledWith("house");
+      expect(builder.contains).toHaveBeenCalledWith("genre_ids", [
+        "11111111-1111-4111-8111-111111111111",
+      ]);
     });
   });
 
@@ -101,7 +120,7 @@ describe("mixesService", () => {
         platform: "soundcloud",
         profile_id: "user-1",
       });
-      expect(result).toEqual(mixData);
+      expect(result).toEqual({ ...mixData, genres: [] });
     });
   });
 

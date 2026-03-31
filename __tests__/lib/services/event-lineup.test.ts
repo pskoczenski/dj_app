@@ -39,6 +39,12 @@ jest.mock("@/lib/services/conversations", () => ({
   },
 }));
 
+jest.mock("@/lib/services/genres", () => ({
+  genresService: {
+    hydrateGenreLabels: jest.fn(async (rows: unknown[]) => rows),
+  },
+}));
+
 import { eventLineupService } from "@/lib/services/event-lineup";
 import { conversationsService } from "@/lib/services/conversations";
 
@@ -71,7 +77,7 @@ describe("eventLineupService", () => {
       }) as typeof origFrom;
 
       const result = await eventLineupService.listForEvent("evt-1");
-      expect(result).toEqual([MOCK_LINEUP_ITEM]);
+      expect(result).toEqual([{ ...MOCK_LINEUP_ITEM, profile: null }]);
       expect(mock.client.from).toHaveBeenCalledWith("event_lineup");
     });
   });

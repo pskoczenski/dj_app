@@ -7,7 +7,6 @@ const mockPush = jest.fn();
 const mockCreate = jest.fn();
 const mockUpdate = jest.fn();
 const mockGetByProfile = jest.fn();
-const mockSyncGenreTags = jest.fn();
 const mockUploadMixCover = jest.fn();
 
 jest.mock("next/navigation", () => ({
@@ -22,9 +21,9 @@ jest.mock("@/lib/services/mixes", () => ({
   },
 }));
 
-jest.mock("@/lib/services/profiles", () => ({
-  profilesService: {
-    syncGenreTags: (...a: unknown[]) => mockSyncGenreTags(...a),
+jest.mock("@/lib/services/genres", () => ({
+  genresService: {
+    resolveLabelsToIds: jest.fn().mockResolvedValue([]),
   },
 }));
 
@@ -174,6 +173,7 @@ describe("MixForm", () => {
         title: "Night Drive",
         embed_url: "https://soundcloud.com/x/y",
         platform: "soundcloud",
+        genre_ids: [],
         cover_image_url: null,
       }),
     );
@@ -193,6 +193,7 @@ describe("MixForm edit", () => {
     embed_url: "https://www.youtube.com/watch?v=abc",
     platform: "youtube",
     description: "Desc",
+    genre_ids: [],
     genres: ["techno"],
     cover_image_url: null,
     duration: null,
@@ -228,6 +229,7 @@ describe("MixForm edit", () => {
         title: "New title",
         embed_url: MOCK_MIX.embed_url,
         platform: "youtube",
+        genre_ids: [],
       }),
     );
     expect(mockPush).toHaveBeenCalledWith("/dj/dj-alpha");

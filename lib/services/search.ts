@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
 import { EVENT_LIST_WITH_LINEUP } from "@/lib/services/events";
 import { MIX_LIST_SELECT } from "@/lib/services/mixes";
+import { genresService } from "@/lib/services/genres";
 import type { Profile, EventWithLineupPreview, MixWithCreator } from "@/types";
 
 function supabase() {
@@ -39,7 +40,7 @@ export async function searchDjs(
     .limit(limit);
 
   if (error) throw error;
-  return (data ?? []) as unknown as Profile[];
+  return genresService.hydrateGenreLabels((data ?? []) as Profile[]);
 }
 
 export async function searchEvents(
@@ -66,7 +67,9 @@ export async function searchEvents(
     .limit(limit);
 
   if (error) throw error;
-  return (data ?? []) as unknown as EventWithLineupPreview[];
+  return genresService.hydrateGenreLabels(
+    (data ?? []) as unknown as EventWithLineupPreview[],
+  );
 }
 
 export async function searchMixes(
@@ -83,7 +86,7 @@ export async function searchMixes(
     .limit(limit);
 
   if (error) throw error;
-  return data ?? [];
+  return genresService.hydrateGenreLabels((data ?? []) as MixWithCreator[]);
 }
 
 export const searchService = {

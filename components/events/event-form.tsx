@@ -13,6 +13,7 @@ import { GenreTagInput } from "@/components/forms/genre-tag-input";
 import { ImageUpload } from "@/components/forms/image-upload";
 import { CityAutocomplete } from "@/components/forms/city-autocomplete";
 import { citiesService } from "@/lib/services/cities";
+import { genresService } from "@/lib/services/genres";
 import {
   LineupBuilder,
   type LineupEntry,
@@ -159,6 +160,7 @@ export function EventForm({
 
     try {
       if (mode === "create") {
+        const genre_ids = await genresService.resolveLabelsToIds(genres);
         const payload: EventInsert = {
           title: title.trim(),
           description: description || null,
@@ -170,7 +172,7 @@ export function EventForm({
           city_id: selectedCity.id,
           country: country || null,
           ticket_url: ticketUrl || null,
-          genres: genres.length > 0 ? genres : null,
+          genre_ids,
           flyer_image_url: flyerUrl,
           created_by: currentUserId,
           status,
@@ -186,6 +188,7 @@ export function EventForm({
         );
         router.push(`/events/${created.id}`);
       } else if (event) {
+        const genre_ids = await genresService.resolveLabelsToIds(genres);
         const prevStatus = event.status;
         const payload: EventUpdate = {
           title: title.trim(),
@@ -198,7 +201,7 @@ export function EventForm({
           city_id: selectedCity.id,
           country: country || null,
           ticket_url: ticketUrl || null,
-          genres: genres.length > 0 ? genres : null,
+          genre_ids,
           flyer_image_url: flyerUrl,
           status,
         };

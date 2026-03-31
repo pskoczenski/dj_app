@@ -56,12 +56,9 @@ Hard DELETE is used only for:
 - `comment_likes` (unlike)
 - `conversation_participants` (removal from group thread)
 
-### Genre tags
+### Genres (master table)
 
-When genres change on a profile, event, or mix, call the `upsert_genre_tags` RPC to keep the `genre_tags` table in sync:
-```ts
-await supabase.rpc('upsert_genre_tags', { input_genres: genres })
-```
+Profiles, events, and mixes store **`genre_ids uuid[]`** (FK to the **`genres`** reference table). The UI still works with string labels; **`genresService`** resolves labels to IDs on write and **`hydrateGenreLabels`** attaches a **`genres: string[]`** array on reads. Do not call Supabase RPCs for genres—there is no `genre_tags` / `upsert_genre_tags`.
 
 ### Storage buckets
 
@@ -174,6 +171,6 @@ __tests__/
 - **Don't create custom modals or form controls.** Use shadcn/ui.
 - **Don't skip the `"use client"` directive.** If the file uses hooks or event handlers, it needs it. If it doesn't, leave it as a server component.
 - **Don't import Supabase client constructors directly.** Use the wrappers in `lib/supabase/`.
-- **Don't forget `upsert_genre_tags`** when saving genres.
+- **Don't persist genre strings without resolving** them through **`genresService.resolveLabelsToIds`** (or equivalent) into **`genre_ids`**.
 - **Don't use `WidthType.PERCENTAGE`** — this is a docx concern, ignore it.
 - **Don't assume Next.js APIs match your training data.** Read `node_modules/next/dist/docs/` first.

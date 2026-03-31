@@ -22,6 +22,7 @@ export function calendarEventToCardEvent(
     },
     country: null,
     flyer_image_url: ce.flyer_image_url,
+    genre_ids: ce.genre_ids,
     genres: ce.genres,
     status: ce.status,
     created_by: ce.created_by,

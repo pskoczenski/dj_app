@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES, VIEWS } from "@/lib/db/schema-constants";
+import { genresService } from "@/lib/services/genres";
 import type { Profile, ProfileUpdate, ProfileFollowCounts } from "@/types";
 
 export interface FollowCounts {
@@ -14,6 +15,12 @@ function supabase() {
 const PROFILE_WITH_CITY =
   "*, cities:city_id(id, name, state_name, state_code, created_at)";
 
+async function enrichProfile(row: Profile | null): Promise<Profile | null> {
+  if (!row) return null;
+  const [withGenres] = await genresService.hydrateGenreLabels([row]);
+  return withGenres as Profile;
+}
+
 export async function getBySlug(slug: string): Promise<Profile | null> {
   const { data, error } = await supabase()
     .from(TABLES.profiles)
@@ -23,7 +30,7 @@ export async function getBySlug(slug: string): Promise<Profile | null> {
     .maybeSingle();
 
   if (error) throw error;
-  return data;
+  return enrichProfile(data as Profile | null);
 }
 
 export async function getById(id: string): Promise<Profile | null> {
@@ -35,7 +42,7 @@ export async function getById(id: string): Promise<Profile | null> {
     .maybeSingle();
 
   if (error) throw error;
-  return data;
+  return enrichProfile(data as Profile | null);
 }
 
 export async function getCurrent(): Promise<Profile | null> {
@@ -51,31 +58,16 @@ export async function update(
   id: string,
   data: ProfileUpdate,
 ): Promise<Profile> {
-  const { genres, ...rest } = data;
-
   const { data: updated, error } = await supabase()
     .from(TABLES.profiles)
-    .update(rest)
+    .update(data)
     .eq("id", id)
     .select(PROFILE_WITH_CITY)
     .single();
 
   if (error) throw error;
-
-  if (genres && genres.length > 0) {
-    await upsertGenreTags(genres);
-
-    const { error: genreError } = await supabase()
-      .from(TABLES.profiles)
-      .update({ genres })
-      .eq("id", id);
-
-    if (genreError) throw genreError;
-
-    return { ...updated, genres };
-  }
-
-  return updated;
+  const [enriched] = await genresService.hydrateGenreLabels([updated as Profile]);
+  return enriched as Profile;
 }
 
 export async function search(
@@ -97,7 +89,7 @@ export async function search(
   const { data, error } = await q.limit(limit);
 
   if (error) throw error;
-  return data ?? [];
+  return genresService.hydrateGenreLabels((data ?? []) as Profile[]);
 }
 
 export async function getFollowCounts(profileId: string): Promise<FollowCounts> {
@@ -115,22 +107,6 @@ export async function getFollowCounts(profileId: string): Promise<FollowCounts> 
   };
 }
 
-async function upsertGenreTags(genres: string[]): Promise<string[]> {
-  const { data, error } = await supabase().rpc("upsert_genre_tags", {
-    input_genres: genres,
-  });
-
-  if (error) throw error;
-  return data ?? [];
-}
-
-/** Registers genre tag rows for autocomplete / counts (call when saving mixes or profiles with genres). */
-export async function syncGenreTags(genres: string[]): Promise<void> {
-  const normalized = genres.map((g) => g.trim()).filter(Boolean);
-  if (normalized.length === 0) return;
-  await upsertGenreTags(normalized);
-}
-
 export const profilesService = {
   getBySlug,
   getById,
@@ -138,5 +114,4 @@ export const profilesService = {
   update,
   search,
   getFollowCounts,
-  syncGenreTags,
 };

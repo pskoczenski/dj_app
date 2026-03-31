@@ -1,4 +1,3 @@
-const mockRpc = jest.fn();
 const mockGetUser = jest.fn();
 
 /**
@@ -30,7 +29,6 @@ function chainMock() {
         return b;
       }),
       auth: { getUser: mockGetUser },
-      rpc: mockRpc,
     },
     /** Get the Nth query builder (0-indexed, in call order) */
     builder: (n: number) => builders[n],
@@ -42,6 +40,22 @@ let mock: ReturnType<typeof chainMock>;
 
 jest.mock("@/lib/supabase/client", () => ({
   createClient: () => mock.client,
+}));
+
+jest.mock("@/lib/services/genres", () => ({
+  genresService: {
+    hydrateGenreLabels: jest.fn(
+      async (rows: Record<string, unknown>[]) =>
+        rows.map((r) => ({
+          ...r,
+          genres: ["house"],
+        })),
+    ),
+    resolveLabelsToIds: jest.fn(),
+    resolveFilterTokenToId: jest.fn(),
+    getIdToNameMap: jest.fn(),
+    labelToSlug: jest.fn(),
+  },
 }));
 
 import { profilesService } from "@/lib/services/profiles";
@@ -62,12 +76,14 @@ const MOCK_PROFILE = {
     created_at: "2024-01-01",
   },
   country: null,
-  genres: ["house"],
+  genre_ids: [] as string[],
   social_links: null,
   created_at: "2024-01-01",
   updated_at: "2024-01-01",
   deleted_at: null,
 };
+
+const MOCK_PROFILE_ENRICHED = { ...MOCK_PROFILE, genres: ["house"] as string[] };
 
 describe("profilesService", () => {
   beforeEach(() => {
@@ -87,7 +103,7 @@ describe("profilesService", () => {
       }) as typeof origFrom;
 
       const result = await profilesService.getBySlug("dj-shadow");
-      expect(result).toEqual(MOCK_PROFILE);
+      expect(result).toEqual(MOCK_PROFILE_ENRICHED);
     });
 
     it("returns null when not found", async () => {
@@ -121,7 +137,7 @@ describe("profilesService", () => {
       }) as typeof origFrom;
 
       const result = await profilesService.getById("user-1");
-      expect(result).toEqual(MOCK_PROFILE);
+      expect(result).toEqual(MOCK_PROFILE_ENRICHED);
     });
   });
 
@@ -137,7 +153,7 @@ describe("profilesService", () => {
       }) as typeof origFrom;
 
       const result = await profilesService.getCurrent();
-      expect(result).toEqual(MOCK_PROFILE);
+      expect(result).toEqual(MOCK_PROFILE_ENRICHED);
     });
 
     it("returns null when not authenticated", async () => {
@@ -194,7 +210,7 @@ describe("profilesService", () => {
   });
 
   describe("update", () => {
-    it("updates profile fields without genres", async () => {
+    it("updates profile fields", async () => {
       mock = chainMock();
       const origFrom = mock.client.from;
       mock.client.from = jest.fn((...args) => {
@@ -212,49 +228,26 @@ describe("profilesService", () => {
       expect(result.display_name).toBe("New Name");
     });
 
-    it("calls upsert_genre_tags RPC when genres change", async () => {
-      let callIdx = 0;
+    it("updates genre_ids in a single update round-trip", async () => {
       mock = chainMock();
       const origFrom = mock.client.from;
       mock.client.from = jest.fn((...args) => {
         const b = origFrom(...args);
-        callIdx++;
-        if (callIdx === 1) {
-          // First from() call: the main update
-          b.single.mockResolvedValueOnce({ data: MOCK_PROFILE, error: null });
-        }
-        // Second from() call: genres update — default { data: null, error: null } is fine
+        b.single.mockResolvedValueOnce({
+          data: { ...MOCK_PROFILE, genre_ids: ["uuid-techno"] },
+          error: null,
+        });
         return b;
       }) as typeof origFrom;
-      mockRpc.mockResolvedValueOnce({ data: ["techno"], error: null });
 
       const result = await profilesService.update("user-1", {
-        genres: ["techno"],
+        genre_ids: ["uuid-techno"],
       });
 
-      expect(mockRpc).toHaveBeenCalledWith("upsert_genre_tags", {
-        input_genres: ["techno"],
-      });
-      expect(result.genres).toEqual(["techno"]);
-    });
-  });
-
-  describe("syncGenreTags", () => {
-    it("does not call RPC for an empty list", async () => {
-      mock = chainMock();
-      await profilesService.syncGenreTags([]);
-      expect(mockRpc).not.toHaveBeenCalled();
-    });
-
-    it("calls upsert_genre_tags with trimmed non-empty tags", async () => {
-      mock = chainMock();
-      mockRpc.mockResolvedValueOnce({ data: ["techno"], error: null });
-
-      await profilesService.syncGenreTags(["  techno ", ""]);
-
-      expect(mockRpc).toHaveBeenCalledWith("upsert_genre_tags", {
-        input_genres: ["techno"],
-      });
+      const b = mock.builder(0);
+      expect(b.update).toHaveBeenCalledWith({ genre_ids: ["uuid-techno"] });
+      expect(result.genre_ids).toEqual(["uuid-techno"]);
+      expect(result.genres).toEqual(["house"]);
     });
   });
 });

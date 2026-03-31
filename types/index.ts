@@ -6,12 +6,18 @@ type Enums = import("./database").Database["public"]["Enums"];
 
 export type City = Tables["cities"]["Row"];
 
+/** Master genre row (public read). */
+export type Genre = Tables["genres"]["Row"];
+
 /** Profile/event rows as returned from list/detail queries with FK embed. */
 export type Profile = Tables["profiles"]["Row"] & {
   cities?: City | null;
+  /** Display names resolved from `genre_ids` by services. */
+  genres?: string[] | null;
 };
 export type Event = Tables["events"]["Row"] & {
   cities?: City | null;
+  genres?: string[] | null;
 };
 
 /** Calendar list shape (flat city/state for UI; mapped in `eventsService.getEventsByDateRange`). */
@@ -25,6 +31,7 @@ export type CalendarEvent = Pick<
   | "end_time"
   | "venue"
   | "flyer_image_url"
+  | "genre_ids"
   | "genres"
   | "status"
   | "created_by"
@@ -54,11 +61,13 @@ export type EventWithLineupPreview = Event & {
 export type EventLineupWithProfile = EventLineup & {
   profile: Pick<
     Profile,
-    "id" | "display_name" | "slug" | "profile_image_url" | "genres"
+    "id" | "display_name" | "slug" | "profile_image_url" | "genre_ids" | "genres"
   > | null;
 };
 
-export type Mix = Tables["mixes"]["Row"];
+export type Mix = Tables["mixes"]["Row"] & {
+  genres?: string[] | null;
+};
 
 /** Mix row with DJ profile from list queries (`getAll`, `getByProfile`). */
 export type MixWithCreator = Mix & {
@@ -66,7 +75,6 @@ export type MixWithCreator = Mix & {
 };
 
 export type Follow = Tables["follows"]["Row"];
-export type GenreTag = Tables["genre_tags"]["Row"];
 export type ProfileFollowCounts = Views["profile_follow_counts"]["Row"];
 export type CommentCounts = Views["comment_counts"]["Row"];
 

@@ -136,10 +136,10 @@ function EventsBrowser() {
       return;
     }
     if (prevCityIdRef.current !== activeCity.id) {
-      listSectionRef.current?.scrollIntoView({
-        block: "start",
-        behavior: "auto",
-      });
+      const el = listSectionRef.current;
+      if (el && typeof el.scrollIntoView === "function") {
+        el.scrollIntoView({ block: "start", behavior: "auto" });
+      }
     }
     prevCityIdRef.current = activeCity.id;
   }, [activeCity.id, viewMode]);

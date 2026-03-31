@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
+import { genresService } from "@/lib/services/genres";
 import { conversationsService } from "@/lib/services/conversations";
 import type {
   EventLineup,
@@ -24,7 +25,7 @@ export async function listForEvent(
         display_name,
         slug,
         profile_image_url,
-        genres
+        genre_ids
       )
     `,
     )
@@ -32,7 +33,16 @@ export async function listForEvent(
     .order("sort_order", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as EventLineupWithProfile[];
+  const rows = (data ?? []) as EventLineupWithProfile[];
+  const profiles = rows
+    .map((r) => r.profile)
+    .filter((p): p is NonNullable<typeof p> => Boolean(p));
+  const hydratedProfiles = await genresService.hydrateGenreLabels(profiles);
+  const byId = new Map(hydratedProfiles.map((p) => [p.id, p]));
+  return rows.map((r) => ({
+    ...r,
+    profile: r.profile?.id ? (byId.get(r.profile.id) ?? r.profile) : null,
+  }));
 }
 
 export async function add(data: EventLineupInsert): Promise<EventLineup> {

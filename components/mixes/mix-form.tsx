@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { mixesService } from "@/lib/services/mixes";
-import { profilesService } from "@/lib/services/profiles";
+import { genresService } from "@/lib/services/genres";
 import { storageService, validateImageFile } from "@/lib/services/storage";
 import { getPlatformFromUrl, isAllowedEmbedHost } from "@/lib/utils/embed";
 import { cn } from "@/lib/utils";
@@ -208,13 +208,14 @@ export function MixForm({ mode, mix, profileId, profileSlug }: MixFormProps) {
             -1,
           ) + 1;
 
+        const genre_ids = await genresService.resolveLabelsToIds(genres);
         const payload: MixInsert = {
           profile_id: profileId,
           title: title.trim(),
           embed_url: embedUrl.trim(),
           platform,
           description: description.trim() || null,
-          genres: genres.length > 0 ? genres : null,
+          genre_ids,
           cover_image_url: null,
           sort_order: nextSort,
         };
@@ -269,10 +270,6 @@ export function MixForm({ mode, mix, profileId, profileSlug }: MixFormProps) {
           }
         }
 
-        if (genres.length > 0) {
-          await profilesService.syncGenreTags(genres);
-        }
-
         toast.success("Mix added!");
         router.push(`/dj/${profileSlug}`);
         return;
@@ -280,20 +277,17 @@ export function MixForm({ mode, mix, profileId, profileSlug }: MixFormProps) {
 
       if (!mix) return;
 
+      const genre_ids = await genresService.resolveLabelsToIds(genres);
       const payload: MixUpdate = {
         title: title.trim(),
         embed_url: embedUrl.trim(),
         platform,
         description: description.trim() || null,
-        genres: genres.length > 0 ? genres : null,
+        genre_ids,
         cover_image_url: coverUrl,
       };
 
       await mixesService.update(mix.id, payload);
-
-      if (genresKey(genres) !== initialGenresRef.current && genres.length > 0) {
-        await profilesService.syncGenreTags(genres);
-      }
 
       toast.success("Mix updated!");
       router.push(`/dj/${profileSlug}`);

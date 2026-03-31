@@ -8,6 +8,7 @@ import {
   profileDefaultsFromAuthUser,
 } from "@/lib/auth/profile-bootstrap";
 import { profilesService } from "@/lib/services/profiles";
+import { genresService } from "@/lib/services/genres";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -185,13 +186,14 @@ export default function EditProfilePage() {
 
     setSaving(true);
     try {
+      const genre_ids = await genresService.resolveLabelsToIds(genres);
       await profilesService.update(profile.id, {
         display_name: displayName,
         slug,
         bio: bio || null,
         city_id: selectedCity.id,
         country: country || null,
-        genres: genres.length > 0 ? genres : null,
+        genre_ids,
         profile_type: profileType,
         social_links: Object.keys(socialLinks).length > 0 ? socialLinks : null,
         profile_image_url: profileImageUrl,

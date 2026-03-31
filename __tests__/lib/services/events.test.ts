@@ -44,6 +44,28 @@ jest.mock("@/lib/supabase/client", () => ({
   createClient: () => mock.client,
 }));
 
+jest.mock("@/lib/services/genres", () => ({
+  genresService: {
+    hydrateGenreLabels: jest.fn(
+      async (rows: Record<string, unknown>[]) =>
+        rows.map((r) => ({
+          ...r,
+          genres: ["techno"],
+        })),
+    ),
+    getIdToNameMap: jest.fn(async (ids: string[]) => {
+      const m = new Map<string, string>();
+      for (const id of ids) m.set(id, "techno");
+      return m;
+    }),
+    resolveFilterTokenToId: jest.fn(async (token: string) =>
+      token === "techno" ? "genre-uuid-techno" : null,
+    ),
+    resolveLabelsToIds: jest.fn(),
+    labelToSlug: jest.fn(),
+  },
+}));
+
 import { eventsService, eventListWithLineupSelect } from "@/lib/services/events";
 
 const MOCK_EVENT = {
@@ -96,7 +118,7 @@ describe("eventsService", () => {
       }) as typeof origFrom;
 
       const result = await eventsService.getAll();
-      expect(result).toEqual([MOCK_EVENT]);
+      expect(result).toEqual([{ ...MOCK_EVENT, genres: ["techno"] }]);
       expect(mock.client.from).toHaveBeenCalledWith("events");
       const builder = mock.builder(0);
       expect(builder.select).toHaveBeenCalledWith(
@@ -149,7 +171,9 @@ describe("eventsService", () => {
 
       await eventsService.getAll({ genre: "techno" });
       const builder = mock.builder(0);
-      expect(builder.contains).toHaveBeenCalledWith("genres", ["techno"]);
+      expect(builder.contains).toHaveBeenCalledWith("genre_ids", [
+        "genre-uuid-techno",
+      ]);
     });
 
     it("applies cityId filter when provided", async () => {
@@ -209,7 +233,7 @@ describe("eventsService", () => {
       }) as typeof origFrom;
 
       const result = await eventsService.getById("evt-1");
-      expect(result).toEqual(MOCK_EVENT);
+      expect(result).toEqual({ ...MOCK_EVENT, genres: ["techno"] });
     });
 
     it("returns null when not found", async () => {
@@ -234,7 +258,7 @@ describe("eventsService", () => {
         created_by: "user-1",
         city_id: "city-portland",
       });
-      expect(result).toEqual(MOCK_EVENT);
+      expect(result).toEqual({ ...MOCK_EVENT, genres: ["techno"] });
     });
   });
 
@@ -260,7 +284,7 @@ describe("eventsService", () => {
 
   describe("getEventsByDateRange", () => {
     const CALENDAR_SELECT =
-      "id,title,start_date,end_date,start_time,end_time,venue,flyer_image_url,genres,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
+      "id,title,start_date,end_date,start_time,end_time,venue,flyer_image_url,genre_ids,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
 
     it("builds overlap, visibility, sort, and published-only when logged out", async () => {
       mock = chainMock();

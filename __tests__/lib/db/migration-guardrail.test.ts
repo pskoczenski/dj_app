@@ -40,9 +40,11 @@ describe("Migration file guardrails", () => {
     );
   });
 
-  it("creates the upsert_genre_tags function", () => {
-    expect(sql).toContain("upsert_genre_tags");
-    expect(sql).toContain("SECURITY DEFINER");
+  it("adds genres master table and removes legacy upsert_genre_tags / genre_tags", () => {
+    expect(sql).toContain("CREATE TABLE genres");
+    expect(sql).toContain("DROP FUNCTION IF EXISTS upsert_genre_tags");
+    expect(sql).toContain("DROP TABLE IF EXISTS genre_tags");
+    expect(sql).toContain("genre_ids");
   });
 
   it("creates the update_updated_at trigger function", () => {

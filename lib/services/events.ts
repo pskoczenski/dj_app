@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
+import { genresService } from "@/lib/services/genres";
 import type {
   CalendarEvent,
   Event,
@@ -66,14 +67,16 @@ function supabase() {
 }
 
 const CALENDAR_SELECT =
-  "id,title,start_date,end_date,start_time,end_time,venue,flyer_image_url,genres,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
+  "id,title,start_date,end_date,start_time,end_time,venue,flyer_image_url,genre_ids,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
 
 function toCalendarEvent(
   row: Record<string, unknown> & {
     cities?: { name?: string; state_code?: string } | null;
   },
+  genreMap: Map<string, string>,
 ): CalendarEvent {
   const c = row.cities;
+  const genreIds = (row.genre_ids as string[] | null) ?? [];
   return {
     id: row.id as string,
     title: row.title as string,
@@ -83,7 +86,10 @@ function toCalendarEvent(
     end_time: (row.end_time as string | null) ?? null,
     venue: (row.venue as string | null) ?? null,
     flyer_image_url: (row.flyer_image_url as string | null) ?? null,
-    genres: (row.genres as string[] | null) ?? null,
+    genre_ids: genreIds,
+    genres: genreIds.map((id) => genreMap.get(id)).filter((x): x is string =>
+      Boolean(x),
+    ),
     status: row.status as CalendarEvent["status"],
     created_by: row.created_by as string,
     city_id: row.city_id as string,
@@ -131,14 +137,24 @@ export async function getEventsByDateRange(
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []).map((r) =>
-    toCalendarEvent(r as Parameters<typeof toCalendarEvent>[0]),
+  const rows = data ?? [];
+  const genreMap = await genresService.getIdToNameMap(
+    rows.flatMap((r) => (r as { genre_ids?: string[] }).genre_ids ?? []),
+  );
+  return rows.map((r) =>
+    toCalendarEvent(r as Parameters<typeof toCalendarEvent>[0], genreMap),
   );
 }
 
 export async function getAll(
   filters: EventFilters = {},
 ): Promise<EventWithLineupPreview[]> {
+  let genreFilterId: string | null = null;
+  if (filters.genre) {
+    genreFilterId = await genresService.resolveFilterTokenToId(filters.genre);
+    if (!genreFilterId) return [];
+  }
+
   const innerCity = Boolean(filters.state);
   let query = supabase()
     .from(TABLES.events)
@@ -155,8 +171,8 @@ export async function getAll(
   if (filters.state) {
     query = query.eq("cities.state_code", filters.state);
   }
-  if (filters.genre) {
-    query = query.contains("genres", [filters.genre]);
+  if (genreFilterId) {
+    query = query.contains("genre_ids", [genreFilterId]);
   }
   if (filters.cityId) {
     query = query.eq("city_id", filters.cityId);
@@ -181,7 +197,9 @@ export async function getAll(
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []) as unknown as EventWithLineupPreview[];
+  return genresService.hydrateGenreLabels(
+    (data ?? []) as unknown as EventWithLineupPreview[],
+  );
 }
 
 export async function getById(id: string): Promise<Event | null> {
@@ -195,10 +213,14 @@ export async function getById(id: string): Promise<Event | null> {
     .maybeSingle();
 
   if (error) throw error;
-  return data as Event | null;
+  if (!data) return null;
+  const [enriched] = await genresService.hydrateGenreLabels([data as Event]);
+  return enriched as Event;
 }
 
-export async function getUpcoming(state?: string): Promise<EventWithLineupPreview[]> {
+export async function getUpcoming(
+  state?: string,
+): Promise<EventWithLineupPreview[]> {
   const today = new Date().toISOString().split("T")[0];
 
   const innerCity = Boolean(state);
@@ -216,10 +238,14 @@ export async function getUpcoming(state?: string): Promise<EventWithLineupPrevie
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []) as unknown as EventWithLineupPreview[];
+  return genresService.hydrateGenreLabels(
+    (data ?? []) as unknown as EventWithLineupPreview[],
+  );
 }
 
-export async function getByProfile(profileId: string): Promise<EventWithLineupPreview[]> {
+export async function getByProfile(
+  profileId: string,
+): Promise<EventWithLineupPreview[]> {
   const { data: lineupRows, error: lineupError } = await supabase()
     .from(TABLES.eventLineup)
     .select("event_id")
@@ -262,9 +288,11 @@ export async function getByProfile(profileId: string): Promise<EventWithLineupPr
     }
   }
 
-  return merged.sort(
-    (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime(),
+  const sorted = merged.sort(
+    (ab, bb) =>
+      new Date(ab.start_date).getTime() - new Date(bb.start_date).getTime(),
   );
+  return genresService.hydrateGenreLabels(sorted);
 }
 
 export async function create(data: EventInsert): Promise<Event> {
@@ -275,13 +303,11 @@ export async function create(data: EventInsert): Promise<Event> {
     .single();
 
   if (error) throw error;
-  return created as Event;
+  const [e] = await genresService.hydrateGenreLabels([created as Event]);
+  return e as Event;
 }
 
-export async function update(
-  id: string,
-  data: EventUpdate,
-): Promise<Event> {
+export async function update(id: string, data: EventUpdate): Promise<Event> {
   const { data: updated, error } = await supabase()
     .from(TABLES.events)
     .update(data)
@@ -290,7 +316,8 @@ export async function update(
     .single();
 
   if (error) throw error;
-  return updated as Event;
+  const [e] = await genresService.hydrateGenreLabels([updated as Event]);
+  return e as Event;
 }
 
 export async function softDelete(id: string): Promise<void> {
