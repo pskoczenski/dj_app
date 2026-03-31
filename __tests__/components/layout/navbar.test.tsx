@@ -91,7 +91,7 @@ describe("Navbar", () => {
 
   it("renders the logo linking to /home", () => {
     renderNav(mockUser);
-    expect(screen.getByText("DJ Network")).toBeInTheDocument();
+    expect(screen.getByText("Dreamtree")).toBeInTheDocument();
   });
 
   it("shows user menu trigger when logged in", () => {

@@ -21,9 +21,23 @@ jest.mock("@/lib/services/mixes", () => ({
   },
 }));
 
+jest.mock("@/components/forms/genre-select", () => ({
+  GenreSelect: ({ onChange }: { onChange: (v: unknown) => void }) => (
+    <button
+      type="button"
+      onClick={() =>
+        onChange([{ id: "g1", slug: "house", name: "House" }])
+      }
+    >
+      Pick genre
+    </button>
+  ),
+}));
+
 jest.mock("@/lib/services/genres", () => ({
   genresService: {
-    resolveLabelsToIds: jest.fn().mockResolvedValue([]),
+    getByIds: jest.fn().mockResolvedValue([{ id: "g1", slug: "house", name: "House" }]),
+    search: jest.fn().mockResolvedValue([]),
   },
 }));
 
@@ -158,6 +172,8 @@ describe("MixForm", () => {
       <MixForm mode="create" profileId="user-1" profileSlug="dj-alpha" />,
     );
 
+    await user.click(screen.getByRole("button", { name: /pick genre/i }));
+
     await user.type(
       screen.getByLabelText(/embed url/i),
       "https://soundcloud.com/x/y",
@@ -173,7 +189,7 @@ describe("MixForm", () => {
         title: "Night Drive",
         embed_url: "https://soundcloud.com/x/y",
         platform: "soundcloud",
-        genre_ids: [],
+        genre_ids: ["g1"],
         cover_image_url: null,
       }),
     );
@@ -218,6 +234,8 @@ describe("MixForm edit", () => {
     expect(screen.getByLabelText(/^title/i)).toHaveValue("Old title");
     expect(screen.getByLabelText(/embed url/i)).toHaveValue(MOCK_MIX.embed_url);
 
+    await user.click(screen.getByRole("button", { name: /pick genre/i }));
+
     await user.clear(screen.getByLabelText(/^title/i));
     await user.type(screen.getByLabelText(/^title/i), "New title");
 
@@ -229,7 +247,7 @@ describe("MixForm edit", () => {
         title: "New title",
         embed_url: MOCK_MIX.embed_url,
         platform: "youtube",
-        genre_ids: [],
+        genre_ids: ["g1"],
       }),
     );
     expect(mockPush).toHaveBeenCalledWith("/dj/dj-alpha");

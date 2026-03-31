@@ -10,6 +10,16 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace }),
 }));
 
+jest.mock("@/components/forms/genre-select", () => ({
+  GenreSelect: ({ value }: { value: unknown[] }) => (
+    <div>
+      {value.map((g: any) => (
+        <span key={g.id}>{g.name}</span>
+      ))}
+    </div>
+  ),
+}));
+
 const mockCitySearch = jest.fn().mockResolvedValue([
   {
     id: "city-bk",
@@ -56,6 +66,7 @@ jest.mock("@/hooks/use-current-user", () => ({
         created_at: "2024-01-01",
       },
       country: "US",
+      genre_ids: ["g1"],
       genres: ["house"],
       profile_type: "dj",
       profile_image_url: null,
@@ -85,6 +96,7 @@ jest.mock("@/lib/services/profiles", () => ({
         created_at: "2024-01-01",
       },
       country: "US",
+      genre_ids: ["g1"],
       genres: ["house"],
       profile_type: "dj",
       profile_image_url: null,
@@ -94,6 +106,12 @@ jest.mock("@/lib/services/profiles", () => ({
       deleted_at: null,
     }),
     update: (...args: unknown[]) => mockUpdate(...args),
+  },
+}));
+
+jest.mock("@/lib/services/genres", () => ({
+  genresService: {
+    getByIds: jest.fn().mockResolvedValue([{ id: "g1", slug: "house", name: "House" }]),
   },
 }));
 
@@ -129,7 +147,7 @@ describe("EditProfilePage", () => {
 
   it("renders genre tags from profile", async () => {
     render(<EditProfilePage />);
-    expect(await screen.findByText("house")).toBeInTheDocument();
+    expect(await screen.findByText("House")).toBeInTheDocument();
   });
 
   it("shows profile type radios", async () => {
@@ -198,7 +216,7 @@ describe("EditProfilePage", () => {
     expect(mockUpdate).toHaveBeenCalledTimes(1);
     expect(mockUpdate).toHaveBeenCalledWith(
       "user-1",
-      expect.objectContaining({ display_name: "DJ Shadow" }),
+      expect.objectContaining({ display_name: "DJ Shadow", genre_ids: ["g1"] }),
     );
   });
 });

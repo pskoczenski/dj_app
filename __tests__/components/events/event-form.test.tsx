@@ -2,6 +2,17 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { EventForm } from "@/components/events/event-form";
 
+jest.mock("@/components/forms/genre-select", () => ({
+  GenreSelect: ({ onChange }: { onChange: (v: unknown) => void }) => (
+    <button
+      type="button"
+      onClick={() => onChange([{ id: "g1", slug: "house", name: "House" }])}
+    >
+      Pick genre
+    </button>
+  ),
+}));
+
 jest.mock("@/lib/services/conversations", () => ({
   conversationsService: {
     ensureEventGroupThread: jest.fn().mockResolvedValue("conv-1"),
@@ -170,6 +181,8 @@ describe("EventForm", () => {
     const user = userEvent.setup();
     render(<EventForm mode="create" currentUserId="user-1" />);
 
+    await user.click(screen.getByRole("button", { name: /pick genre/i }));
+
     await user.type(screen.getByLabelText(/title/i), "Launch Party");
     await user.type(screen.getByLabelText(/start date/i), "2025-08-01");
     await selectCityWithAutocomplete(user, /event city/i);
@@ -177,7 +190,7 @@ describe("EventForm", () => {
 
     await waitFor(() => {
       expect(eventsService.create).toHaveBeenCalledWith(
-        expect.objectContaining({ city_id: "city-pdx" }),
+        expect.objectContaining({ city_id: "city-pdx", genre_ids: ["g1"] }),
       );
     });
   });
@@ -208,6 +221,7 @@ describe("EventForm", () => {
           start_time: null,
           end_time: null,
           flyer_image_url: null,
+          genre_ids: [],
           genres: null,
           google_place_id: null,
           latitude: null,
