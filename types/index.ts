@@ -121,6 +121,7 @@ export interface CommentLikeState {
 export type ProfileInsert = Tables["profiles"]["Insert"];
 export type EventInsert = Tables["events"]["Insert"];
 export type EventLineupInsert = Tables["event_lineup"]["Insert"];
+export type EventLineupUpdate = Tables["event_lineup"]["Update"];
 export type MixInsert = Tables["mixes"]["Insert"];
 export type FollowInsert = Tables["follows"]["Insert"];
 
