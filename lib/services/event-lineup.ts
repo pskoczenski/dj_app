@@ -5,8 +5,14 @@ import { conversationsService } from "@/lib/services/conversations";
 import type {
   EventLineup,
   EventLineupInsert,
+  EventLineupUpdate,
   EventLineupWithProfile,
 } from "@/types";
+
+export type EventLineupRowDisplayPatch = Pick<
+  EventLineupUpdate,
+  "sort_order" | "is_headliner" | "set_time"
+>;
 
 function supabase() {
   return createClient();
@@ -45,23 +51,35 @@ export async function listForEvent(
   }));
 }
 
+/**
+ * Add a lineup row, or refresh order/display fields if that DJ is already on the event.
+ * Upsert avoids 23505 when the UI lacks `eventLineupId` but the row already exists in DB.
+ */
 export async function add(data: EventLineupInsert): Promise<EventLineup> {
-  const { data: created, error } = await supabase()
+  const { data: row, error } = await supabase()
     .from(TABLES.eventLineup)
-    .insert(data)
+    .upsert(data, { onConflict: "event_id,profile_id" })
     .select()
     .single();
 
-  if (error) {
-    if (error.code === "23505") {
-      throw new Error("This DJ is already in the lineup.");
-    }
-    throw error;
-  }
+  if (error) throw error;
 
-  await conversationsService.syncEventGroupParticipants(created.event_id);
+  await conversationsService.syncEventGroupParticipants(row.event_id);
 
-  return created;
+  return row as EventLineup;
+}
+
+/** Update display/order fields for an existing lineup row (edit flow). */
+export async function updateRow(
+  id: string,
+  patch: EventLineupRowDisplayPatch,
+): Promise<void> {
+  const { error } = await supabase()
+    .from(TABLES.eventLineup)
+    .update(patch)
+    .eq("id", id);
+
+  if (error) throw error;
 }
 
 export async function remove(id: string): Promise<void> {
@@ -99,6 +117,7 @@ export async function reorder(
 export const eventLineupService = {
   listForEvent,
   add,
+  updateRow,
   remove,
   reorder,
 };

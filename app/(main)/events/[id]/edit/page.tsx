@@ -1,15 +1,31 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { use, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useEvent } from "@/hooks/use-event";
-import { profilesService } from "@/lib/services/profiles";
 import { EventForm } from "@/components/events/event-form";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { EmptyState } from "@/components/shared/empty-state";
 import type { LineupEntry } from "@/components/events/lineup-builder";
-import type { Profile } from "@/types";
+import type { EventLineupWithProfile } from "@/types";
+import { formatSetTimeForInput } from "@/lib/utils/format-set-time-for-input";
+
+function lineupToFormEntries(lineup: EventLineupWithProfile[]): LineupEntry[] {
+  return lineup.map((item, i) => {
+    const p = item.profile;
+    return {
+      tempId: `existing-${item.id}`,
+      eventLineupId: item.id,
+      profileId: item.profile_id,
+      displayName: p?.display_name ?? "Unknown",
+      slug: p?.slug ?? "",
+      profileImageUrl: p?.profile_image_url ?? null,
+      isHeadliner: item.is_headliner ?? false,
+      setTime: formatSetTimeForInput(item.set_time),
+      sortOrder: item.sort_order ?? i,
+    };
+  });
+}
 
 export default function EditEventPage({
   params,
@@ -17,46 +33,12 @@ export default function EditEventPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const router = useRouter();
   const { user, loading: userLoading } = useCurrentUser();
   const { event, lineup, loading: eventLoading } = useEvent(id);
-  const [initialLineup, setInitialLineup] = useState<LineupEntry[] | null>(
-    null,
-  );
 
-  useEffect(() => {
-    if (!lineup.length) {
-      setInitialLineup([]);
-      return;
-    }
+  const initialLineup = useMemo(() => lineupToFormEntries(lineup), [lineup]);
 
-    let cancelled = false;
-    Promise.all(
-      lineup.map((item) => profilesService.getById(item.profile_id)),
-    ).then((profiles) => {
-      if (cancelled) return;
-      const entries: LineupEntry[] = lineup.map((item, i) => {
-        const p = profiles[i] as Profile | null;
-        return {
-          tempId: `existing-${item.id}`,
-          profileId: item.profile_id,
-          displayName: p?.display_name ?? "Unknown",
-          slug: p?.slug ?? "",
-          profileImageUrl: p?.profile_image_url ?? null,
-          isHeadliner: item.is_headliner ?? false,
-          setTime: item.set_time ?? "",
-          sortOrder: item.sort_order ?? i,
-        };
-      });
-      setInitialLineup(entries);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [lineup]);
-
-  const loading = userLoading || eventLoading || initialLineup === null;
+  const loading = userLoading || eventLoading;
 
   if (loading) {
     return (
@@ -92,7 +74,7 @@ export default function EditEventPage({
       <EventForm
         mode="edit"
         event={event}
-        initialLineup={initialLineup ?? []}
+        initialLineup={initialLineup}
         currentUserId={user.id}
       />
     </div>

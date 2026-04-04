@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { eventsService } from "@/lib/services/events";
 import { eventLineupService } from "@/lib/services/event-lineup";
@@ -110,6 +110,21 @@ export function EventForm({
   );
   const [lineup, setLineup] = useState<LineupEntry[]>(initialLineup);
 
+  useEffect(() => {
+    if (mode !== "edit") return;
+    setLineup(initialLineup);
+  }, [mode, event?.id, initialLineup]);
+
+  const persistLineupRemove = useCallback(async (entry: LineupEntry) => {
+    if (!entry.eventLineupId) return;
+    try {
+      await eventLineupService.remove(entry.eventLineupId);
+    } catch {
+      toast.error("Could not remove this DJ from the lineup.");
+      throw new Error("remove failed");
+    }
+  }, []);
+
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -156,6 +171,10 @@ export function EventForm({
     startDate.length > 0 &&
     selectedCity !== null;
 
+  const primarySubmitLabel = mode === "edit" ? "Update Event" : "Publish";
+  const primarySubmitPendingLabel =
+    mode === "edit" ? "Updating…" : "Saving…";
+
   function validate(): boolean {
     const e: Record<string, string> = {};
     if (!title.trim()) e.title = "Title is required.";
@@ -165,8 +184,32 @@ export function EventForm({
     return Object.keys(e).length === 0;
   }
 
+  function isLineupDuplicateError(err: unknown): boolean {
+    if (err instanceof Error) {
+      if (err.message.includes("already in the lineup")) return true;
+      if (/duplicate key|unique constraint|23505/i.test(err.message)) return true;
+    }
+    if (
+      err &&
+      typeof err === "object" &&
+      "code" in err &&
+      String((err as { code: unknown }).code) === "23505"
+    ) {
+      return true;
+    }
+    return false;
+  }
+
   async function saveLineup(eventId: string) {
     for (const entry of lineup) {
+      if (entry.eventLineupId) {
+        await eventLineupService.updateRow(entry.eventLineupId, {
+          sort_order: entry.sortOrder,
+          is_headliner: entry.isHeadliner,
+          set_time: entry.setTime.trim() || null,
+        });
+        continue;
+      }
       try {
         await eventLineupService.add({
           event_id: eventId,
@@ -174,12 +217,10 @@ export function EventForm({
           added_by: currentUserId,
           sort_order: entry.sortOrder,
           is_headliner: entry.isHeadliner,
-          set_time: entry.setTime || null,
+          set_time: entry.setTime.trim() || null,
         });
       } catch (err) {
-        if (err instanceof Error && err.message.includes("already in the lineup")) {
-          continue;
-        }
+        if (isLineupDuplicateError(err)) continue;
         throw err;
       }
     }
@@ -490,6 +531,7 @@ export function EventForm({
         value={lineup}
         onChange={setLineup}
         currentUserId={currentUserId}
+        persistRemove={mode === "edit" ? persistLineupRemove : undefined}
       />
 
       {lineup.length > 0 && (
@@ -515,7 +557,7 @@ export function EventForm({
       {/* Actions */}
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={saving || !isValid}>
-          {saving ? "Saving…" : "Publish"}
+          {saving ? primarySubmitPendingLabel : primarySubmitLabel}
         </Button>
         <Button
           type="button"

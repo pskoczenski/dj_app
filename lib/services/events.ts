@@ -308,6 +308,9 @@ export async function getByProfile(
 }
 
 export async function create(data: EventInsert): Promise<Event> {
+  if (data.genre_ids?.length) {
+    await genresService.ensureGenreIdsExist(data.genre_ids);
+  }
   const { data: created, error } = await supabase()
     .from(TABLES.events)
     .insert(data)
@@ -320,6 +323,9 @@ export async function create(data: EventInsert): Promise<Event> {
 }
 
 export async function update(id: string, data: EventUpdate): Promise<Event> {
+  if (data.genre_ids?.length) {
+    await genresService.ensureGenreIdsExist(data.genre_ids);
+  }
   const { data: updated, error } = await supabase()
     .from(TABLES.events)
     .update(data)

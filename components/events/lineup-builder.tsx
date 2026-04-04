@@ -12,6 +12,8 @@ import type { Profile } from "@/types";
 
 export interface LineupEntry {
   tempId: string;
+  /** Set when this row was loaded from `event_lineup` (edit mode); omit for new picks. */
+  eventLineupId?: string;
   profileId: string;
   displayName: string;
   slug: string;
@@ -25,6 +27,11 @@ interface LineupBuilderProps {
   value: LineupEntry[];
   onChange: (entries: LineupEntry[]) => void;
   currentUserId?: string;
+  /**
+   * When removing a row that already exists in `event_lineup`, run this first
+   * (e.g. `eventLineupService.remove`). If it throws, the row stays in the list.
+   */
+  persistRemove?: (entry: LineupEntry) => Promise<void>;
 }
 
 let nextTempId = 1;
@@ -36,8 +43,10 @@ export function LineupBuilder({
   value,
   onChange,
   currentUserId,
+  persistRemove,
 }: LineupBuilderProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [removingTempId, setRemovingTempId] = useState<string | null>(null);
   const [results, setResults] = useState<Profile[]>([]);
   const [searching, setSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -99,8 +108,24 @@ export function LineupBuilder({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUserId, value]);
 
-  function removeEntry(tempId: string) {
-    onChange(value.filter((e) => e.tempId !== tempId).map((e, i) => ({ ...e, sortOrder: i })));
+  async function removeEntry(tempId: string) {
+    const entry = value.find((e) => e.tempId === tempId);
+    if (!entry) return;
+    setRemovingTempId(tempId);
+    try {
+      if (persistRemove) {
+        await persistRemove(entry);
+      }
+      onChange(
+        value
+          .filter((e) => e.tempId !== tempId)
+          .map((e, i) => ({ ...e, sortOrder: i })),
+      );
+    } catch {
+      // Parent `persistRemove` should toast; keep row in the list.
+    } finally {
+      setRemovingTempId(null);
+    }
   }
 
   function moveUp(index: number) {
@@ -235,8 +260,9 @@ export function LineupBuilder({
               {/* Remove */}
               <button
                 type="button"
-                onClick={() => removeEntry(entry.tempId)}
-                className="text-fog hover:text-dried-blood"
+                disabled={removingTempId === entry.tempId}
+                onClick={() => void removeEntry(entry.tempId)}
+                className="text-fog hover:text-dried-blood disabled:opacity-40"
                 aria-label={`Remove ${entry.displayName}`}
               >
                 <X className="size-4" />
