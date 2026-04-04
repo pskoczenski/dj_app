@@ -60,7 +60,12 @@ export function EventCard({
   currentUserId?: string | null;
   onLikeChange?: (next: { liked: boolean; likesCount: number }) => void;
 }) {
-  const location = [event.venue, event.cities?.name, event.cities?.state_code]
+  const location = [
+    event.venue,
+    event.street_address,
+    event.cities?.name,
+    event.cities?.state_code,
+  ]
     .filter(Boolean)
     .join(", ");
   const headingId = `event-title-${event.id}`;

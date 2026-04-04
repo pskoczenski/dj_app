@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { EventForm } from "@/components/events/event-form";
 
@@ -28,6 +28,7 @@ jest.mock("@/lib/services/events", () => ({
   eventsService: {
     create: jest.fn().mockResolvedValue({ id: "new-evt" }),
     update: jest.fn().mockResolvedValue({ id: "evt-1" }),
+    softDelete: jest.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -195,7 +196,7 @@ describe("EventForm", () => {
     });
   });
 
-  it("shows Cancel Event button in edit mode", () => {
+  it("shows cancel vs delete help and actions in edit mode", () => {
     render(
       <EventForm
         mode="edit"
@@ -228,13 +229,68 @@ describe("EventForm", () => {
           longitude: null,
           ticket_url: null,
           venue: null,
+          street_address: null,
           created_at: "2025-01-01",
           updated_at: "2025-01-01",
         }}
       />,
     );
+    expect(screen.getByText(/cancel vs delete/i)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /cancel event/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^delete event$/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("soft-deletes after confirming delete in edit mode", async () => {
+    const user = userEvent.setup();
+    render(
+      <EventForm
+        mode="edit"
+        currentUserId="user-1"
+        event={{
+          id: "evt-1",
+          title: "Existing",
+          start_date: "2025-08-01",
+          status: "published",
+          created_by: "user-1",
+          deleted_at: null,
+          city_id: "city-pdx",
+          cities: {
+            id: "city-pdx",
+            name: "Portland",
+            state_name: "Oregon",
+            state_code: "OR",
+            created_at: "2025-01-01",
+          },
+          country: null,
+          description: null,
+          end_date: null,
+          start_time: null,
+          end_time: null,
+          flyer_image_url: null,
+          genre_ids: [],
+          genres: null,
+          google_place_id: null,
+          latitude: null,
+          longitude: null,
+          ticket_url: null,
+          venue: null,
+          street_address: null,
+          created_at: "2025-01-01",
+          updated_at: "2025-01-01",
+        }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /^delete event$/i }));
+    const dialog = await screen.findByRole("alertdialog");
+    await user.click(within(dialog).getByRole("button", { name: /^delete$/i }));
+
+    await waitFor(() => {
+      expect(eventsService.softDelete).toHaveBeenCalledWith("evt-1");
+    });
   });
 });

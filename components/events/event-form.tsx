@@ -19,6 +19,17 @@ import {
   type LineupEntry,
 } from "@/components/events/lineup-builder";
 import { LineupCard } from "@/components/events/lineup-card";
+import { EventCancelVsDeleteHelp } from "@/components/events/event-cancel-vs-delete-help";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import type {
   City,
@@ -85,6 +96,9 @@ export function EventForm({
   const [startTime, setStartTime] = useState(event?.start_time ?? "");
   const [endTime, setEndTime] = useState(event?.end_time ?? "");
   const [venue, setVenue] = useState(event?.venue ?? "");
+  const [streetAddress, setStreetAddress] = useState(
+    event?.street_address ?? "",
+  );
   const [selectedCity, setSelectedCity] = useState<City | null>(
     event?.cities ?? null,
   );
@@ -98,6 +112,7 @@ export function EventForm({
 
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (mode !== "edit" || !event?.genre_ids || event.genre_ids.length === 0) {
@@ -185,6 +200,7 @@ export function EventForm({
           start_time: startTime || null,
           end_time: endTime || null,
           venue: venue || null,
+          street_address: streetAddress.trim() || null,
           city_id: selectedCity.id,
           country: country || null,
           ticket_url: ticketUrl || null,
@@ -214,6 +230,7 @@ export function EventForm({
           start_time: startTime || null,
           end_time: endTime || null,
           venue: venue || null,
+          street_address: streetAddress.trim() || null,
           city_id: selectedCity.id,
           country: country || null,
           ticket_url: ticketUrl || null,
@@ -236,6 +253,21 @@ export function EventForm({
       }
     } catch {
       toast.error("Failed to save event. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSoftDelete() {
+    if (!event) return;
+    setSaving(true);
+    try {
+      await eventsService.softDelete(event.id);
+      toast.success("Event deleted.");
+      setDeleteDialogOpen(false);
+      router.push("/events");
+    } catch {
+      toast.error("Failed to delete event. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -376,6 +408,22 @@ export function EventForm({
             id="event-venue"
             value={venue}
             onChange={(e) => setVenue(e.target.value)}
+            placeholder="e.g. Holocene"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="event-street-address"
+            className="text-sm font-medium text-bone"
+          >
+            Street address
+          </label>
+          <Input
+            id="event-street-address"
+            value={streetAddress}
+            onChange={(e) => setStreetAddress(e.target.value)}
+            placeholder="e.g. 1001 SE Morrison St"
+            autoComplete="street-address"
           />
         </div>
         <div className="flex flex-col gap-1 sm:col-span-2">
@@ -477,17 +525,63 @@ export function EventForm({
         >
           Save as Draft
         </Button>
-        {mode === "edit" && event?.status !== "cancelled" && (
-          <Button
-            type="button"
-            variant="destructive"
-            disabled={saving}
-            onClick={() => handleSubmit("cancelled")}
-          >
-            Cancel Event
-          </Button>
-        )}
       </div>
+
+      {mode === "edit" && event && (
+        <div className="flex flex-col gap-4 border-t border-root-line pt-6">
+          <EventCancelVsDeleteHelp />
+          {event.status === "cancelled" && (
+            <p className="text-sm text-stone">
+              This event is already cancelled. Delete it below if you want it
+              removed from the app entirely.
+            </p>
+          )}
+          <div className="flex flex-wrap gap-3">
+            {event.status !== "cancelled" && (
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={saving}
+                onClick={() => handleSubmit("cancelled")}
+              >
+                Cancel event
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              className="border-dried-blood/50 text-dried-blood hover:bg-dried-blood/10 dark:text-dried-blood"
+              disabled={saving}
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              Delete event
+            </Button>
+          </div>
+
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {event.status === "cancelled"
+                    ? `“${event.title.trim() || "This event"}” will be removed from discovery, search, and calendars. This cannot be undone.`
+                    : `“${event.title.trim() || "This event"}” will be removed from discovery, search, and calendars. This cannot be undone. Use “Cancel event” above if you only want it marked as cancelled but still visible.`}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={saving}>Back</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  disabled={saving}
+                  onClick={() => void handleSoftDelete()}
+                >
+                  {saving ? "Deleting…" : "Delete"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
     </form>
   );
 }

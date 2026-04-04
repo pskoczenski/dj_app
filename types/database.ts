@@ -127,6 +127,7 @@ export type Database = {
           start_date: string
           start_time: string | null
           status: Database["public"]["Enums"]["event_status"]
+          street_address: string | null
           ticket_url: string | null
           title: string
           updated_at: string | null
@@ -151,6 +152,7 @@ export type Database = {
           start_date: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["event_status"]
+          street_address?: string | null
           ticket_url?: string | null
           title: string
           updated_at?: string | null
@@ -175,6 +177,7 @@ export type Database = {
           start_date?: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["event_status"]
+          street_address?: string | null
           ticket_url?: string | null
           title?: string
           updated_at?: string | null

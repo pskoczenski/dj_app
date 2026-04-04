@@ -12,6 +12,7 @@ export function calendarEventToCardEvent(
     start_time: ce.start_time,
     end_time: ce.end_time,
     venue: ce.venue,
+    street_address: ce.street_address,
     city_id: ce.city_id,
     cities: {
       id: ce.city_id,

@@ -30,6 +30,7 @@ export type CalendarEvent = Pick<
   | "start_time"
   | "end_time"
   | "venue"
+  | "street_address"
   | "flyer_image_url"
   | "genre_ids"
   | "genres"

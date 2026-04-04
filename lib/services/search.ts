@@ -70,7 +70,7 @@ export async function searchEvents(
     .is("deleted_at", null)
     .eq("status", "published")
     .or(
-      `title.ilike.${term},description.ilike.${term},venue.ilike.${term},cities.name.ilike.${term}`,
+      `title.ilike.${term},description.ilike.${term},venue.ilike.${term},street_address.ilike.${term},cities.name.ilike.${term}`,
     );
 
   if (options.cityId) {

@@ -45,6 +45,7 @@ const EVENT = {
   genre_ids: [] as string[],
   genres: null,
   likes_count: 0,
+  street_address: null,
   status: "published" as const,
   created_by: "u1",
 };

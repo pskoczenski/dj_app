@@ -69,7 +69,7 @@ function supabase() {
 }
 
 const CALENDAR_SELECT =
-  "id,title,start_date,end_date,start_time,end_time,venue,flyer_image_url,genre_ids,likes_count,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
+  "id,title,start_date,end_date,start_time,end_time,venue,street_address,flyer_image_url,genre_ids,likes_count,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
 
 function toCalendarEvent(
   row: Record<string, unknown> & {
@@ -87,6 +87,7 @@ function toCalendarEvent(
     start_time: (row.start_time as string | null) ?? null,
     end_time: (row.end_time as string | null) ?? null,
     venue: (row.venue as string | null) ?? null,
+    street_address: (row.street_address as string | null) ?? null,
     flyer_image_url: (row.flyer_image_url as string | null) ?? null,
     genre_ids: genreIds,
     genres: genreIds.map((id) => genreMap.get(id)).filter((x): x is string =>

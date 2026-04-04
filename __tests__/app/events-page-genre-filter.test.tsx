@@ -184,6 +184,8 @@ describe("Events page — Step 37 genre filter", () => {
         city_id: "city-pdx",
         cities: portland,
         genre_ids: [],
+        likes_count: 0,
+        street_address: null,
         event_lineup: [],
       },
     ]);

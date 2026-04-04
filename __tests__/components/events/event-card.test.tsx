@@ -65,6 +65,7 @@ const MOCK_EVENT: EventWithLineupPreview = {
   likes_count: 7,
   ticket_url: null,
   venue: "Holocene",
+  street_address: null,
   created_at: "2025-01-01",
   updated_at: "2025-01-01",
   genre_ids: [],

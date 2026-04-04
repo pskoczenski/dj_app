@@ -9,6 +9,7 @@ import { useLikedEventIds } from "@/hooks/use-liked-event-ids";
 import { useConversations } from "@/hooks/use-conversations";
 import { eventLineupService } from "@/lib/services/event-lineup";
 import { conversationsService } from "@/lib/services/conversations";
+import { eventsService } from "@/lib/services/events";
 import { CancelledBanner } from "@/components/events/cancelled-banner";
 import { CommentCountModalTrigger } from "@/components/comments/comment-count-modal-trigger";
 import { EventLikeControl } from "@/components/events/event-like-control";
@@ -20,11 +21,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Calendar,
   Clock,
   MapPin,
   ExternalLink,
   Pencil,
+  Trash2,
   UserMinus,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -55,6 +67,8 @@ export default function EventDetailPage({
     liked: boolean;
     count: number;
   } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   useEffect(() => {
     setOptLike(null);
@@ -93,6 +107,7 @@ export default function EventDetailPage({
 
   const location = [
     event.venue,
+    event.street_address,
     event.cities?.name,
     event.cities?.state_code,
     event.country,
@@ -135,6 +150,21 @@ export default function EventDetailPage({
       router.push(`/messages/${conversationId}`);
     } catch {
       toast.error("Could not open group chat.");
+    }
+  }
+
+  async function handleConfirmDeleteEvent() {
+    if (!event) return;
+    setDeleteBusy(true);
+    try {
+      await eventsService.softDelete(event.id);
+      toast.success("Event deleted.");
+      setDeleteDialogOpen(false);
+      router.push("/events");
+    } catch {
+      toast.error("Could not delete event. Please try again.");
+    } finally {
+      setDeleteBusy(false);
     }
   }
 
@@ -194,13 +224,26 @@ export default function EventDetailPage({
             </Button>
           )}
           {isCreator && (
-            <Link
-              href={`/events/${event.id}/edit`}
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              <Pencil className="mr-1.5 size-4" />
-              Edit
-            </Link>
+            <>
+              <Link
+                href={`/events/${event.id}/edit`}
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                <Pencil className="mr-1.5 size-4" />
+                Edit
+              </Link>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-dried-blood/50 text-dried-blood hover:bg-dried-blood/10 dark:text-dried-blood"
+                onClick={() => setDeleteDialogOpen(true)}
+                aria-label="Delete event"
+              >
+                <Trash2 className="size-4" />
+                Delete
+              </Button>
+            </>
           )}
           {userLineupEntry && !isCreator && (
             <Button variant="destructive" size="sm" onClick={handleRemoveSelf}>
@@ -333,6 +376,30 @@ export default function EventDetailPage({
           </Link>
         </section>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deleting removes this event from discovery, search, and calendars.
+              It cannot be undone; people in an existing group chat may still see
+              a short notice. To keep the listing visible but marked as cancelled,
+              use Edit → Cancel event instead.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteBusy}>Back</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deleteBusy}
+              onClick={() => void handleConfirmDeleteEvent()}
+            >
+              {deleteBusy ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

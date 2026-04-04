@@ -135,6 +135,9 @@ function EventsBrowser() {
               (e) =>
                 e.title.toLowerCase().includes(search.toLowerCase()) ||
                 e.venue?.toLowerCase().includes(search.toLowerCase()) ||
+                e.street_address
+                  ?.toLowerCase()
+                  .includes(search.toLowerCase()) ||
                 e.cities?.name?.toLowerCase().includes(search.toLowerCase()),
             )
           : data;
@@ -274,7 +277,7 @@ function EventsBrowser() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fog" />
             <Input
-              placeholder="Search events by title, venue, or city…"
+              placeholder="Search events by title, venue, address, or city…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
