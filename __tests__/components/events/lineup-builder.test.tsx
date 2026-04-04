@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   LineupBuilder,
@@ -71,6 +71,50 @@ describe("LineupBuilder", () => {
     const updated = onChange.mock.calls[0][0];
     expect(updated).toHaveLength(1);
     expect(updated[0].displayName).toBe("DJ Beta");
+  });
+
+  it("awaits persistRemove before onChange when provided", async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    const persistRemove = jest.fn().mockResolvedValue(undefined);
+    const entries = [makeEntry({ tempId: "a", eventLineupId: "lu-1" })];
+
+    render(
+      <LineupBuilder
+        value={entries}
+        onChange={onChange}
+        persistRemove={persistRemove}
+      />,
+    );
+
+    await user.click(screen.getByLabelText("Remove DJ Alpha"));
+
+    await waitFor(() => {
+      expect(persistRemove).toHaveBeenCalledWith(
+        expect.objectContaining({ eventLineupId: "lu-1" }),
+      );
+      expect(onChange).toHaveBeenCalled();
+    });
+  });
+
+  it("does not call onChange when persistRemove rejects", async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    const persistRemove = jest.fn().mockRejectedValue(new Error("fail"));
+    const entries = [makeEntry({ tempId: "a", eventLineupId: "lu-1" })];
+
+    render(
+      <LineupBuilder
+        value={entries}
+        onChange={onChange}
+        persistRemove={persistRemove}
+      />,
+    );
+
+    await user.click(screen.getByLabelText("Remove DJ Alpha"));
+
+    await waitFor(() => expect(persistRemove).toHaveBeenCalled());
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it("calls onChange with swapped order when move down is clicked", async () => {
