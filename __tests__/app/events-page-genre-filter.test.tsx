@@ -12,6 +12,7 @@ const mockGetAll = jest.fn();
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ replace: mockReplace }),
   useSearchParams: () => searchParams,
+  usePathname: () => "/events",
 }));
 
 jest.mock("@/lib/services/events", () => ({
@@ -68,6 +69,10 @@ jest.mock("@/hooks/use-comments", () => ({
 
 jest.mock("@/hooks/use-current-user", () => ({
   useCurrentUser: () => ({ user: null }),
+}));
+
+jest.mock("@/hooks/use-liked-event-ids", () => ({
+  useLikedEventIds: () => new Set<string>(),
 }));
 
 const portland: City = {

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CornerVineAccent } from "@/components/decorative/corner-vine-accent";
 import { CommentCountModalTrigger } from "@/components/comments/comment-count-modal-trigger";
+import { EventLikeControl } from "@/components/events/event-like-control";
 import { formatSetTime12h } from "@/lib/format-time";
 import type { EventWithLineupPreview } from "@/types";
 
@@ -48,7 +49,17 @@ function statusVariant(status: string) {
   }
 }
 
-export function EventCard({ event }: { event: EventWithLineupPreview }) {
+export function EventCard({
+  event,
+  likedByMe = false,
+  currentUserId = null,
+  onLikeChange,
+}: {
+  event: EventWithLineupPreview;
+  likedByMe?: boolean;
+  currentUserId?: string | null;
+  onLikeChange?: (next: { liked: boolean; likesCount: number }) => void;
+}) {
   const location = [event.venue, event.cities?.name, event.cities?.state_code]
     .filter(Boolean)
     .join(", ");
@@ -115,7 +126,15 @@ export function EventCard({ event }: { event: EventWithLineupPreview }) {
             )}
           </CardContent>
         </Link>
-        <div className="flex cursor-default items-center justify-end border-t border-root-line px-4 py-2">
+        <div className="flex cursor-default items-center justify-between gap-2 border-t border-root-line px-4 py-2">
+          <EventLikeControl
+            eventId={event.id}
+            likesCount={event.likes_count ?? 0}
+            likedByMe={likedByMe}
+            currentUserId={currentUserId}
+            onLikeChange={onLikeChange}
+            variant="footer"
+          />
           <CommentCountModalTrigger
             commentableType="event"
             commentableId={event.id}

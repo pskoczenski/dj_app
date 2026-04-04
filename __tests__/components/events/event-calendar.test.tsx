@@ -76,7 +76,9 @@ const baseEvent = {
   city: null,
   state: null,
   flyer_image_url: null,
+  genre_ids: [] as string[],
   genres: null,
+  likes_count: 0,
   status: "published" as const,
   created_by: "u1",
 };

@@ -69,7 +69,7 @@ function supabase() {
 }
 
 const CALENDAR_SELECT =
-  "id,title,start_date,end_date,start_time,end_time,venue,flyer_image_url,genre_ids,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
+  "id,title,start_date,end_date,start_time,end_time,venue,flyer_image_url,genre_ids,likes_count,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
 
 function toCalendarEvent(
   row: Record<string, unknown> & {
@@ -97,6 +97,7 @@ function toCalendarEvent(
     city_id: row.city_id as string,
     city: c?.name ?? null,
     state: c?.state_code ?? null,
+    likes_count: (row.likes_count as number | null | undefined) ?? 0,
   };
 }
 

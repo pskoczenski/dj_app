@@ -1,15 +1,17 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEvent } from "@/hooks/use-event";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useLikedEventIds } from "@/hooks/use-liked-event-ids";
 import { useConversations } from "@/hooks/use-conversations";
 import { eventLineupService } from "@/lib/services/event-lineup";
 import { conversationsService } from "@/lib/services/conversations";
 import { CancelledBanner } from "@/components/events/cancelled-banner";
 import { CommentCountModalTrigger } from "@/components/comments/comment-count-modal-trigger";
+import { EventLikeControl } from "@/components/events/event-like-control";
 import { ShareButton } from "@/components/events/share-button";
 import { LineupCard } from "@/components/events/lineup-card";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
@@ -48,6 +50,15 @@ export default function EventDetailPage({
   const router = useRouter();
   const { event, lineup, loading, error, refetch } = useEvent(id);
   const { user } = useCurrentUser();
+  const serverLikedEventIds = useLikedEventIds(event ? [event.id] : [], user?.id);
+  const [optLike, setOptLike] = useState<{
+    liked: boolean;
+    count: number;
+  } | null>(null);
+
+  useEffect(() => {
+    setOptLike(null);
+  }, [event?.id, event?.likes_count]);
   const { conversations, refetch: refetchConversations } = useConversations();
 
   if (loading) {
@@ -93,6 +104,11 @@ export default function EventDetailPage({
   const creator = (event as Record<string, unknown>).profiles as
     | { id: string; display_name: string; slug: string; profile_image_url: string | null }
     | undefined;
+
+  const detailLikedByMe =
+    optLike !== null ? optLike.liked : serverLikedEventIds.has(event.id);
+  const detailLikesCount =
+    optLike !== null ? optLike.count : (event.likes_count ?? 0);
 
   async function handleRemoveSelf() {
     if (!userLineupEntry) return;
@@ -141,7 +157,18 @@ export default function EventDetailPage({
         <h1 className="font-display text-3xl font-bold text-bone">
           {event.title}
         </h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <EventLikeControl
+            eventId={event.id}
+            likesCount={detailLikesCount}
+            likedByMe={detailLikedByMe}
+            currentUserId={user?.id}
+            onLikeChange={(next) =>
+              setOptLike({ liked: next.liked, count: next.likesCount })
+            }
+            variant="inline"
+            className="rounded-default border border-root-line px-2 py-1.5"
+          />
           <ShareButton title={event.title} />
           {canOpenGroupChat && (
             <Button

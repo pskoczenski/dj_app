@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState, type ReactElement } from "react";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { useLikedEventIds } from "@/hooks/use-liked-event-ids";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +23,8 @@ export function EventPreviewModal({
 }) {
   const [open, setOpen] = useState(false);
   const cardEvent = useMemo(() => calendarEventToCardEvent(event), [event]);
+  const { user } = useCurrentUser();
+  const likedEventIds = useLikedEventIds([event.id], user?.id);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -30,7 +34,11 @@ export function EventPreviewModal({
         className="flex max-h-[min(90vh,48rem)] w-full max-w-lg flex-col gap-0 overflow-y-auto p-4 sm:max-w-lg"
       >
         <div className="pb-2">
-          <EventCard event={cardEvent} />
+          <EventCard
+            event={cardEvent}
+            likedByMe={likedEventIds.has(event.id)}
+            currentUserId={user?.id}
+          />
         </div>
         <div className="flex justify-end border-t border-root-line pt-3">
           <Link

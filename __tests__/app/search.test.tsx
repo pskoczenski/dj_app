@@ -19,6 +19,7 @@ jest.mock("@/lib/services/search", () => ({
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ replace: jest.fn() }),
   useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/search",
 }));
 
 jest.mock("@/hooks/use-genres", () => ({
@@ -34,6 +35,19 @@ jest.mock("@/hooks/use-genres", () => ({
     ],
     loading: false,
   }),
+}));
+
+jest.mock("@/hooks/use-current-user", () => ({
+  useCurrentUser: () => ({
+    user: null,
+    profile: null,
+    hasAuthSession: false,
+    loading: false,
+  }),
+}));
+
+jest.mock("@/hooks/use-liked-event-ids", () => ({
+  useLikedEventIds: () => new Set<string>(),
 }));
 
 import SearchPage from "@/app/(main)/search/page";

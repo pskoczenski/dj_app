@@ -40,6 +40,10 @@ jest.mock("@/hooks/use-current-user", () => ({
   }),
 }));
 
+jest.mock("@/hooks/use-liked-event-ids", () => ({
+  useLikedEventIds: () => new Set<string>(),
+}));
+
 jest.mock("@/lib/services/events", () => ({
   eventsService: {
     getUpcoming: jest.fn().mockResolvedValue([]),

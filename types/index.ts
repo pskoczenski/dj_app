@@ -33,6 +33,7 @@ export type CalendarEvent = Pick<
   | "flyer_image_url"
   | "genre_ids"
   | "genres"
+  | "likes_count"
   | "status"
   | "created_by"
   | "city_id"

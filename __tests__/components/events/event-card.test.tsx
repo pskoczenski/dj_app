@@ -3,6 +3,18 @@ import userEvent from "@testing-library/user-event";
 import { EventCard } from "@/components/events/event-card";
 import type { EventWithLineupPreview } from "@/types";
 
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: jest.fn() }),
+  usePathname: () => "/events",
+}));
+
+jest.mock("@/lib/services/event-likes", () => ({
+  eventLikesService: {
+    getLikedEventIdsForUser: jest.fn(),
+    toggleLike: jest.fn(),
+  },
+}));
+
 jest.mock("@/hooks/use-comment-count", () => ({
   useCommentCount: () => ({ count: 3, loading: false }),
 }));
@@ -50,10 +62,12 @@ const MOCK_EVENT: EventWithLineupPreview = {
   google_place_id: null,
   latitude: null,
   longitude: null,
+  likes_count: 7,
   ticket_url: null,
   venue: "Holocene",
   created_at: "2025-01-01",
   updated_at: "2025-01-01",
+  genre_ids: [],
 };
 
 describe("EventCard", () => {
@@ -133,6 +147,13 @@ describe("EventCard", () => {
   it("renders semantic article wrapper", () => {
     render(<EventCard event={MOCK_EVENT} />);
     expect(screen.getByRole("article")).toBeInTheDocument();
+  });
+
+  it("renders like control with count", () => {
+    render(<EventCard event={MOCK_EVENT} />);
+    expect(screen.getByRole("button", { name: /like this event/i })).toHaveTextContent(
+      "7",
+    );
   });
 
   it("renders comment count trigger and opens comments dialog", async () => {

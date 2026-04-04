@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState, type ReactElement } from "react";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { useLikedEventIds } from "@/hooks/use-liked-event-ids";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +34,9 @@ export function EventCalendarDayModal({
 }) {
   const [open, setOpen] = useState(false);
   const title = useMemo(() => formatDayHeader(date), [date]);
+  const { user } = useCurrentUser();
+  const dayEventIds = useMemo(() => events.map((e) => e.id), [events]);
+  const likedEventIds = useLikedEventIds(dayEventIds, user?.id);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -48,7 +53,12 @@ export function EventCalendarDayModal({
             <p className="text-center text-sm text-stone">No events on this day.</p>
           ) : (
             events.map((e) => (
-              <EventCard key={e.id} event={calendarEventToCardEvent(e)} />
+              <EventCard
+                key={e.id}
+                event={calendarEventToCardEvent(e)}
+                likedByMe={likedEventIds.has(e.id)}
+                currentUserId={user?.id}
+              />
             ))
           )}
         </div>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useLikedEventIds } from "@/hooks/use-liked-event-ids";
 import { eventsService } from "@/lib/services/events";
 import { mixesService } from "@/lib/services/mixes";
 import { profilesService, type FollowCounts } from "@/lib/services/profiles";
@@ -32,6 +33,49 @@ export default function HomePage() {
     followingCount: 0,
   });
   const [loading, setLoading] = useState(true);
+
+  const homeEventIds = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const e of [...nearbyEvents, ...upcomingGigs]) {
+      if (!seen.has(e.id)) {
+        seen.add(e.id);
+        out.push(e.id);
+      }
+    }
+    return out;
+  }, [nearbyEvents, upcomingGigs]);
+
+  const serverLikedEventIds = useLikedEventIds(homeEventIds, user?.id);
+  const homeEventsListKey = homeEventIds.join("\0");
+  const [optimisticEventLiked, setOptimisticEventLiked] = useState<
+    Record<string, boolean>
+  >({});
+
+  useEffect(() => {
+    setOptimisticEventLiked({});
+  }, [homeEventsListKey]);
+
+  const likedEventByMe = useCallback(
+    (eventId: string) =>
+      Object.hasOwn(optimisticEventLiked, eventId)
+        ? optimisticEventLiked[eventId]
+        : serverLikedEventIds.has(eventId),
+    [optimisticEventLiked, serverLikedEventIds],
+  );
+
+  function handleHomeEventLikeChange(
+    eventId: string,
+    next: { liked: boolean; likesCount: number },
+  ) {
+    const patch = (list: EventWithLineupPreview[]) =>
+      list.map((e) =>
+        e.id === eventId ? { ...e, likes_count: next.likesCount } : e,
+      );
+    setNearbyEvents((prev) => patch(prev));
+    setUpcomingGigs((prev) => patch(prev));
+    setOptimisticEventLiked((o) => ({ ...o, [eventId]: next.liked }));
+  }
 
   useEffect(() => {
     if (userLoading) return;
@@ -216,7 +260,15 @@ export default function HomePage() {
           {nearbyEvents.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {nearbyEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  likedByMe={likedEventByMe(event.id)}
+                  currentUserId={user?.id}
+                  onLikeChange={(next) =>
+                    handleHomeEventLikeChange(event.id, next)
+                  }
+                />
               ))}
             </div>
           ) : (
@@ -235,7 +287,15 @@ export default function HomePage() {
           {upcomingGigs.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2">
               {upcomingGigs.map((event) => (
-                <EventCard key={event.id} event={event} />
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  likedByMe={likedEventByMe(event.id)}
+                  currentUserId={user?.id}
+                  onLikeChange={(next) =>
+                    handleHomeEventLikeChange(event.id, next)
+                  }
+                />
               ))}
             </div>
           ) : (

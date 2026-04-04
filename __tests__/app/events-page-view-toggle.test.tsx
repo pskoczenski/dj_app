@@ -9,6 +9,7 @@ let searchParams = new URLSearchParams();
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ replace: mockReplace }),
   useSearchParams: () => searchParams,
+  usePathname: () => "/events",
 }));
 
 const mockGetAll = jest.fn().mockResolvedValue([]);
@@ -50,6 +51,10 @@ jest.mock("@/hooks/use-comments", () => ({
 
 jest.mock("@/hooks/use-current-user", () => ({
   useCurrentUser: () => ({ user: null }),
+}));
+
+jest.mock("@/hooks/use-liked-event-ids", () => ({
+  useLikedEventIds: () => new Set<string>(),
 }));
 
 jest.mock("@/hooks/use-genres", () => ({

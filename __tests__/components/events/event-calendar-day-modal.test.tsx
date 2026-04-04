@@ -1,5 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
+jest.mock("@/hooks/use-current-user", () => ({
+  useCurrentUser: () => ({ user: null }),
+}));
+
+jest.mock("@/hooks/use-liked-event-ids", () => ({
+  useLikedEventIds: () => new Set<string>(),
+}));
+
 import { EventCalendarDayModal } from "@/components/events/event-calendar-day-modal";
 
 beforeAll(() => {
@@ -33,7 +42,9 @@ const EV = (title: string, id: string) => ({
   city: null,
   state: null,
   flyer_image_url: null,
+  genre_ids: [] as string[],
   genres: null,
+  likes_count: 0,
   status: "published" as const,
   created_by: "u1",
 });

@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
 import { eventsService, type EventFilters } from "@/lib/services/events";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { useLikedEventIds } from "@/hooks/use-liked-event-ids";
 import { useLocation } from "@/hooks/use-location";
 import { EventCard } from "@/components/events/event-card";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
@@ -43,6 +45,7 @@ function EventsBrowser() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { activeCity } = useLocation();
+  const { user: currentUser } = useCurrentUser();
 
   const [events, setEvents] = useState<EventWithLineupPreview[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +59,37 @@ function EventsBrowser() {
   );
   const [showFilters, setShowFilters] = useState(false);
   const [selectedGenreIds, setSelectedGenreIds] = useState<string[]>([]);
+
+  const eventIds = useMemo(() => events.map((e) => e.id), [events]);
+  const serverLikedIds = useLikedEventIds(eventIds, currentUser?.id);
+  const eventsListKey = eventIds.join("\0");
+  const [optimisticLiked, setOptimisticLiked] = useState<Record<string, boolean>>(
+    {},
+  );
+
+  useEffect(() => {
+    setOptimisticLiked({});
+  }, [eventsListKey]);
+
+  const likedByMe = useCallback(
+    (eventId: string) =>
+      Object.hasOwn(optimisticLiked, eventId)
+        ? optimisticLiked[eventId]
+        : serverLikedIds.has(eventId),
+    [optimisticLiked, serverLikedIds],
+  );
+
+  function handleEventLikeChange(
+    eventId: string,
+    next: { liked: boolean; likesCount: number },
+  ) {
+    setEvents((prev) =>
+      prev.map((e) =>
+        e.id === eventId ? { ...e, likes_count: next.likesCount } : e,
+      ),
+    );
+    setOptimisticLiked((o) => ({ ...o, [eventId]: next.liked }));
+  }
 
   const viewMode =
     searchParams.get("view") === "calendar" ? "calendar" : "list";
@@ -336,7 +370,15 @@ function EventsBrowser() {
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {events.map((event) => (
-                  <EventCard key={event.id} event={event} />
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    likedByMe={likedByMe(event.id)}
+                    currentUserId={currentUser?.id}
+                    onLikeChange={(next) =>
+                      handleEventLikeChange(event.id, next)
+                    }
+                  />
                 ))}
               </div>
             )}

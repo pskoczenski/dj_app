@@ -1,9 +1,11 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useLikedEventIds } from "@/hooks/use-liked-event-ids";
 import { useLocation } from "@/hooks/use-location";
 import { searchService } from "@/lib/services/search";
 import { EventCard } from "@/components/events/event-card";
@@ -32,6 +34,7 @@ function SearchBrowser() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { activeCity } = useLocation();
+  const { user: currentUser } = useCurrentUser();
 
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [tab, setTab] = useState<TabValue>(
@@ -47,6 +50,37 @@ function SearchBrowser() {
   /** When true, DJ + event search is scoped to `activeCity`; mixes are never scoped. */
   const [scopeToActiveCity, setScopeToActiveCity] = useState(true);
   const [selectedGenreIds, setSelectedGenreIds] = useState<string[]>([]);
+
+  const eventIds = useMemo(() => events.map((e) => e.id), [events]);
+  const serverLikedIds = useLikedEventIds(eventIds, currentUser?.id);
+  const eventsListKey = eventIds.join("\0");
+  const [optimisticLiked, setOptimisticLiked] = useState<Record<string, boolean>>(
+    {},
+  );
+
+  useEffect(() => {
+    setOptimisticLiked({});
+  }, [eventsListKey]);
+
+  const likedEventByMe = useCallback(
+    (eventId: string) =>
+      Object.hasOwn(optimisticLiked, eventId)
+        ? optimisticLiked[eventId]
+        : serverLikedIds.has(eventId),
+    [optimisticLiked, serverLikedIds],
+  );
+
+  function handleEventLikeChange(
+    eventId: string,
+    next: { liked: boolean; likesCount: number },
+  ) {
+    setEvents((prev) =>
+      prev.map((e) =>
+        e.id === eventId ? { ...e, likes_count: next.likesCount } : e,
+      ),
+    );
+    setOptimisticLiked((o) => ({ ...o, [eventId]: next.liked }));
+  }
 
   const runSearch = useCallback(
     async (q: string, cityScoped: boolean, genreIds: string[]) => {
@@ -243,7 +277,15 @@ function SearchBrowser() {
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {events.slice(0, 3).map((e) => (
-                        <EventCard key={e.id} event={e} />
+                        <EventCard
+                          key={e.id}
+                          event={e}
+                          likedByMe={likedEventByMe(e.id)}
+                          currentUserId={currentUser?.id}
+                          onLikeChange={(next) =>
+                            handleEventLikeChange(e.id, next)
+                          }
+                        />
                       ))}
                     </div>
                   </section>
@@ -299,7 +341,15 @@ function SearchBrowser() {
               {events.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {events.map((e) => (
-                    <EventCard key={e.id} event={e} />
+                    <EventCard
+                      key={e.id}
+                      event={e}
+                      likedByMe={likedEventByMe(e.id)}
+                      currentUserId={currentUser?.id}
+                      onLikeChange={(next) =>
+                        handleEventLikeChange(e.id, next)
+                      }
+                    />
                   ))}
                 </div>
               ) : (

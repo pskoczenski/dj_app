@@ -94,10 +94,12 @@ const MOCK_EVENT = {
   google_place_id: null,
   latitude: null,
   longitude: null,
+  likes_count: 0,
   ticket_url: null,
   venue: null,
   created_at: "2025-01-01",
   updated_at: "2025-01-01",
+  genre_ids: [],
 };
 
 describe("eventsService", () => {
@@ -339,7 +341,7 @@ describe("eventsService", () => {
 
   describe("getEventsByDateRange", () => {
     const CALENDAR_SELECT =
-      "id,title,start_date,end_date,start_time,end_time,venue,flyer_image_url,genre_ids,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
+      "id,title,start_date,end_date,start_time,end_time,venue,flyer_image_url,genre_ids,likes_count,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
 
     it("builds overlap, visibility, sort, and published-only when logged out", async () => {
       mock = chainMock();
