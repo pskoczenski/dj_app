@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Search as SearchIcon } from "lucide-react";
+import { GenreFilterBar } from "@/components/shared/genre-filter-bar";
 import type { Profile, EventWithLineupPreview, MixWithCreator } from "@/types";
 
 type TabValue = "all" | "djs" | "events" | "mixes";
@@ -45,25 +46,46 @@ function SearchBrowser() {
   const [hasSearched, setHasSearched] = useState(false);
   /** When true, DJ + event search is scoped to `activeCity`; mixes are never scoped. */
   const [scopeToActiveCity, setScopeToActiveCity] = useState(true);
+  const [selectedGenreIds, setSelectedGenreIds] = useState<string[]>([]);
 
   const runSearch = useCallback(
-    async (q: string, cityScoped: boolean) => {
-      if (q.length < 2) {
-        setDjs([]);
-        setEvents([]);
-        setMixes([]);
-        setHasSearched(false);
-        return;
-      }
-      setLoading(true);
-      setHasSearched(true);
+    async (q: string, cityScoped: boolean, genreIds: string[]) => {
+      const qTrim = q.trim();
       const locationOpts =
         cityScoped && activeCity.id ? { cityId: activeCity.id } : {};
+      const djOpts = {
+        ...locationOpts,
+        ...(genreIds.length > 0 ? { genreIds } : {}),
+      };
+
+      if (qTrim.length < 2) {
+        setEvents([]);
+        setMixes([]);
+        if (genreIds.length > 0) {
+          setLoading(true);
+          setHasSearched(true);
+          try {
+            const d = await searchService.searchDjs("", djOpts);
+            setDjs(d);
+          } catch {
+            setDjs([]);
+          } finally {
+            setLoading(false);
+          }
+        } else {
+          setDjs([]);
+          setHasSearched(false);
+        }
+        return;
+      }
+
+      setLoading(true);
+      setHasSearched(true);
       try {
         const [d, e, m] = await Promise.all([
-          searchService.searchDjs(q, locationOpts),
-          searchService.searchEvents(q, locationOpts),
-          searchService.searchMixes(q),
+          searchService.searchDjs(qTrim, djOpts),
+          searchService.searchEvents(qTrim, locationOpts),
+          searchService.searchMixes(qTrim),
         ]);
         setDjs(d);
         setEvents(e);
@@ -78,8 +100,8 @@ function SearchBrowser() {
   );
 
   useEffect(() => {
-    void runSearch(debouncedQuery, scopeToActiveCity);
-  }, [debouncedQuery, scopeToActiveCity, runSearch]);
+    void runSearch(debouncedQuery, scopeToActiveCity, selectedGenreIds);
+  }, [debouncedQuery, scopeToActiveCity, selectedGenreIds, runSearch]);
 
   // Sync to URL
   useEffect(() => {
@@ -133,6 +155,14 @@ function SearchBrowser() {
         </Button>
       </div>
 
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-fog">DJ results — filter by genre</p>
+        <GenreFilterBar
+          selectedGenreIds={selectedGenreIds}
+          onChange={setSelectedGenreIds}
+        />
+      </div>
+
       {/* Tabs */}
       <Tabs
         defaultValue="all"
@@ -156,8 +186,20 @@ function SearchBrowser() {
           </p>
         ) : totalResults === 0 ? (
           <EmptyState
-            title="No results"
-            description={`Nothing matched "${debouncedQuery}". Try a different search.`}
+            title={
+              selectedGenreIds.length > 0 &&
+              debouncedQuery.trim().length < 2
+                ? scopeToActiveCity
+                  ? `No DJs matching these genres in ${activeCity.name}.`
+                  : "No DJs matching these genres."
+                : "No results"
+            }
+            description={
+              selectedGenreIds.length > 0 &&
+              debouncedQuery.trim().length < 2
+                ? "Clear the genre filter or type at least two characters to search events and mixes."
+                : `Nothing matched "${debouncedQuery}". Try a different search.`
+            }
           />
         ) : (
           <>
@@ -236,7 +278,16 @@ function SearchBrowser() {
               {djs.length > 0 ? (
                 <DjResultsList profiles={djs} />
               ) : (
-                <EmptyState title="No DJs found" description="" />
+                <EmptyState
+                  title={
+                    selectedGenreIds.length > 0
+                      ? scopeToActiveCity
+                        ? `No DJs matching these genres in ${activeCity.name}.`
+                        : "No DJs matching these genres."
+                      : "No DJs found"
+                  }
+                  description=""
+                />
               )}
             </TabsContent>
 

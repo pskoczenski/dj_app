@@ -57,6 +57,8 @@ export interface EventFilters {
   state?: string;
   /** When set, restricts results to this `city_id` (optional browse filter). */
   cityId?: string;
+  /** OR match: event `genre_ids` overlaps any of these UUIDs. */
+  genreIds?: string[];
   genre?: string;
   sort?: "soonest" | "latest" | "added";
   range?: [number, number];
@@ -105,7 +107,7 @@ function toCalendarEvent(
 export async function getEventsByDateRange(
   startDate: string,
   endDate: string,
-  options: { cityId?: string } = {},
+  options: { cityId?: string; genreIds?: string[] } = {},
 ): Promise<CalendarEvent[]> {
   const sb = supabase();
   const {
@@ -123,6 +125,10 @@ export async function getEventsByDateRange(
 
   if (options.cityId) {
     query = query.eq("city_id", options.cityId);
+  }
+
+  if (options.genreIds?.length) {
+    query = query.overlaps("genre_ids", options.genreIds);
   }
 
   if (user?.id) {
@@ -173,6 +179,9 @@ export async function getAll(
   }
   if (genreFilterId) {
     query = query.contains("genre_ids", [genreFilterId]);
+  }
+  if (filters.genreIds?.length) {
+    query = query.overlaps("genre_ids", filters.genreIds);
   }
   if (filters.cityId) {
     query = query.eq("city_id", filters.cityId);

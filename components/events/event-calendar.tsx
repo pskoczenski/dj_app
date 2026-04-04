@@ -88,7 +88,14 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-export function EventCalendar({ initialMonth }: { initialMonth?: Date }) {
+export function EventCalendar({
+  initialMonth,
+  selectedGenreIds = [],
+}: {
+  initialMonth?: Date;
+  /** When non-empty, calendar fetch uses OR overlap on `genre_ids`. */
+  selectedGenreIds?: string[];
+}) {
   const { activeCity } = useLocation();
   const [currentMonth, setCurrentMonth] = useState(() => {
     const base = initialMonth ?? new Date();
@@ -107,7 +114,10 @@ export function EventCalendar({ initialMonth }: { initialMonth?: Date }) {
   const { events, eventsByDate, loading, error } = useCalendarEvents(
     startDate,
     endDate,
-    { cityId: activeCity.id },
+    {
+      cityId: activeCity.id,
+      genreIds: selectedGenreIds.length ? selectedGenreIds : undefined,
+    },
   );
 
   const weeks = useMemo(() => {
@@ -339,7 +349,9 @@ export function EventCalendar({ initialMonth }: { initialMonth?: Date }) {
 
       {!error && !loading && events.length === 0 ? (
         <p className="text-center text-sm text-stone" role="status">
-          No events in {activeCity.name} this month.
+          {selectedGenreIds.length > 0
+            ? `No events matching these genres in ${activeCity.name} this month.`
+            : `No events in ${activeCity.name} this month.`}
         </p>
       ) : null}
     </div>

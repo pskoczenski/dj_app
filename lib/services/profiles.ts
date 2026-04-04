@@ -72,18 +72,30 @@ export async function update(
 
 export async function search(
   query: string,
-  options: { limit?: number; cityId?: string } = {},
+  options: { limit?: number; cityId?: string; genreIds?: string[] } = {},
 ): Promise<Profile[]> {
+  const qTrim = query.trim();
+  if (qTrim.length < 2 && !options.genreIds?.length) {
+    return [];
+  }
+
   const limit = options.limit ?? 10;
   const term = `%${query}%`;
   let q = supabase()
     .from(TABLES.profiles)
     .select(PROFILE_WITH_CITY)
-    .is("deleted_at", null)
-    .or(`display_name.ilike.${term},slug.ilike.${term}`);
+    .is("deleted_at", null);
+
+  if (qTrim.length >= 2) {
+    q = q.or(`display_name.ilike.${term},slug.ilike.${term}`);
+  }
 
   if (options.cityId) {
     q = q.eq("city_id", options.cityId);
+  }
+
+  if (options.genreIds?.length) {
+    q = q.overlaps("genre_ids", options.genreIds);
   }
 
   const { data, error } = await q.limit(limit);

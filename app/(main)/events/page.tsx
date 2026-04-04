@@ -14,6 +14,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CalendarDays, List, Search, SlidersHorizontal } from "lucide-react";
 import { EventCalendar } from "@/components/events/event-calendar";
+import { GenreMultiSelectPopover } from "@/components/shared/genre-multi-select-popover";
 import type { EventWithLineupPreview } from "@/types";
 
 const PAGE_SIZE = 12;
@@ -50,11 +51,11 @@ function EventsBrowser() {
 
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const [stateFilter, setStateFilter] = useState(searchParams.get("state") ?? "");
-  const [genreFilter, setGenreFilter] = useState(searchParams.get("genre") ?? "");
   const [sort, setSort] = useState<EventFilters["sort"]>(
     (searchParams.get("sort") as EventFilters["sort"]) ?? "soonest",
   );
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedGenreIds, setSelectedGenreIds] = useState<string[]>([]);
 
   const viewMode =
     searchParams.get("view") === "calendar" ? "calendar" : "list";
@@ -90,7 +91,7 @@ function EventsBrowser() {
           cityId: activeCity.id,
         };
         if (stateFilter) filters.state = stateFilter;
-        if (genreFilter) filters.genre = genreFilter;
+        if (selectedGenreIds.length > 0) filters.genreIds = selectedGenreIds;
         filters.range = [from, to];
 
         const data = await eventsService.getAll(filters);
@@ -117,7 +118,7 @@ function EventsBrowser() {
         setLoadingMore(false);
       }
     },
-    [search, stateFilter, genreFilter, sort, activeCity.id],
+    [search, stateFilter, sort, activeCity.id, selectedGenreIds],
   );
 
   useEffect(() => {
@@ -149,7 +150,6 @@ function EventsBrowser() {
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     if (stateFilter) params.set("state", stateFilter);
-    if (genreFilter) params.set("genre", genreFilter);
     if (sort && sort !== "soonest") params.set("sort", sort);
     if (new URLSearchParams(searchParamsString).get("view") === "calendar") {
       params.set("view", "calendar");
@@ -157,7 +157,7 @@ function EventsBrowser() {
     const nextQs = params.toString();
     if (areQueryStringsEqual(nextQs, searchParamsString)) return;
     router.replace(`/events${nextQs ? `?${nextQs}` : ""}`, { scroll: false });
-  }, [search, stateFilter, genreFilter, sort, router, searchParamsString]);
+  }, [search, stateFilter, sort, router, searchParamsString]);
 
   // Infinite scroll via IntersectionObserver
   useEffect(() => {
@@ -223,7 +223,14 @@ function EventsBrowser() {
               <SlidersHorizontal className="mr-1.5 size-4" />
               Filters
             </Button>
-          ) : null}
+          ) : (
+            <GenreMultiSelectPopover
+              triggerId="events-calendar-genre-trigger"
+              selectedGenreIds={selectedGenreIds}
+              onChange={setSelectedGenreIds}
+              idleLabel="Any genre"
+            />
+          )}
         </div>
       </div>
 
@@ -243,7 +250,7 @@ function EventsBrowser() {
 
           {/* Filters */}
           {showFilters && (
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap items-end gap-3">
               <Input
                 placeholder="State (e.g. CA)"
                 value={stateFilter}
@@ -251,13 +258,20 @@ function EventsBrowser() {
                 className="w-32"
                 aria-label="Filter by state"
               />
-              <Input
-                placeholder="Genre"
-                value={genreFilter}
-                onChange={(e) => setGenreFilter(e.target.value)}
-                className="w-40"
-                aria-label="Filter by genre"
-              />
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="events-genre-filter-trigger"
+                  className="text-xs text-fog"
+                >
+                  Genres
+                </label>
+                <GenreMultiSelectPopover
+                  triggerId="events-genre-filter-trigger"
+                  selectedGenreIds={selectedGenreIds}
+                  onChange={setSelectedGenreIds}
+                  idleLabel="Any genre"
+                />
+              </div>
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as EventFilters["sort"])}
@@ -273,6 +287,11 @@ function EventsBrowser() {
 
           {/* Results */}
           <div ref={listSectionRef}>
+            <p className="sr-only" aria-live="polite" aria-atomic>
+              {!loading
+                ? `Showing ${events.length} event${events.length === 1 ? "" : "s"}.`
+                : ""}
+            </p>
             {loading ? (
               <div className="flex justify-center py-12">
                 <LoadingSpinner size="lg" />
@@ -282,6 +301,21 @@ function EventsBrowser() {
                 <EmptyState
                   title="No events found"
                   description="Try adjusting your search or filters."
+                />
+              ) : selectedGenreIds.length > 0 ? (
+                <EmptyState
+                  title={`No events matching these genres in ${activeCity.name}.`}
+                  description="Try other genres or clear the filter."
+                  action={
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setSelectedGenreIds([])}
+                    >
+                      Clear genre filter
+                    </Button>
+                  }
                 />
               ) : (
                 <EmptyState
@@ -317,7 +351,7 @@ function EventsBrowser() {
           )}
         </>
       ) : (
-        <EventCalendar />
+        <EventCalendar selectedGenreIds={selectedGenreIds} />
       )}
     </div>
   );

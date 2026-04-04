@@ -7,7 +7,15 @@ import type { CalendarEvent } from "@/types";
 
 export type UseCalendarEventsOptions = {
   cityId?: string;
+  genreIds?: string[];
 };
+
+function buildCalendarFetchOptions(options: UseCalendarEventsOptions) {
+  const out: { cityId?: string; genreIds?: string[] } = {};
+  if (options.cityId) out.cityId = options.cityId;
+  if (options.genreIds?.length) out.genreIds = options.genreIds;
+  return out;
+}
 
 export function useCalendarEvents(
   startDate: string,
@@ -22,15 +30,28 @@ export function useCalendarEvents(
   const [error, setError] = useState<Error | null>(null);
   const requestIdRef = useRef(0);
 
+  const optionsKey = JSON.stringify({
+    c: options.cityId ?? null,
+    g: [...(options.genreIds ?? [])].sort(),
+  });
+
   const runFetch = useCallback(async () => {
     const id = ++requestIdRef.current;
     setLoading(true);
     setError(null);
     try {
+      const parsed = JSON.parse(optionsKey) as {
+        c: string | null;
+        g: string[];
+      };
+      const fetchOpts = buildCalendarFetchOptions({
+        cityId: parsed.c ?? undefined,
+        genreIds: parsed.g.length ? parsed.g : undefined,
+      });
       const data = await eventsService.getEventsByDateRange(
         startDate,
         endDate,
-        options.cityId ? { cityId: options.cityId } : {},
+        fetchOpts,
       );
       if (id !== requestIdRef.current) return;
       setEvents(data);
@@ -45,7 +66,7 @@ export function useCalendarEvents(
         setLoading(false);
       }
     }
-  }, [startDate, endDate, options.cityId]);
+  }, [startDate, endDate, optionsKey]);
 
   useEffect(() => {
     void runFetch();

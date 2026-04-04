@@ -56,12 +56,18 @@ export function EventCard({ event }: { event: EventWithLineupPreview }) {
   const djNames = lineupDisplayNames(event);
 
   return (
-    <article aria-labelledby={headingId}>
-      <Card variant="interactive" className="relative">
-        <Link href={`/events/${event.id}`} className="block">
+    <article aria-labelledby={headingId} className="h-full">
+      <Card
+        variant="interactive"
+        className="relative flex min-h-96 h-full flex-col gap-0 py-0"
+      >
+        <Link
+          href={`/events/${event.id}`}
+          className="flex min-h-0 flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-moss/50 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-moss"
+        >
           <CornerVineAccent
             corner="top-right"
-            className="absolute right-2 top-2 h-8 w-8"
+            className="absolute right-2 top-2 z-10 h-8 w-8"
             opacity={0.1}
           />
           {event.flyer_image_url && (
@@ -69,10 +75,10 @@ export function EventCard({ event }: { event: EventWithLineupPreview }) {
             <img
               src={event.flyer_image_url}
               alt={event.title}
-              className="aspect-[2/1] w-full object-cover"
+              className="aspect-[2/1] w-full shrink-0 object-cover"
             />
           )}
-          <CardHeader>
+          <CardHeader className="pb-0 pt-2.5">
             <CardTitle id={headingId} className="text-bone">
               {event.title}
             </CardTitle>
@@ -82,7 +88,7 @@ export function EventCard({ event }: { event: EventWithLineupPreview }) {
               </p>
             )}
           </CardHeader>
-          <CardContent className="flex flex-col gap-2 pb-3">
+          <CardContent className="flex flex-1 flex-col gap-2 py-0">
             <div className="flex items-center gap-1.5 text-sm text-stone">
               <Calendar className="size-4 shrink-0" />
               <span>{formatEventDateTimeLine(event)}</span>

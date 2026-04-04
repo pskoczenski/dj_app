@@ -13,26 +13,41 @@ export type SearchServiceOptions = {
   limit?: number;
   /** When set, restricts DJ and event search to this `city_id`. */
   cityId?: string;
+  /** OR match: profile `genre_ids` overlaps any of these UUIDs (DJs only). */
+  genreIds?: string[];
 };
 
 export async function searchDjs(
   query: string,
   options: SearchServiceOptions = {},
 ): Promise<Profile[]> {
+  const qTrim = query.trim();
+  if (qTrim.length < 2 && !options.genreIds?.length) {
+    return [];
+  }
+
   const limit = options.limit ?? 20;
-  const term = `%${query}%`;
+
   let q = supabase()
     .from(TABLES.profiles)
     .select(
       "*, cities:city_id(id, name, state_name, state_code, created_at)",
     )
-    .is("deleted_at", null)
-    .or(
+    .is("deleted_at", null);
+
+  if (qTrim.length >= 2) {
+    const term = `%${qTrim}%`;
+    q = q.or(
       `display_name.ilike.${term},bio.ilike.${term},cities.name.ilike.${term}`,
     );
+  }
 
   if (options.cityId) {
     q = q.eq("city_id", options.cityId);
+  }
+
+  if (options.genreIds?.length) {
+    q = q.overlaps("genre_ids", options.genreIds);
   }
 
   const { data, error } = await q
