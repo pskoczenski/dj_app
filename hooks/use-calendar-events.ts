@@ -58,6 +58,9 @@ export function useCalendarEvents(
       setEventsByDate(buildEventsByDateMap(data));
     } catch (e) {
       if (id !== requestIdRef.current) return;
+      if (process.env.NODE_ENV === "development") {
+        console.error("Calendar events fetch failed:", e);
+      }
       setError(e instanceof Error ? e : new Error(String(e)));
       setEvents([]);
       setEventsByDate(new Map());

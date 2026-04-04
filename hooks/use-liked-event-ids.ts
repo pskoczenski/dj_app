@@ -14,7 +14,7 @@ export function useLikedEventIds(
 
   useEffect(() => {
     if (!userId || eventIds.length === 0) {
-      setLikedIds(new Set());
+      setLikedIds((prev) => (prev.size === 0 ? prev : new Set()));
       return;
     }
 

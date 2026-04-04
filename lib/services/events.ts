@@ -68,8 +68,9 @@ function supabase() {
   return createClient();
 }
 
+/** Use `*` for event columns so older DBs without optional columns (e.g. likes_count, street_address) still work. */
 const CALENDAR_SELECT =
-  "id,title,start_date,end_date,start_time,end_time,venue,street_address,flyer_image_url,genre_ids,likes_count,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
+  "*,cities:city_id(id,name,state_code,state_name,created_at)";
 
 function toCalendarEvent(
   row: Record<string, unknown> & {

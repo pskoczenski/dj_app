@@ -1,6 +1,13 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -19,6 +26,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Search as SearchIcon } from "lucide-react";
 import { GenreFilterBar } from "@/components/shared/genre-filter-bar";
 import type { Profile, EventWithLineupPreview, MixWithCreator } from "@/types";
+import { areQueryStringsEqual } from "@/lib/utils/compare-query-string";
 
 type TabValue = "all" | "djs" | "events" | "mixes";
 
@@ -33,6 +41,10 @@ export default function SearchPage() {
 function SearchBrowser() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const routerRef = useRef(router);
+  routerRef.current = router;
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
   const { activeCity } = useLocation();
   const { user: currentUser } = useCurrentUser();
 
@@ -137,14 +149,19 @@ function SearchBrowser() {
     void runSearch(debouncedQuery, scopeToActiveCity, selectedGenreIds);
   }, [debouncedQuery, scopeToActiveCity, selectedGenreIds, runSearch]);
 
-  // Sync to URL
+  // Sync to URL (do not depend on `router` — unstable identity can retrigger forever)
   useEffect(() => {
+    const sp = searchParamsRef.current;
+    const currentQs = sp.toString();
     const params = new URLSearchParams();
     if (query) params.set("q", query);
     if (tab !== "all") params.set("tab", tab);
-    const qs = params.toString();
-    router.replace(`/search${qs ? `?${qs}` : ""}`, { scroll: false });
-  }, [query, tab, router]);
+    const nextQs = params.toString();
+    if (areQueryStringsEqual(nextQs, currentQs)) return;
+    routerRef.current.replace(`/search${nextQs ? `?${nextQs}` : ""}`, {
+      scroll: false,
+    });
+  }, [query, tab]);
 
   const totalResults = djs.length + events.length + mixes.length;
 

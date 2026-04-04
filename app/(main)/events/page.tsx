@@ -14,24 +14,13 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { areQueryStringsEqual } from "@/lib/utils/compare-query-string";
 import { CalendarDays, List, Search, SlidersHorizontal } from "lucide-react";
 import { EventCalendar } from "@/components/events/event-calendar";
 import { GenreMultiSelectPopover } from "@/components/shared/genre-multi-select-popover";
 import type { EventWithLineupPreview } from "@/types";
 
 const PAGE_SIZE = 12;
-
-/** Order-independent compare so we skip redundant router.replace (avoids RSC refetch loops). */
-function areQueryStringsEqual(a: string, b: string): boolean {
-  const entries = (qs: string) =>
-    [...new URLSearchParams(qs).entries()].sort(([k1, v1], [k2, v2]) =>
-      k1 === k2 ? v1.localeCompare(v2) : k1.localeCompare(k2),
-    );
-  const ea = entries(a);
-  const eb = entries(b);
-  if (ea.length !== eb.length) return false;
-  return ea.every(([k, v], i) => k === eb[i][0] && v === eb[i][1]);
-}
 
 export default function EventsPage() {
   return (
@@ -94,7 +83,10 @@ function EventsBrowser() {
   const viewMode =
     searchParams.get("view") === "calendar" ? "calendar" : "list";
 
-  const searchParamsString = searchParams.toString();
+  const routerRef = useRef(router);
+  routerRef.current = router;
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
 
   function setViewMode(mode: "list" | "calendar") {
     const params = new URLSearchParams(searchParams.toString());
@@ -108,6 +100,7 @@ function EventsBrowser() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const listSectionRef = useRef<HTMLDivElement>(null);
   const prevCityIdRef = useRef<string | null>(null);
+  const appendInFlightRef = useRef(false);
 
   const fetchPage = useCallback(
     async (page: number, append: boolean) => {
@@ -182,19 +175,24 @@ function EventsBrowser() {
     prevCityIdRef.current = activeCity.id;
   }, [activeCity.id, viewMode]);
 
-  // Sync local filters to URL (only replace when query actually changes — avoids navigation loops)
+  // Sync local filters to URL. Do not depend on `router` or `searchParams.toString()` — those
+  // update after replace() and can retrigger this effect forever (navigation loop).
   useEffect(() => {
+    const sp = searchParamsRef.current;
+    const currentQs = sp.toString();
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     if (stateFilter) params.set("state", stateFilter);
     if (sort && sort !== "soonest") params.set("sort", sort);
-    if (new URLSearchParams(searchParamsString).get("view") === "calendar") {
+    if (sp.get("view") === "calendar") {
       params.set("view", "calendar");
     }
     const nextQs = params.toString();
-    if (areQueryStringsEqual(nextQs, searchParamsString)) return;
-    router.replace(`/events${nextQs ? `?${nextQs}` : ""}`, { scroll: false });
-  }, [search, stateFilter, sort, router, searchParamsString]);
+    if (areQueryStringsEqual(nextQs, currentQs)) return;
+    routerRef.current.replace(`/events${nextQs ? `?${nextQs}` : ""}`, {
+      scroll: false,
+    });
+  }, [search, stateFilter, sort]);
 
   // Infinite scroll via IntersectionObserver
   useEffect(() => {
@@ -203,10 +201,20 @@ function EventsBrowser() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
-          pageRef.current += 1;
-          fetchPage(pageRef.current, true);
+        if (
+          !entries[0]?.isIntersecting ||
+          !hasMore ||
+          loadingMore ||
+          loading ||
+          appendInFlightRef.current
+        ) {
+          return;
         }
+        appendInFlightRef.current = true;
+        pageRef.current += 1;
+        void fetchPage(pageRef.current, true).finally(() => {
+          appendInFlightRef.current = false;
+        });
       },
       { threshold: 0.1 },
     );

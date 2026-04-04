@@ -342,7 +342,7 @@ describe("eventsService", () => {
 
   describe("getEventsByDateRange", () => {
     const CALENDAR_SELECT =
-      "id,title,start_date,end_date,start_time,end_time,venue,street_address,flyer_image_url,genre_ids,likes_count,status,created_by,city_id,cities:city_id(id,name,state_code,state_name,created_at)";
+      "*,cities:city_id(id,name,state_code,state_name,created_at)";
 
     it("builds overlap, visibility, sort, and published-only when logged out", async () => {
       mock = chainMock();

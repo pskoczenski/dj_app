@@ -179,6 +179,41 @@ async function findEventGroupConversationId(eventId: string): Promise<string | n
 }
 
 /**
+ * After resolving the event_group conversation id: full participant sync uses
+ * `conversation_participants` reads/writes that only the event creator can perform
+ * under RLS. Lineup DJs may only insert themselves (branch B insert policy).
+ */
+async function reconcileEventGroupAccess(
+  eventId: string,
+  eventCreatedBy: string,
+  conversationId: string,
+): Promise<void> {
+  const userId = await resolveCurrentUserId();
+  if (eventCreatedBy === userId) {
+    await syncEventGroupParticipants(eventId);
+    return;
+  }
+
+  const sb = supabase();
+  const { data: lineupRow, error: luErr } = await sb
+    .from(TABLES.eventLineup)
+    .select("profile_id")
+    .eq("event_id", eventId)
+    .eq("profile_id", userId)
+    .maybeSingle();
+  if (luErr) throw luErr;
+  if (!lineupRow) return;
+
+  const { error: upErr } = await sb
+    .from(TABLES.conversationParticipants)
+    .upsert(
+      { conversation_id: conversationId, profile_id: userId },
+      { onConflict: "conversation_id,profile_id", ignoreDuplicates: true },
+    );
+  if (upErr) throw upErr;
+}
+
+/**
  * Keeps event_group participants aligned with `events.created_by` + `event_lineup`.
  * No-op if the event has no group thread yet. Never removes the event creator.
  */
@@ -266,7 +301,11 @@ export async function ensureEventGroupThread(eventId: string): Promise<string | 
 
   const existingId = await findEventGroupConversationId(eventId);
   if (existingId) {
-    await syncEventGroupParticipants(eventId);
+    await reconcileEventGroupAccess(
+      eventId,
+      eventRow.created_by,
+      existingId,
+    );
     return existingId;
   }
 
@@ -300,7 +339,11 @@ export async function ensureEventGroupThread(eventId: string): Promise<string | 
     if ((createErr as { code?: string }).code === "23505") {
       const reuse = await findEventGroupConversationId(eventId);
       if (reuse) {
-        await syncEventGroupParticipants(eventId);
+        await reconcileEventGroupAccess(
+          eventId,
+          eventRow.created_by,
+          reuse,
+        );
         return reuse;
       }
     }

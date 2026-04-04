@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, SlidersHorizontal } from "lucide-react";
 import type { MixWithCreator } from "@/types";
+import { areQueryStringsEqual } from "@/lib/utils/compare-query-string";
 
 const PAGE_SIZE = 12;
 
@@ -53,6 +54,11 @@ function MixesBrowser() {
   const debouncedSearch = useDebounce(search, 300);
   const pageRef = useRef(0);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const appendInFlightRef = useRef(false);
+  const routerRef = useRef(router);
+  routerRef.current = router;
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
 
   const mixIds = useMemo(() => mixes.map((m) => m.id), [mixes]);
   const serverLikedIds = useLikedMixIds(mixIds, currentUser?.id);
@@ -125,16 +131,21 @@ function MixesBrowser() {
     fetchPage(0, false);
   }, [fetchPage]);
 
-  // Sync to URL
+  // Sync to URL (do not depend on `router` or searchParams string — avoids navigation loops)
   useEffect(() => {
+    const sp = searchParamsRef.current;
+    const currentQs = sp.toString();
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     if (genreFilter) params.set("genre", genreFilter);
     if (platformFilter) params.set("platform", platformFilter);
     if (sort && sort !== "newest") params.set("sort", sort);
-    const qs = params.toString();
-    router.replace(`/mixes${qs ? `?${qs}` : ""}`, { scroll: false });
-  }, [search, genreFilter, platformFilter, sort, router]);
+    const nextQs = params.toString();
+    if (areQueryStringsEqual(nextQs, currentQs)) return;
+    routerRef.current.replace(`/mixes${nextQs ? `?${nextQs}` : ""}`, {
+      scroll: false,
+    });
+  }, [search, genreFilter, platformFilter, sort]);
 
   // Infinite scroll
   useEffect(() => {
@@ -143,10 +154,20 @@ function MixesBrowser() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
-          pageRef.current += 1;
-          fetchPage(pageRef.current, true);
+        if (
+          !entries[0]?.isIntersecting ||
+          !hasMore ||
+          loadingMore ||
+          loading ||
+          appendInFlightRef.current
+        ) {
+          return;
         }
+        appendInFlightRef.current = true;
+        pageRef.current += 1;
+        void fetchPage(pageRef.current, true).finally(() => {
+          appendInFlightRef.current = false;
+        });
       },
       { threshold: 0.1 },
     );
