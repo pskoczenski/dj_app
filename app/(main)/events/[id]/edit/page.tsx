@@ -8,7 +8,7 @@ import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { EmptyState } from "@/components/shared/empty-state";
 import type { LineupEntry } from "@/components/events/lineup-builder";
 import type { EventLineupWithProfile } from "@/types";
-import { formatSetTimeForInput } from "@/lib/utils/format-set-time-for-input";
+import { formatSetTimeForLineupField } from "@/lib/format-time";
 
 function lineupToFormEntries(lineup: EventLineupWithProfile[]): LineupEntry[] {
   return lineup.map((item, i) => {
@@ -21,7 +21,7 @@ function lineupToFormEntries(lineup: EventLineupWithProfile[]): LineupEntry[] {
       slug: p?.slug ?? "",
       profileImageUrl: p?.profile_image_url ?? null,
       isHeadliner: item.is_headliner ?? false,
-      setTime: formatSetTimeForInput(item.set_time),
+      setTime: formatSetTimeForLineupField(item.set_time),
       sortOrder: item.sort_order ?? i,
     };
   });
@@ -68,9 +68,6 @@ export default function EditEventPage({
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-6 font-display text-2xl font-bold text-bone">
-        Edit Event
-      </h1>
       <EventForm
         mode="edit"
         event={event}

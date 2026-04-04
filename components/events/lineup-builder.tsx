@@ -246,12 +246,12 @@ export function LineupBuilder({
                     Headliner
                   </label>
                   <Input
-                    placeholder="Set time"
+                    placeholder="e.g. 10:30 PM"
                     value={entry.setTime}
                     onChange={(e) =>
                       updateEntry(entry.tempId, { setTime: e.target.value })
                     }
-                    className="h-7 w-28 text-xs"
+                    className="h-7 min-w-[7.5rem] w-36 max-w-[10rem] text-xs"
                     aria-label={`Set time for ${entry.displayName}`}
                   />
                 </div>

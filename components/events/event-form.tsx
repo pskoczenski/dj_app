@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronLeft, X } from "lucide-react";
 import { eventsService } from "@/lib/services/events";
 import { eventLineupService } from "@/lib/services/event-lineup";
 import { conversationsService } from "@/lib/services/conversations";
@@ -40,6 +41,59 @@ import type {
   EventStatus,
   Genre,
 } from "@/types";
+import {
+  InvalidLineupSetTimeError,
+  parseLineupSetTimeToPostgres,
+} from "@/lib/format-time";
+
+function normLineupForDirtyCompare(entries: LineupEntry[]): unknown[] {
+  return [...entries]
+    .map((e) => ({
+      eventLineupId: e.eventLineupId ?? null,
+      profileId: e.profileId,
+      setTime: e.setTime.trim(),
+      sortOrder: e.sortOrder,
+      isHeadliner: e.isHeadliner,
+    }))
+    .sort((a, b) => {
+      if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+      return a.profileId.localeCompare(b.profileId);
+    });
+}
+
+function serializeEditFormState(args: {
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  venue: string;
+  streetAddress: string;
+  cityId: string;
+  country: string;
+  ticketUrl: string;
+  genreIds: string[];
+  flyerUrl: string | null;
+  lineup: LineupEntry[];
+}): string {
+  return JSON.stringify({
+    title: args.title.trim(),
+    description: args.description.trim(),
+    startDate: args.startDate,
+    endDate: args.endDate,
+    startTime: args.startTime,
+    endTime: args.endTime,
+    venue: args.venue.trim(),
+    streetAddress: args.streetAddress.trim(),
+    cityId: args.cityId,
+    country: args.country.trim(),
+    ticketUrl: args.ticketUrl.trim(),
+    genreIds: [...args.genreIds].sort(),
+    flyerUrl: args.flyerUrl ?? "",
+    lineup: normLineupForDirtyCompare(args.lineup),
+  });
+}
 
 /** Minimal row shape for LineupCard preview from builder state. */
 function lineupEntryToCardProps(entry: LineupEntry): {
@@ -52,12 +106,18 @@ function lineupEntryToCardProps(entry: LineupEntry): {
     genres: string[] | null;
   };
 } {
+  const trimmedSet = entry.setTime.trim();
+  const set_time =
+    trimmedSet === ""
+      ? null
+      : (parseLineupSetTimeToPostgres(trimmedSet) ?? trimmedSet);
+
   const item = {
     id: entry.tempId,
     event_id: "",
     profile_id: entry.profileId,
     added_by: "",
-    set_time: entry.setTime.trim() || null,
+    set_time,
     sort_order: entry.sortOrder,
     is_headliner: entry.isHeadliner,
     created_at: null,
@@ -81,10 +141,12 @@ interface EventFormProps {
   currentUserId: string;
 }
 
+const EMPTY_LINEUP: LineupEntry[] = [];
+
 export function EventForm({
   mode,
   event,
-  initialLineup = [],
+  initialLineup = EMPTY_LINEUP,
   currentUserId,
 }: EventFormProps) {
   const router = useRouter();
@@ -128,16 +190,29 @@ export function EventForm({
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [genresReadyForDirty, setGenresReadyForDirty] = useState(
+    mode !== "edit",
+  );
+  const [cityReadyForDirty, setCityReadyForDirty] = useState(mode !== "edit");
 
   useEffect(() => {
-    if (mode !== "edit" || !event?.genre_ids || event.genre_ids.length === 0) {
+    if (mode !== "edit") {
+      setGenresReadyForDirty(true);
       setSelectedGenres([]);
       return;
     }
+    if (!event?.genre_ids || event.genre_ids.length === 0) {
+      setSelectedGenres([]);
+      setGenresReadyForDirty(true);
+      return;
+    }
+    setGenresReadyForDirty(false);
     let alive = true;
     void genresService.getByIds(event.genre_ids).then((g) => {
       if (!alive) return;
       setSelectedGenres(g);
+      setGenresReadyForDirty(true);
     });
     return () => {
       alive = false;
@@ -148,23 +223,125 @@ export function EventForm({
     let cancelled = false;
     if (!event) {
       setSelectedCity(null);
+      setCityReadyForDirty(true);
       return () => {
         cancelled = true;
       };
     }
+    if (mode === "edit") {
+      setCityReadyForDirty(false);
+    }
     if (event.cities) {
       setSelectedCity(event.cities);
+      if (mode === "edit") setCityReadyForDirty(true);
     } else if (event.city_id) {
       void citiesService.getById(event.city_id).then((c) => {
-        if (!cancelled) setSelectedCity(c);
+        if (!cancelled) {
+          setSelectedCity(c);
+          if (mode === "edit") setCityReadyForDirty(true);
+        }
       });
     } else {
       setSelectedCity(null);
+      if (mode === "edit") setCityReadyForDirty(true);
     }
     return () => {
       cancelled = true;
     };
-  }, [event?.id, event?.city_id, event?.cities?.id]);
+  }, [event?.id, event?.city_id, event?.cities?.id, mode]);
+
+  const editHydrationReady =
+    mode !== "edit" || (genresReadyForDirty && cityReadyForDirty);
+
+  const savedComparable = useMemo(() => {
+    if (mode !== "edit" || !event) return "";
+    return serializeEditFormState({
+      title: event.title ?? "",
+      description: event.description ?? "",
+      startDate: event.start_date ?? "",
+      endDate: event.end_date ?? "",
+      startTime: event.start_time ?? "",
+      endTime: event.end_time ?? "",
+      venue: event.venue ?? "",
+      streetAddress: event.street_address ?? "",
+      cityId: event.city_id ?? "",
+      country: event.country ?? "",
+      ticketUrl: event.ticket_url ?? "",
+      genreIds: event.genre_ids ?? [],
+      flyerUrl: event.flyer_image_url ?? null,
+      lineup: initialLineup,
+    });
+  }, [mode, event, initialLineup]);
+
+  const currentComparable = useMemo(
+    () =>
+      mode !== "edit" || !event
+        ? ""
+        : serializeEditFormState({
+            title,
+            description,
+            startDate,
+            endDate,
+            startTime,
+            endTime,
+            venue,
+            streetAddress,
+            cityId: selectedCity?.id ?? "",
+            country,
+            ticketUrl,
+            genreIds: selectedGenres.map((g) => g.id),
+            flyerUrl,
+            lineup,
+          }),
+    [
+      mode,
+      event,
+      title,
+      description,
+      startDate,
+      endDate,
+      startTime,
+      endTime,
+      venue,
+      streetAddress,
+      selectedCity?.id,
+      country,
+      ticketUrl,
+      selectedGenres,
+      flyerUrl,
+      lineup,
+    ],
+  );
+
+  const isDirty =
+    mode === "edit" &&
+    !!event &&
+    editHydrationReady &&
+    savedComparable !== currentComparable;
+
+  const requestLeaveEdit = useCallback(() => {
+    if (mode !== "edit" || !event) return;
+    if (!isDirty) {
+      router.push(`/events/${event.id}`);
+      return;
+    }
+    setLeaveDialogOpen(true);
+  }, [mode, event, isDirty, router]);
+
+  const confirmLeaveEdit = useCallback(() => {
+    setLeaveDialogOpen(false);
+    if (event) router.push(`/events/${event.id}`);
+  }, [event, router]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isDirty]);
 
   const isValid =
     title.trim().length > 0 &&
@@ -182,6 +359,19 @@ export function EventForm({
     if (!selectedCity) e.cityId = "City is required.";
     setErrors(e);
     return Object.keys(e).length === 0;
+  }
+
+  function parseSetTimeOrThrow(raw: string): string | null {
+    const t = raw.trim();
+    if (!t) return null;
+    const parsed = parseLineupSetTimeToPostgres(t);
+    if (!parsed) {
+      toast.error(
+        "Invalid set time. Use formats like 10:30 PM, 10 PM, or 22:30.",
+      );
+      throw new InvalidLineupSetTimeError();
+    }
+    return parsed;
   }
 
   function isLineupDuplicateError(err: unknown): boolean {
@@ -206,7 +396,7 @@ export function EventForm({
         await eventLineupService.updateRow(entry.eventLineupId, {
           sort_order: entry.sortOrder,
           is_headliner: entry.isHeadliner,
-          set_time: entry.setTime.trim() || null,
+          set_time: parseSetTimeOrThrow(entry.setTime),
         });
         continue;
       }
@@ -217,7 +407,7 @@ export function EventForm({
           added_by: currentUserId,
           sort_order: entry.sortOrder,
           is_headliner: entry.isHeadliner,
-          set_time: entry.setTime.trim() || null,
+          set_time: parseSetTimeOrThrow(entry.setTime),
         });
       } catch (err) {
         if (isLineupDuplicateError(err)) continue;
@@ -292,8 +482,10 @@ export function EventForm({
         toast.success("Event updated!");
         router.push(`/events/${event.id}`);
       }
-    } catch {
-      toast.error("Failed to save event. Please try again.");
+    } catch (err) {
+      if (!(err instanceof InvalidLineupSetTimeError)) {
+        toast.error("Failed to save event. Please try again.");
+      }
     } finally {
       setSaving(false);
     }
@@ -322,6 +514,34 @@ export function EventForm({
       }}
       className="flex flex-col gap-6"
     >
+      {mode === "edit" && event ? (
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            onClick={() => requestLeaveEdit()}
+            aria-label="Back to event"
+          >
+            <ChevronLeft className="size-5" aria-hidden />
+          </Button>
+          <h1 className="font-display min-w-0 flex-1 text-center text-2xl font-bold text-bone">
+            Edit Event
+          </h1>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            onClick={() => requestLeaveEdit()}
+            aria-label="Close editor"
+          >
+            <X className="size-5" aria-hidden />
+          </Button>
+        </div>
+      ) : null}
+
       {/* Flyer */}
       <div>
         <p className="mb-2 text-sm font-medium text-bone">Event Flyer</p>
@@ -555,19 +775,48 @@ export function EventForm({
       )}
 
       {/* Actions */}
-      <div className="flex flex-wrap gap-3">
-        <Button type="submit" disabled={saving || !isValid}>
-          {saving ? primarySubmitPendingLabel : primarySubmitLabel}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={saving || !title.trim()}
-          onClick={() => handleSubmit("draft")}
-        >
-          Save as Draft
-        </Button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-3">
+          <Button type="submit" disabled={saving || !isValid}>
+            {saving ? primarySubmitPendingLabel : primarySubmitLabel}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={saving || !title.trim()}
+            onClick={() => handleSubmit("draft")}
+          >
+            Save as Draft
+          </Button>
+        </div>
+        {mode === "edit" && event ? (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={saving}
+            onClick={() => requestLeaveEdit()}
+          >
+            Cancel edit
+          </Button>
+        ) : null}
       </div>
+
+      <AlertDialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave without saving?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. If you leave now, they will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction type="button" onClick={() => confirmLeaveEdit()}>
+              Leave
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {mode === "edit" && event && (
         <div className="flex flex-col gap-4 border-t border-root-line pt-6">

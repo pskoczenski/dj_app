@@ -20,8 +20,9 @@ jest.mock("@/lib/services/conversations", () => ({
   },
 }));
 
+const mockRouterPush = jest.fn();
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: () => ({ push: mockRouterPush }),
 }));
 
 jest.mock("@/lib/services/events", () => ({
@@ -36,6 +37,7 @@ jest.mock("@/lib/services/event-lineup", () => ({
   eventLineupService: {
     add: jest.fn().mockResolvedValue({}),
     updateRow: jest.fn().mockResolvedValue(undefined),
+    remove: jest.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -87,6 +89,39 @@ async function selectCityWithAutocomplete(
   const option = await screen.findByRole("option", { name: /portland,\s*or/i });
   await user.click(option);
 }
+
+const baseEditEvent = {
+  id: "evt-1",
+  title: "Existing",
+  start_date: "2025-08-01",
+  status: "published" as const,
+  created_by: "user-1",
+  deleted_at: null,
+  city_id: "city-pdx",
+  cities: {
+    id: "city-pdx",
+    name: "Portland",
+    state_name: "Oregon",
+    state_code: "OR",
+    created_at: "2025-01-01",
+  },
+  country: null,
+  description: null,
+  end_date: null,
+  start_time: null,
+  end_time: null,
+  flyer_image_url: null,
+  genre_ids: [] as string[],
+  genres: null,
+  google_place_id: null,
+  latitude: null,
+  longitude: null,
+  ticket_url: null,
+  venue: null,
+  street_address: null,
+  created_at: "2025-01-01",
+  updated_at: "2025-01-01",
+};
 
 describe("EventForm", () => {
   beforeEach(() => {
@@ -202,42 +237,7 @@ describe("EventForm", () => {
 
   it("shows cancel vs delete help and actions in edit mode", () => {
     render(
-      <EventForm
-        mode="edit"
-        currentUserId="user-1"
-        event={{
-          id: "evt-1",
-          title: "Existing",
-          start_date: "2025-08-01",
-          status: "published",
-          created_by: "user-1",
-          deleted_at: null,
-          city_id: "city-pdx",
-          cities: {
-            id: "city-pdx",
-            name: "Portland",
-            state_name: "Oregon",
-            state_code: "OR",
-            created_at: "2025-01-01",
-          },
-          country: null,
-          description: null,
-          end_date: null,
-          start_time: null,
-          end_time: null,
-          flyer_image_url: null,
-          genre_ids: [],
-          genres: null,
-          google_place_id: null,
-          latitude: null,
-          longitude: null,
-          ticket_url: null,
-          venue: null,
-          street_address: null,
-          created_at: "2025-01-01",
-          updated_at: "2025-01-01",
-        }}
-      />,
+      <EventForm mode="edit" currentUserId="user-1" event={baseEditEvent} />,
     );
     expect(screen.getByText(/cancel vs delete/i)).toBeInTheDocument();
     expect(
@@ -246,6 +246,38 @@ describe("EventForm", () => {
     expect(
       screen.getByRole("button", { name: /^delete event$/i }),
     ).toBeInTheDocument();
+  });
+
+  it("navigates back from edit when form is clean", async () => {
+    const user = userEvent.setup();
+    render(<EventForm mode="edit" currentUserId="user-1" event={baseEditEvent} />);
+
+    await user.click(screen.getByRole("button", { name: /back to event/i }));
+
+    expect(mockRouterPush).toHaveBeenCalledWith("/events/evt-1");
+    expect(
+      screen.queryByRole("alertdialog", { name: /leave without saving/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("prompts before leaving edit when form is dirty", async () => {
+    const user = userEvent.setup();
+    render(<EventForm mode="edit" currentUserId="user-1" event={baseEditEvent} />);
+
+    await user.type(screen.getByLabelText(/title/i), "!");
+
+    await user.click(screen.getByRole("button", { name: /cancel edit/i }));
+
+    const dialog = await screen.findByRole("alertdialog");
+    expect(
+      within(dialog).getByText(/leave without saving/i),
+    ).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: /^leave$/i }));
+
+    await waitFor(() => {
+      expect(mockRouterPush).toHaveBeenCalledWith("/events/evt-1");
+    });
   });
 
   it("updates existing lineup rows on publish in edit mode instead of inserting", async () => {
