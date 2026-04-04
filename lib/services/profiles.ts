@@ -58,6 +58,9 @@ export async function update(
   id: string,
   data: ProfileUpdate,
 ): Promise<Profile> {
+  if (data.genre_ids?.length) {
+    await genresService.ensureGenreIdsExist(data.genre_ids);
+  }
   const { data: updated, error } = await supabase()
     .from(TABLES.profiles)
     .update(data)

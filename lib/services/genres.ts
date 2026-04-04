@@ -136,6 +136,32 @@ export async function search(
   return [...prefixRows, ...((fallback ?? []) as Genre[])];
 }
 
+/**
+ * Ensures every id exists in `genres` (compensates for no FK on `genre_ids` arrays).
+ * Call before writes that persist `genre_ids` on profiles, events, or mixes.
+ */
+export async function ensureGenreIdsExist(
+  genreIds: string[] | null | undefined,
+): Promise<void> {
+  const unique = [...new Set((genreIds ?? []).filter(Boolean))];
+  if (unique.length === 0) return;
+
+  const { data, error } = await supabase()
+    .from(TABLES.genres)
+    .select("id")
+    .in("id", unique);
+
+  if (error) throw error;
+
+  const found = new Set((data ?? []).map((r) => r.id));
+  const missing = unique.filter((id) => !found.has(id));
+  if (missing.length > 0) {
+    throw new Error(
+      `Unknown genre id(s): ${missing.join(", ")}. Each id must exist in the genres table.`,
+    );
+  }
+}
+
 export async function getByIds(genreIds: string[]): Promise<Genre[]> {
   const ids = [...new Set(genreIds.filter(Boolean))];
   if (ids.length === 0) return [];
@@ -173,6 +199,7 @@ export const genresService = {
   search,
   getAll,
   getByIds,
+  ensureGenreIdsExist,
   resolveLabelsToIds,
   resolveFilterTokenToId,
   getIdToNameMap,

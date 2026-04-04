@@ -97,6 +97,9 @@ export async function getById(id: string): Promise<Mix | null> {
 }
 
 export async function create(data: MixInsert): Promise<Mix> {
+  if (data.genre_ids?.length) {
+    await genresService.ensureGenreIdsExist(data.genre_ids);
+  }
   const { data: created, error } = await supabase()
     .from(TABLES.mixes)
     .insert(data)
@@ -109,6 +112,9 @@ export async function create(data: MixInsert): Promise<Mix> {
 }
 
 export async function update(id: string, data: MixUpdate): Promise<Mix> {
+  if (data.genre_ids?.length) {
+    await genresService.ensureGenreIdsExist(data.genre_ids);
+  }
   const { data: updated, error } = await supabase()
     .from(TABLES.mixes)
     .update(data)
