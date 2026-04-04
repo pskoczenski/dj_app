@@ -67,6 +67,13 @@ describe("Migration file guardrails", () => {
     expect(sql).toContain("Users can remove own comment likes");
   });
 
+  it("adds conversation_participants INSERT helper and last_read_at UPDATE policy (00022)", () => {
+    expect(sql).toContain("can_insert_conversation_participant");
+    expect(sql).toContain("Eligible event members can add participants");
+    expect(sql).toContain("Participants can update own last_read_at");
+    expect(sql).toContain("conversation_participants_immutable");
+  });
+
   it("adds cities table with trigram index and authenticated read policy", () => {
     expect(sql).toContain("CREATE TABLE cities");
     expect(sql).toContain("CREATE EXTENSION IF NOT EXISTS pg_trgm");

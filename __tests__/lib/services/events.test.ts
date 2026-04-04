@@ -54,6 +54,7 @@ jest.mock("@/lib/services/genres", () => ({
           genres: ["techno"],
         })),
     ),
+    ensureGenreIdsExist: jest.fn().mockResolvedValue(undefined),
     getIdToNameMap: jest.fn(async (ids: string[]) => {
       const m = new Map<string, string>();
       for (const id of ids) m.set(id, "techno");
@@ -67,6 +68,7 @@ jest.mock("@/lib/services/genres", () => ({
   },
 }));
 
+import { genresService } from "@/lib/services/genres";
 import { eventsService, eventListWithLineupSelect } from "@/lib/services/events";
 
 const MOCK_EVENT = {
@@ -317,6 +319,27 @@ describe("eventsService", () => {
         city_id: "city-portland",
       });
       expect(result).toEqual({ ...MOCK_EVENT, genres: ["techno"] });
+    });
+
+    it("validates genre_ids before insert when provided", async () => {
+      mock = chainMock();
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        b.single.mockResolvedValueOnce({ data: MOCK_EVENT, error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await eventsService.create({
+        title: "Underground Session",
+        start_date: "2025-06-15",
+        created_by: "user-1",
+        city_id: "city-portland",
+        genre_ids: ["g1"],
+      });
+      expect(jest.mocked(genresService.ensureGenreIdsExist)).toHaveBeenCalledWith([
+        "g1",
+      ]);
     });
   });
 

@@ -5,6 +5,7 @@ function chainMock() {
     chain.eq = jest.fn().mockReturnValue(chain);
     chain.order = jest.fn().mockReturnValue(chain);
     chain.insert = jest.fn().mockReturnValue(chain);
+    chain.upsert = jest.fn().mockReturnValue(chain);
     chain.update = jest.fn().mockReturnValue(chain);
     chain.delete = jest.fn().mockReturnValue(chain);
     chain.single = jest.fn().mockResolvedValue({ data: null, error: null });
@@ -83,7 +84,7 @@ describe("eventLineupService", () => {
   });
 
   describe("add", () => {
-    it("inserts and returns the lineup item", async () => {
+    it("upserts on event_id+profile_id and returns the lineup item", async () => {
       mock = chainMock();
       const origFrom = mock.client.from;
       mock.client.from = jest.fn((...args) => {
@@ -98,19 +99,28 @@ describe("eventLineupService", () => {
         added_by: "user-2",
       });
       expect(result).toEqual(MOCK_LINEUP_ITEM);
+      const b = mock.builder(0);
+      expect(b.upsert).toHaveBeenCalledWith(
+        {
+          event_id: "evt-1",
+          profile_id: "user-1",
+          added_by: "user-2",
+        },
+        { onConflict: "event_id,profile_id" },
+      );
       expect(conversationsService.syncEventGroupParticipants).toHaveBeenCalledWith(
         "evt-1",
       );
     });
 
-    it("throws a friendly error on unique violation", async () => {
+    it("propagates other errors from upsert", async () => {
       mock = chainMock();
       const origFrom = mock.client.from;
       mock.client.from = jest.fn((...args) => {
         const b = origFrom(...args);
         b.single.mockResolvedValueOnce({
           data: null,
-          error: { code: "23505", message: "duplicate key" },
+          error: { code: "42501", message: "permission denied" },
         });
         return b;
       }) as typeof origFrom;
@@ -121,7 +131,35 @@ describe("eventLineupService", () => {
           profile_id: "user-1",
           added_by: "user-2",
         }),
-      ).rejects.toThrow("This DJ is already in the lineup.");
+      ).rejects.toEqual(
+        expect.objectContaining({ code: "42501", message: "permission denied" }),
+      );
+    });
+  });
+
+  describe("updateRow", () => {
+    it("updates sort_order and headliner fields", async () => {
+      mock = chainMock();
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        b.eq.mockResolvedValueOnce({ error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await eventLineupService.updateRow("lu-9", {
+        sort_order: 2,
+        is_headliner: true,
+        set_time: "23:00",
+      });
+
+      const b = mock.builder(0);
+      expect(b.update).toHaveBeenCalledWith({
+        sort_order: 2,
+        is_headliner: true,
+        set_time: "23:00",
+      });
+      expect(b.eq).toHaveBeenCalledWith("id", "lu-9");
     });
   });
 

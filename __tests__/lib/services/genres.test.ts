@@ -80,5 +80,29 @@ describe("genresService", () => {
     expect(c.in).toHaveBeenCalledWith("id", ["a", "b"]);
     expect(rows.map((r) => r.id)).toEqual(["a", "b"]);
   });
+
+  it("ensureGenreIdsExist no-ops for empty input", async () => {
+    await expect(genresService.ensureGenreIdsExist([])).resolves.toBeUndefined();
+    await expect(genresService.ensureGenreIdsExist(undefined)).resolves.toBeUndefined();
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it("ensureGenreIdsExist resolves when all ids exist", async () => {
+    const c = chainResolvingTo([{ id: "g1" }, { id: "g2" }]);
+    mockFrom.mockReturnValue(c);
+
+    await genresService.ensureGenreIdsExist(["g1", "g2"]);
+    expect(mockFrom).toHaveBeenCalledWith("genres");
+    expect(c.in).toHaveBeenCalledWith("id", ["g1", "g2"]);
+  });
+
+  it("ensureGenreIdsExist throws when any id is missing", async () => {
+    const c = chainResolvingTo([{ id: "g1" }]);
+    mockFrom.mockReturnValue(c);
+
+    await expect(
+      genresService.ensureGenreIdsExist(["g1", "ghost"]),
+    ).rejects.toThrow(/Unknown genre id/);
+  });
 });
 

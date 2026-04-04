@@ -52,6 +52,7 @@ jest.mock("@/lib/services/genres", () => ({
           genres: ["house"],
         })),
     ),
+    ensureGenreIdsExist: jest.fn().mockResolvedValue(undefined),
     resolveLabelsToIds: jest.fn(),
     resolveFilterTokenToId: jest.fn(),
     getIdToNameMap: jest.fn(),
@@ -59,6 +60,7 @@ jest.mock("@/lib/services/genres", () => ({
   },
 }));
 
+import { genresService } from "@/lib/services/genres";
 import { profilesService } from "@/lib/services/profiles";
 
 const MOCK_PROFILE = {
@@ -269,6 +271,9 @@ describe("profilesService", () => {
         genre_ids: ["uuid-techno"],
       });
 
+      expect(jest.mocked(genresService.ensureGenreIdsExist)).toHaveBeenCalledWith([
+        "uuid-techno",
+      ]);
       const b = mock.builder(0);
       expect(b.update).toHaveBeenCalledWith({ genre_ids: ["uuid-techno"] });
       expect(result.genre_ids).toEqual(["uuid-techno"]);

@@ -40,6 +40,7 @@ jest.mock("@/lib/services/genres", () => ({
     hydrateGenreLabels: jest.fn(async (rows: Record<string, unknown>[]) =>
       rows.map((r) => ({ ...r, genres: [] as string[] })),
     ),
+    ensureGenreIdsExist: jest.fn().mockResolvedValue(undefined),
     resolveFilterTokenToId: jest.fn(),
     resolveLabelsToIds: jest.fn(),
     getIdToNameMap: jest.fn(),
@@ -121,6 +122,35 @@ describe("mixesService", () => {
         profile_id: "user-1",
       });
       expect(result).toEqual({ ...mixData, genres: [] });
+    });
+
+    it("validates genre_ids before insert when provided", async () => {
+      const mixData = {
+        id: "mix-1",
+        title: "Summer Vibes",
+        embed_url: "https://soundcloud.com/x/y",
+        platform: "soundcloud" as const,
+        profile_id: "user-1",
+        genre_ids: ["g1"],
+      };
+      mock = chainMock();
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        b.single.mockResolvedValueOnce({ data: mixData, error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await mixesService.create({
+        title: "Summer Vibes",
+        embed_url: "https://soundcloud.com/x/y",
+        platform: "soundcloud",
+        profile_id: "user-1",
+        genre_ids: ["g1"],
+      });
+      expect(jest.mocked(genresService.ensureGenreIdsExist)).toHaveBeenCalledWith([
+        "g1",
+      ]);
     });
   });
 

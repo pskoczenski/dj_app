@@ -33,7 +33,10 @@ jest.mock("@/lib/services/events", () => ({
 }));
 
 jest.mock("@/lib/services/event-lineup", () => ({
-  eventLineupService: { add: jest.fn().mockResolvedValue({}) },
+  eventLineupService: {
+    add: jest.fn().mockResolvedValue({}),
+    updateRow: jest.fn().mockResolvedValue(undefined),
+  },
 }));
 
 jest.mock("@/lib/services/storage", () => ({
@@ -72,6 +75,7 @@ jest.mock("sonner", () => ({ toast: { success: jest.fn(), error: jest.fn() } }))
 
 import { conversationsService } from "@/lib/services/conversations";
 import { eventsService } from "@/lib/services/events";
+import { eventLineupService } from "@/lib/services/event-lineup";
 
 async function selectCityWithAutocomplete(
   user: ReturnType<typeof userEvent.setup>,
@@ -242,6 +246,78 @@ describe("EventForm", () => {
     expect(
       screen.getByRole("button", { name: /^delete event$/i }),
     ).toBeInTheDocument();
+  });
+
+  it("updates existing lineup rows on publish in edit mode instead of inserting", async () => {
+    const user = userEvent.setup();
+    render(
+      <EventForm
+        mode="edit"
+        currentUserId="user-1"
+        initialLineup={[
+          {
+            tempId: "existing-lu-1",
+            eventLineupId: "lu-1",
+            profileId: "dj-1",
+            displayName: "DJ Alpha",
+            slug: "dj-alpha",
+            profileImageUrl: null,
+            isHeadliner: false,
+            setTime: "",
+            sortOrder: 0,
+          },
+        ]}
+        event={{
+          id: "evt-1",
+          title: "Existing",
+          start_date: "2025-08-01",
+          status: "draft",
+          created_by: "user-1",
+          deleted_at: null,
+          city_id: "city-pdx",
+          cities: {
+            id: "city-pdx",
+            name: "Portland",
+            state_name: "Oregon",
+            state_code: "OR",
+            created_at: "2025-01-01",
+          },
+          country: null,
+          description: null,
+          end_date: null,
+          start_time: null,
+          end_time: null,
+          flyer_image_url: null,
+          genre_ids: [],
+          genres: null,
+          google_place_id: null,
+          latitude: null,
+          longitude: null,
+          ticket_url: null,
+          venue: null,
+          street_address: null,
+          created_at: "2025-01-01",
+          updated_at: "2025-01-01",
+        }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /pick genre/i }));
+    await user.click(screen.getByRole("button", { name: /update event/i }));
+
+    await waitFor(() => {
+      expect(eventsService.update).toHaveBeenCalled();
+    });
+    expect(eventsService.create).not.toHaveBeenCalled();
+    expect(eventLineupService.updateRow).toHaveBeenCalledWith("lu-1", {
+      sort_order: 0,
+      is_headliner: false,
+      set_time: null,
+    });
+    expect(eventLineupService.add).not.toHaveBeenCalled();
+    expect(conversationsService.ensureEventGroupThread).toHaveBeenCalledWith(
+      "evt-1",
+    );
   });
 
   it("soft-deletes after confirming delete in edit mode", async () => {
