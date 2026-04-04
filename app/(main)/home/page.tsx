@@ -122,8 +122,8 @@ export default function HomePage() {
       <aside className="flex flex-col gap-4 lg:w-[300px] lg:shrink-0">
         {/* Profile card */}
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 pt-4">
-            <Avatar className="size-16">
+          <CardContent className="flex flex-col items-center gap-4 pt-6">
+            <Avatar className="size-20">
               {user.avatarUrl ? (
                 <AvatarImage
                   src={user.avatarUrl}

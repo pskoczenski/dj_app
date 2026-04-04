@@ -33,7 +33,7 @@ export function ProfileHeader({
 
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
-      <Avatar className="size-24 sm:size-28">
+      <Avatar className="size-28 sm:size-32">
         {profile.profile_image_url && (
           <AvatarImage src={profile.profile_image_url} alt={profile.display_name} />
         )}

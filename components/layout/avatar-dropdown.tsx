@@ -31,10 +31,10 @@ export function AvatarDropdown({ user }: AvatarDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="flex size-9 cursor-pointer items-center justify-center rounded-full text-stone outline-none transition-colors hover:bg-root-line/60 hover:text-bone focus-visible:ring-2 focus-visible:ring-fern"
+        className="flex size-11 cursor-pointer items-center justify-center rounded-full text-stone outline-none transition-colors hover:bg-root-line/60 hover:text-bone focus-visible:ring-2 focus-visible:ring-fern"
         aria-label="User menu"
       >
-        <User className="size-5" aria-hidden />
+        <User className="size-" aria-hidden />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" sideOffset={8} className="w-56">
