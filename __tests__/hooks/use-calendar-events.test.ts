@@ -173,6 +173,19 @@ describe("useCalendarEvents", () => {
     });
   });
 
+  it("passes genreIds to getEventsByDateRange when provided", async () => {
+    renderHook(() =>
+      useCalendarEvents("2026-04-01", "2026-04-30", {
+        genreIds: ["g-house", "g-techno"],
+      }),
+    );
+
+    await waitFor(() => expect(mockGetByRange).toHaveBeenCalled());
+    expect(mockGetByRange).toHaveBeenCalledWith("2026-04-01", "2026-04-30", {
+      genreIds: ["g-house", "g-techno"],
+    });
+  });
+
   it("refetch calls the service again", async () => {
     const { result } = renderHook(() =>
       useCalendarEvents("2026-04-01", "2026-04-30"),

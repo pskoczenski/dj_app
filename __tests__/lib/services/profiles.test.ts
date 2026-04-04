@@ -10,6 +10,7 @@ function chainMock() {
     const chain: Record<string, jest.Mock> = {};
     chain.select = jest.fn().mockReturnValue(chain);
     chain.eq = jest.fn().mockReturnValue(chain);
+    chain.overlaps = jest.fn().mockReturnValue(chain);
     chain.or = jest.fn().mockReturnValue(chain);
     chain.is = jest.fn().mockReturnValue(chain);
     chain.update = jest.fn().mockReturnValue(chain);
@@ -183,6 +184,30 @@ describe("profilesService", () => {
         (c: unknown[]) => c[0] === "city_id",
       );
       expect(cityCalls).toHaveLength(0);
+    });
+
+    it("applies genreIds via overlaps when provided", async () => {
+      mock = chainMock();
+      await profilesService.search("dj", { genreIds: ["g1", "g2"] });
+
+      const b = mock.builder(0);
+      expect(b.overlaps).toHaveBeenCalledWith("genre_ids", ["g1", "g2"]);
+    });
+
+    it("returns empty array when query is too short and no genreIds", async () => {
+      mock = chainMock();
+      const result = await profilesService.search("x");
+      expect(result).toEqual([]);
+      expect(mock.client.from).not.toHaveBeenCalled();
+    });
+
+    it("runs genre-only query when genreIds set and query is empty", async () => {
+      mock = chainMock();
+      await profilesService.search("", { genreIds: ["g1"] });
+
+      const b = mock.builder(0);
+      expect(b.overlaps).toHaveBeenCalledWith("genre_ids", ["g1"]);
+      expect(b.or).not.toHaveBeenCalled();
     });
   });
 

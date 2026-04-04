@@ -21,6 +21,21 @@ jest.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+jest.mock("@/hooks/use-genres", () => ({
+  useGenres: () => ({
+    genres: [
+      {
+        id: "genre-house",
+        name: "House",
+        slug: "house",
+        sort_order: 0,
+        created_at: "2025-01-01",
+      },
+    ],
+    loading: false,
+  }),
+}));
+
 import SearchPage from "@/app/(main)/search/page";
 
 const homeCity: City = {
@@ -168,5 +183,49 @@ describe("SearchPage", () => {
       expect(mockSearchEvents).toHaveBeenCalledWith("house", {});
       expect(mockSearchMixes).toHaveBeenCalledWith("house");
     });
+  });
+
+  it("passes genreIds to searchDjs only when a genre chip is selected", async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    renderSearch();
+
+    await user.click(screen.getByRole("button", { name: /^house$/i }));
+
+    await act(async () => {
+      jest.advanceTimersByTime(350);
+    });
+
+    await waitFor(() => {
+      expect(mockSearchDjs).toHaveBeenCalledWith("", {
+        cityId: homeCity.id,
+        genreIds: ["genre-house"],
+      });
+    });
+    expect(mockSearchEvents).not.toHaveBeenCalled();
+    expect(mockSearchMixes).not.toHaveBeenCalled();
+  });
+
+  it("composes text search with genreIds on DJs; mixes stay unfiltered by genre", async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    renderSearch();
+
+    await user.click(screen.getByRole("button", { name: /^house$/i }));
+    await user.type(screen.getByLabelText("Search"), "mix");
+
+    await act(async () => {
+      jest.advanceTimersByTime(350);
+    });
+
+    await waitFor(() => {
+      expect(mockSearchDjs).toHaveBeenCalledWith("mix", {
+        cityId: homeCity.id,
+        genreIds: ["genre-house"],
+      });
+      expect(mockSearchEvents).toHaveBeenCalledWith("mix", {
+        cityId: homeCity.id,
+      });
+      expect(mockSearchMixes).toHaveBeenCalledWith("mix");
+    });
+    expect(mockSearchMixes.mock.calls[0]?.[1]).toBeUndefined();
   });
 });

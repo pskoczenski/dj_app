@@ -52,6 +52,13 @@ jest.mock("@/hooks/use-current-user", () => ({
   useCurrentUser: () => ({ user: null }),
 }));
 
+jest.mock("@/hooks/use-genres", () => ({
+  useGenres: () => ({
+    genres: [],
+    loading: false,
+  }),
+}));
+
 jest.mock("@/hooks/use-location", () => ({
   useLocation: () => ({
     activeCity: {

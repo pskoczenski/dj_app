@@ -8,6 +8,7 @@ function chainMock() {
     chain.lte = jest.fn().mockReturnValue(chain);
     chain.in = jest.fn().mockReturnValue(chain);
     chain.contains = jest.fn().mockReturnValue(chain);
+    chain.overlaps = jest.fn().mockReturnValue(chain);
     chain.or = jest.fn().mockReturnValue(chain);
     chain.order = jest.fn().mockReturnValue(chain);
     chain.range = jest.fn().mockReturnValue(chain);
@@ -191,6 +192,60 @@ describe("eventsService", () => {
       expect(builder.eq).toHaveBeenCalledWith("city_id", "city-1");
     });
 
+    it("applies genreIds via overlaps when provided", async () => {
+      mock = chainMock();
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        (b as any).then = (resolve: (v: unknown) => void) =>
+          resolve({ data: [], error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await eventsService.getAll({ genreIds: ["g1", "g2"] });
+      const builder = mock.builder(0);
+      expect(builder.overlaps).toHaveBeenCalledWith("genre_ids", ["g1", "g2"]);
+    });
+
+    it("does not apply overlaps when genreIds empty or omitted", async () => {
+      mock = chainMock();
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        (b as any).then = (resolve: (v: unknown) => void) =>
+          resolve({ data: [], error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await eventsService.getAll({});
+      await eventsService.getAll({ genreIds: [] });
+      expect(
+        (mock.builder(0).overlaps as jest.Mock).mock.calls.length,
+      ).toBe(0);
+      expect(
+        (mock.builder(1).overlaps as jest.Mock).mock.calls.length,
+      ).toBe(0);
+    });
+
+    it("composes cityId and genreIds in one query", async () => {
+      mock = chainMock();
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        (b as any).then = (resolve: (v: unknown) => void) =>
+          resolve({ data: [], error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await eventsService.getAll({
+        cityId: "city-1",
+        genreIds: ["g1"],
+      });
+      const builder = mock.builder(0);
+      expect(builder.eq).toHaveBeenCalledWith("city_id", "city-1");
+      expect(builder.overlaps).toHaveBeenCalledWith("genre_ids", ["g1"]);
+    });
+
     it("does not apply city_id filter when cityId omitted", async () => {
       mock = chainMock();
       const origFrom = mock.client.from;
@@ -350,6 +405,44 @@ describe("eventsService", () => {
         (c: unknown[]) => c[0] === "city_id",
       );
       expect(cityFilters).toHaveLength(0);
+    });
+
+    it("applies genreIds via overlaps when provided", async () => {
+      mock = chainMock();
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        (b as { then?: unknown }).then = (resolve: (v: unknown) => void) =>
+          resolve({ data: [], error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await eventsService.getEventsByDateRange("2026-04-01", "2026-04-30", {
+        genreIds: ["g1", "g2"],
+      });
+
+      const builder = mock.builder(0);
+      expect(builder.overlaps).toHaveBeenCalledWith("genre_ids", ["g1", "g2"]);
+    });
+
+    it("composes cityId and genreIds", async () => {
+      mock = chainMock();
+      const origFrom = mock.client.from;
+      mock.client.from = jest.fn((...args) => {
+        const b = origFrom(...args);
+        (b as { then?: unknown }).then = (resolve: (v: unknown) => void) =>
+          resolve({ data: [], error: null });
+        return b;
+      }) as typeof origFrom;
+
+      await eventsService.getEventsByDateRange("2026-04-01", "2026-04-30", {
+        cityId: "city-x",
+        genreIds: ["g1"],
+      });
+
+      const builder = mock.builder(0);
+      expect(builder.eq).toHaveBeenCalledWith("city_id", "city-x");
+      expect(builder.overlaps).toHaveBeenCalledWith("genre_ids", ["g1"]);
     });
 
     it("uses or(published, created_by) when authenticated", async () => {

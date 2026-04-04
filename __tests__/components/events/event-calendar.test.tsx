@@ -176,6 +176,48 @@ describe("EventCalendar", () => {
     ).toBeInTheDocument();
   });
 
+  it("passes selectedGenreIds to useCalendarEvents", () => {
+    mockUseCalendarEvents.mockReturnValue({
+      events: [],
+      eventsByDate: new Map(),
+      loading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    render(
+      <EventCalendar
+        initialMonth={new Date(2026, 3, 1)}
+        selectedGenreIds={["g1"]}
+      />,
+    );
+
+    expect(mockUseCalendarEvents).toHaveBeenCalled();
+    const opts = mockUseCalendarEvents.mock.calls[0]?.[2];
+    expect(opts).toEqual({ cityId: "city-cal", genreIds: ["g1"] });
+  });
+
+  it("shows genre-aware empty copy when genres are selected", () => {
+    mockUseCalendarEvents.mockReturnValue({
+      events: [],
+      eventsByDate: new Map(),
+      loading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    render(
+      <EventCalendar
+        initialMonth={new Date(2026, 3, 1)}
+        selectedGenreIds={["g1"]}
+      />,
+    );
+
+    expect(
+      screen.getByText(/no events matching these genres in portland this month/i),
+    ).toBeInTheDocument();
+  });
+
   it("shows loading skeletons in cells while loading", () => {
     mockUseCalendarEvents.mockReturnValue({
       events: [],

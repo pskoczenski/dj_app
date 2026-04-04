@@ -54,6 +54,21 @@ jest.mock("@/hooks/use-current-user", () => ({
   useCurrentUser: () => ({ user: null }),
 }));
 
+jest.mock("@/hooks/use-genres", () => ({
+  useGenres: () => ({
+    genres: [
+      {
+        id: "genre-house",
+        name: "House",
+        slug: "house",
+        sort_order: 0,
+        created_at: "2025-01-01",
+      },
+    ],
+    loading: false,
+  }),
+}));
+
 const portland: City = {
   id: "city-pdx",
   name: "Portland",
