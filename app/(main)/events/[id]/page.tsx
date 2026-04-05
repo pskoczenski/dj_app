@@ -345,7 +345,7 @@ export default function EventDetailPage({
       {/* Posted By */}
       {creator && (
         <section>
-          <h2 className="mb-3 font-display text-lg font-bold text-bone">
+          <h2 className="mb-3 heading-subtle text-xl font-bold text-bone">
             Posted By
           </h2>
           <Link

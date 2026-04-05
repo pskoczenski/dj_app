@@ -234,7 +234,7 @@ export default function DjProfilePage({
 
       {profile.social_links && (
         <section>
-          <h2 className="mb-3 font-display text-lg font-semibold text-bone">
+          <h2 className="mb-3 heading-subtle text-xl font-semibold text-bone">
             Links
           </h2>
           <SocialLinks links={profile.social_links} />
@@ -243,7 +243,7 @@ export default function DjProfilePage({
 
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-semibold text-bone">
+          <h2 className="heading-subtle text-xl font-semibold text-bone">
             Mixes
           </h2>
           {isOwnProfile && (
@@ -345,7 +345,7 @@ export default function DjProfilePage({
       </AlertDialog>
 
       <section>
-        <h2 className="mb-3 font-display text-lg font-semibold text-bone">
+        <h2 className="mb-3 heading-subtle text-xl font-semibold text-bone">
           Events
         </h2>
         <EmptyState

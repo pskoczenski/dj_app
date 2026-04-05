@@ -179,7 +179,7 @@ export default function HomePage() {
               )}
             </Avatar>
             <div className="text-center">
-              <p className="font-display text-lg font-bold text-bone">
+              <p className="heading-subtle text-xl font-bold text-bone">
                 {user.displayName}
               </p>
               <p className="text-xs text-fog">@{user.slug}</p>
@@ -245,7 +245,7 @@ export default function HomePage() {
 
         {/* Events near you */}
         <section>
-          <h2 className="mb-3 font-display text-xl font-bold text-bone">
+          <h2 className="mb-4 heading-subtle text-xl font-bold text-bone">
             Events Near You
           </h2>
           {profile?.city_id === DEFAULT_SIGNUP_CITY_ID && (
@@ -281,7 +281,7 @@ export default function HomePage() {
 
         {/* Upcoming gigs */}
         <section>
-          <h2 className="mb-3 font-display text-xl font-bold text-bone">
+          <h2 className="mb-4 heading-subtle text-xl font-bold text-bone">
             Your Upcoming Gigs
           </h2>
           {upcomingGigs.length > 0 ? (
@@ -308,7 +308,7 @@ export default function HomePage() {
 
         {/* Recent activity */}
         <section>
-          <h2 className="mb-3 font-display text-xl font-bold text-bone">
+          <h2 className="mb-4 heading-subtle text-xl font-bold text-bone">
             Recent From the Community
           </h2>
           {recentMixes.length > 0 ? (

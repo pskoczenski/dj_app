@@ -15,7 +15,7 @@ export function MobileTopBar({ user }: MobileTopBarProps) {
     <header className="flex h-12 items-center gap-3 border-b border-root-line bg-dark-moss px-4 md:hidden">
       <Link
         href="/home"
-        className="min-w-0 flex-1 truncate font-display text-base font-bold tracking-wide text-bone"
+        className="heading-subtle min-w-0 flex-1 truncate text-xl font-bold text-bone"
       >
         Dreamtree
       </Link>

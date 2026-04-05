@@ -364,7 +364,7 @@ export default function EditProfilePage() {
 
         {/* Mixes anchor for Quick Create link */}
         <section id="mixes" className="scroll-mt-20">
-          <h2 className="mb-2 font-display text-lg font-semibold text-bone">
+          <h2 className="mb-2 heading-subtle text-xl font-semibold text-bone">
             Mixes
           </h2>
           <p className="text-sm text-stone">

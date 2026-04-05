@@ -210,18 +210,21 @@ body {
   font-family: var(--font-display);
   font-variation-settings: "WONK" 1;
   letter-spacing: 0.02em;
+  line-height: 1.05;
 }
 
 .heading-section {
   font-family: var(--font-display);
   font-variation-settings: "WONK" 0.5;
   letter-spacing: 0.02em;
+  line-height: 1.2;
 }
 
 .heading-subtle {
   font-family: var(--font-display);
   font-variation-settings: "WONK" 0;
   letter-spacing: 0.02em;
+  line-height: 1.4;
 }
 
 :focus-visible {

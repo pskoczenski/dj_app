@@ -163,7 +163,7 @@ export function EventCalendar({
         </Button>
         <div
           aria-live="polite"
-          className="min-w-0 flex-1 text-center font-display text-lg font-semibold tracking-tight text-bone"
+          className="heading-subtle min-w-0 flex-1 text-center text-xl font-semibold text-bone"
         >
           {formatMonthYear(currentMonth)}
         </div>

@@ -260,7 +260,7 @@ function SearchBrowser() {
                 {djs.length > 0 && (
                   <section>
                     <div className="mb-3 flex items-center justify-between">
-                      <h2 className="font-display text-lg font-bold text-bone">
+                      <h2 className="heading-subtle text-xl font-bold text-bone">
                         DJs
                       </h2>
                       {djs.length > 3 && (
@@ -279,7 +279,7 @@ function SearchBrowser() {
                 {events.length > 0 && (
                   <section>
                     <div className="mb-3 flex items-center justify-between">
-                      <h2 className="font-display text-lg font-bold text-bone">
+                      <h2 className="heading-subtle text-xl font-bold text-bone">
                         Events
                       </h2>
                       {events.length > 3 && (
@@ -310,7 +310,7 @@ function SearchBrowser() {
                 {mixes.length > 0 && (
                   <section>
                     <div className="mb-3 flex items-center justify-between">
-                      <h2 className="font-display text-lg font-bold text-bone">
+                      <h2 className="heading-subtle text-xl font-bold text-bone">
                         Mixes
                       </h2>
                       {mixes.length > 3 && (
@@ -331,7 +331,7 @@ function SearchBrowser() {
 
             {/* DJs tab */}
             <TabsContent value="djs">
-              <h2 className="mb-3 font-display text-lg font-bold text-bone">
+              <h2 className="mb-3 heading-subtle text-xl font-bold text-bone">
                 DJs
               </h2>
               {djs.length > 0 ? (
@@ -352,7 +352,7 @@ function SearchBrowser() {
 
             {/* Events tab */}
             <TabsContent value="events">
-              <h2 className="mb-3 font-display text-lg font-bold text-bone">
+              <h2 className="mb-3 heading-subtle text-xl font-bold text-bone">
                 Events
               </h2>
               {events.length > 0 ? (
@@ -376,7 +376,7 @@ function SearchBrowser() {
 
             {/* Mixes tab */}
             <TabsContent value="mixes">
-              <h2 className="mb-3 font-display text-lg font-bold text-bone">
+              <h2 className="mb-3 heading-subtle text-xl font-bold text-bone">
                 Mixes
               </h2>
               {mixes.length > 0 ? (

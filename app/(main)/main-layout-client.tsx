@@ -15,7 +15,7 @@ export function MainLayoutClient({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen flex-col">
         <Navbar user={user} />
         <MobileTopBar user={user} />
-        <PageContainer as="main" className="flex-1 py-6 pb-20 md:pb-6">
+        <PageContainer as="main" className="flex-1 py-8 pb-24 md:pb-8">
           {children}
         </PageContainer>
         <MobileTabBar user={user} />

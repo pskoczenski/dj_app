@@ -28,7 +28,7 @@ export function Navbar({ user }: NavbarProps) {
       <nav className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
         <Link
           href="/home"
-          className="shrink-0 font-display text-lg font-bold tracking-wide text-bone"
+          className="heading-subtle shrink-0 text-xl font-bold text-bone"
         >
           Dreamtree
         </Link>
