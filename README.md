@@ -1,8 +1,18 @@
-## DJ Network — MVP
+## Dreamtree — MVP
 
-DJ Network is a grassroots networking platform for DJs — discover events, share mixes, follow artists, search the network, and message other users. **Browse** can follow your **active city**: events (list + calendar) and search (DJs + events) respect **`useLocation` / `activeCity`**; home and mixes are not city-filtered.
+**Live deployment (MVP):** [https://dj-app-kohl.vercel.app/](https://dj-app-kohl.vercel.app/)
+
+Dreamtree is a grassroots networking platform for DJs — discover events, share mixes, follow artists, search the network, and message other users. **Browse** can follow your **active city**: events (list + calendar) and search (DJs + events) respect **`useLocation` / `activeCity`**; home and mixes are not city-filtered.
 
 Built with **Next.js 16** (App Router), **Supabase** (Postgres, Auth, Storage), **Tailwind CSS v4**, and **shadcn/ui**.
+
+### Recent updates
+
+- **Genres:** Master `genres` table with `genre_ids` on profiles, events, and mixes; optional **genre filters** on `/events` (list + calendar) and on `/search` for DJs and events (combined with city when applicable).
+- **Events:** Optional **ticket URL** on listings (compact “Get Tickets” CTA on event detail); **event likes** (heart + count on cards, detail, home, and search); **street address** field on events.
+- **Mixes:** **Mix likes**; oEmbed-assisted title/cover on create; creator + date on mix cards.
+- **Social:** **Comments** (with likes) on events and mixes; **event group** messaging for creators and lineup DJs, with ongoing **RLS** hardening for conversations and participants (see `supabase/migrations/00020` onward).
+- **Auth (planned):** Google sign-in UI is stubbed in the login page; email/password is live. See `docs/README.md` → TODO for backlog items (Realtime messaging, maps, etc.).
 
 ---
 
@@ -168,14 +178,17 @@ docs/                   design + tech specs (agent-step workflow)
   - Like mixes (heart + count).
 
 - **4. Create and discover events**
-  - Create events with flyer uploads (including draft flyer support).
-  - Add a lineup and publish events.
-  - Pick an **active city** in the nav; the events **list** and **calendar** show published events in that city. Search can stay **in city** or switch to **all cities** for DJs/events (mixes are always global).
+  - Create events with flyer uploads (including draft flyer support), optional **ticket link**, and lineup.
+  - Publish events; **like** events from cards or detail.
+  - Pick an **active city** in the nav; the events **list** and **calendar** show published events in that city (optionally filter by **genre**). Search can stay **in city** or switch to **all cities** for DJs/events (mixes are always global).
 
-- **5. Message other users**
+- **5. Engage on content**
+  - Open **comments** from event or mix cards (or detail) to read, post, and like comments.
+
+- **6. Message other users**
   - From a DJ profile, open a quick compose dialog and send a DM.
   - View inbox at `/messages` and open threads at `/messages/[conversationId]`.
-  - Event group threads exist for events (where enabled by lineup membership/creator rules).
+  - **Event group** threads for creators and lineup DJs (see product rules in `docs/tech_specs/`).
 
 ---
 
