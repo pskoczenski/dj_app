@@ -20,7 +20,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -357,15 +357,13 @@ export default function EventDetailPage({
             href={`/dj/${creator.slug}`}
             className="flex items-center gap-3 rounded-default border border-root-line p-3 transition-colors hover:border-sage-edge"
           >
-            <Avatar className="size-10">
-              {creator.profile_image_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+            <Avatar className="size-10 shrink-0">
+              {creator.profile_image_url ? (
+                <AvatarImage
                   src={creator.profile_image_url}
                   alt={creator.display_name}
-                  className="size-full object-cover"
                 />
-              )}
+              ) : null}
               <AvatarFallback className="text-xs">
                 {creator.display_name
                   .split(" ")
