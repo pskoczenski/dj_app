@@ -1,4 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
+import { MessagingInboxProvider } from "@/hooks/messaging-inbox-provider";
 
 const mockGetInbox = jest.fn();
 jest.mock("@/lib/services/conversations", () => ({
@@ -8,14 +10,15 @@ jest.mock("@/lib/services/conversations", () => ({
   },
 }));
 
-jest.mock("@/hooks/use-current-user", () => ({
-  useCurrentUser: () => ({
-    user: { id: "user-1" },
-    loading: false,
-  }),
-}));
-
 import { useUnreadCount } from "@/hooks/use-unread-count";
+
+function inboxWrapper({ children }: { children: ReactNode }) {
+  return createElement(
+    MessagingInboxProvider,
+    { userId: "user-1", userLoading: false },
+    children,
+  );
+}
 
 describe("useUnreadCount", () => {
   beforeEach(() => {
@@ -29,7 +32,9 @@ describe("useUnreadCount", () => {
       .mockResolvedValueOnce([{ unreadCount: 2 }, { unreadCount: 3 }])
       .mockResolvedValueOnce([{ unreadCount: 1 }]);
 
-    const { result } = renderHook(() => useUnreadCount());
+    const { result } = renderHook(() => useUnreadCount(), {
+      wrapper: inboxWrapper,
+    });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.count).toBe(5);
 

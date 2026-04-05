@@ -1,4 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
+import { MessagingInboxProvider } from "@/hooks/messaging-inbox-provider";
 
 const mockGetInbox = jest.fn();
 jest.mock("@/lib/services/conversations", () => ({
@@ -8,14 +10,15 @@ jest.mock("@/lib/services/conversations", () => ({
   },
 }));
 
-jest.mock("@/hooks/use-current-user", () => ({
-  useCurrentUser: () => ({
-    user: { id: "user-1" },
-    loading: false,
-  }),
-}));
-
 import { useConversations } from "@/hooks/use-conversations";
+
+function inboxWrapper({ children }: { children: ReactNode }) {
+  return createElement(
+    MessagingInboxProvider,
+    { userId: "user-1", userLoading: false },
+    children,
+  );
+}
 
 describe("useConversations", () => {
   beforeEach(() => {
@@ -26,7 +29,9 @@ describe("useConversations", () => {
 
   it("polls at 30s interval", async () => {
     mockGetInbox.mockResolvedValue([]);
-    const { result } = renderHook(() => useConversations());
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: inboxWrapper,
+    });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(mockGetInbox).toHaveBeenCalledTimes(1);
 

@@ -443,12 +443,23 @@ export function EventForm({
 
         const created = await eventsService.create(payload);
         await saveLineup(created.id);
+        let groupChatSetupFailed = false;
         if (status === "published") {
-          await conversationsService.ensureEventGroupThread(created.id);
+          try {
+            await conversationsService.ensureEventGroupThread(created.id);
+          } catch (err) {
+            groupChatSetupFailed = true;
+            console.error("ensureEventGroupThread failed after create", err);
+          }
         }
         toast.success(
           status === "published" ? "Event published!" : "Draft saved!",
         );
+        if (groupChatSetupFailed) {
+          toast.warning(
+            "Group chat could not be created. Your event was saved—try editing and publishing again, or contact support if this keeps happening.",
+          );
+        }
         router.push(`/events/${created.id}`);
       } else if (event) {
         const genre_ids = selectedGenres.map((g) => g.id);
@@ -472,14 +483,25 @@ export function EventForm({
 
         await eventsService.update(event.id, payload);
         await saveLineup(event.id);
+        let groupChatSetupFailed = false;
         if (payload.status === "published") {
-          if (prevStatus !== "published") {
-            await conversationsService.ensureEventGroupThread(event.id);
-          } else {
-            await conversationsService.syncEventGroupParticipants(event.id);
+          try {
+            if (prevStatus !== "published") {
+              await conversationsService.ensureEventGroupThread(event.id);
+            } else {
+              await conversationsService.syncEventGroupParticipants(event.id);
+            }
+          } catch (err) {
+            groupChatSetupFailed = true;
+            console.error("Event group messaging sync failed after update", err);
           }
         }
         toast.success("Event updated!");
+        if (groupChatSetupFailed) {
+          toast.warning(
+            "Group chat could not be synced. Other changes were saved—try saving again if you need the chat.",
+          );
+        }
         router.push(`/events/${event.id}`);
       }
     } catch (err) {

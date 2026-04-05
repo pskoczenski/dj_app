@@ -72,6 +72,7 @@ describe("Migration file guardrails", () => {
     expect(sql).toContain("Eligible event members can add participants");
     expect(sql).toContain("Participants can update own last_read_at");
     expect(sql).toContain("conversation_participants_immutable");
+    expect(sql).toContain("row_security = off");
   });
 
   it("adds cities table with trigram index and authenticated read policy", () => {
