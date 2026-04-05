@@ -741,7 +741,12 @@ export type Database = {
       }
     }
     Functions: {
+      add_self_to_event_group_chat: { Args: { p_event_id: string }; Returns: undefined }
       get_or_create_dm: { Args: { other_user_id: string }; Returns: string }
+      sync_event_group_participants_for_event: {
+        Args: { p_event_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       commentable_type: "event" | "mix"

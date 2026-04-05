@@ -75,6 +75,11 @@ describe("Migration file guardrails", () => {
     expect(sql).toContain("row_security = off");
   });
 
+  it("adds event group participant sync RPCs (00024)", () => {
+    expect(sql).toContain("sync_event_group_participants_for_event");
+    expect(sql).toContain("add_self_to_event_group_chat");
+  });
+
   it("adds cities table with trigram index and authenticated read policy", () => {
     expect(sql).toContain("CREATE TABLE cities");
     expect(sql).toContain("CREATE EXTENSION IF NOT EXISTS pg_trgm");

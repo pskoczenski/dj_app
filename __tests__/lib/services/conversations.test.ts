@@ -42,21 +42,20 @@ describe("conversationsService", () => {
   });
 
   describe("syncEventGroupParticipants", () => {
-    it("returns early when no event_group conversation exists", async () => {
+    it("calls sync_event_group_participants_for_event RPC", async () => {
       mockAuthGetUser.mockResolvedValue({
         data: { user: { id: "user-1" } },
         error: null,
       });
-      const maybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
-      const eq2 = jest.fn().mockReturnValue({ maybeSingle });
-      const eq1 = jest.fn().mockReturnValue({ eq: eq2 });
-      const select = jest.fn().mockReturnValue({ eq: eq1 });
-      fromMock.mockReturnValueOnce({ select });
+      mockRpc.mockResolvedValueOnce({ data: null, error: null });
 
       await conversationsService.syncEventGroupParticipants("evt-1");
 
-      expect(fromMock).toHaveBeenCalledWith("conversations");
-      expect(fromMock).toHaveBeenCalledTimes(1);
+      expect(mockRpc).toHaveBeenCalledWith(
+        "sync_event_group_participants_for_event",
+        { p_event_id: "evt-1" },
+      );
+      expect(fromMock).not.toHaveBeenCalled();
     });
   });
 

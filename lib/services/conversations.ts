@@ -204,13 +204,10 @@ async function reconcileEventGroupAccess(
   if (luErr) throw luErr;
   if (!lineupRow) return;
 
-  const { error: upErr } = await sb
-    .from(TABLES.conversationParticipants)
-    .upsert(
-      { conversation_id: conversationId, profile_id: userId },
-      { onConflict: "conversation_id,profile_id", ignoreDuplicates: true },
-    );
-  if (upErr) throw upErr;
+  const { error: rpcErr } = await sb.rpc("add_self_to_event_group_chat", {
+    p_event_id: eventId,
+  });
+  if (rpcErr) throw rpcErr;
 }
 
 /**
@@ -219,64 +216,10 @@ async function reconcileEventGroupAccess(
  */
 export async function syncEventGroupParticipants(eventId: string): Promise<void> {
   const sb = supabase();
-  const conversationId = await findEventGroupConversationId(eventId);
-  if (!conversationId) return;
-
-  const { data: eventRow, error: eErr } = await sb
-    .from(TABLES.events)
-    .select("created_by")
-    .eq("id", eventId)
-    .maybeSingle();
-  if (eErr) throw eErr;
-  if (!eventRow) return;
-
-  const { data: lineupRows, error: lErr } = await sb
-    .from(TABLES.eventLineup)
-    .select("profile_id")
-    .eq("event_id", eventId);
-  if (lErr) throw lErr;
-
-  const desired = new Set<string>([eventRow.created_by]);
-  for (const row of lineupRows ?? []) {
-    desired.add((row as { profile_id: string }).profile_id);
-  }
-
-  const { data: participantRows, error: pErr } = await sb
-    .from(TABLES.conversationParticipants)
-    .select("profile_id")
-    .eq("conversation_id", conversationId);
-  if (pErr) throw pErr;
-
-  const current = new Set(
-    (participantRows ?? []).map((r: { profile_id: string }) => r.profile_id),
-  );
-
-  const creatorId = eventRow.created_by;
-  const toAdd = [...desired].filter((id) => !current.has(id));
-  const toRemove = [...current].filter((id) => !desired.has(id) && id !== creatorId);
-
-  if (toRemove.length > 0) {
-    const { error: dErr } = await sb
-      .from(TABLES.conversationParticipants)
-      .delete()
-      .eq("conversation_id", conversationId)
-      .in("profile_id", toRemove);
-    if (dErr) throw dErr;
-  }
-
-  if (toAdd.length > 0) {
-    const inserts = toAdd.map((profileId) => ({
-      conversation_id: conversationId,
-      profile_id: profileId,
-    }));
-    const { error: iErr } = await sb
-      .from(TABLES.conversationParticipants)
-      .upsert(inserts, {
-        onConflict: "conversation_id,profile_id",
-        ignoreDuplicates: true,
-      });
-    if (iErr) throw iErr;
-  }
+  const { error } = await sb.rpc("sync_event_group_participants_for_event", {
+    p_event_id: eventId,
+  });
+  if (error) throw error;
 }
 
 /**
@@ -301,11 +244,16 @@ export async function ensureEventGroupThread(eventId: string): Promise<string | 
 
   const existingId = await findEventGroupConversationId(eventId);
   if (existingId) {
-    await reconcileEventGroupAccess(
-      eventId,
-      eventRow.created_by,
-      existingId,
-    );
+    try {
+      await reconcileEventGroupAccess(
+        eventId,
+        eventRow.created_by,
+        existingId,
+      );
+    } catch {
+      // Sync uses RPC (00024); if the migration is not applied yet, still return the
+      // thread id so creators can open chat; saving the event again retries sync.
+    }
     return existingId;
   }
 
@@ -314,17 +262,6 @@ export async function ensureEventGroupThread(eventId: string): Promise<string | 
   }
 
   const creatorId = eventRow.created_by;
-  const { data: lineupRows, error: lineupErr } = await sb
-    .from(TABLES.eventLineup)
-    .select("profile_id")
-    .eq("event_id", eventId);
-  if (lineupErr) throw lineupErr;
-
-  const participantIds = new Set<string>([creatorId]);
-  for (const row of lineupRows ?? []) {
-    participantIds.add((row as { profile_id: string }).profile_id);
-  }
-
   const conversationId = newConversationId();
   const { error: createErr } = await sb
     .from(TABLES.conversations)
@@ -339,28 +276,26 @@ export async function ensureEventGroupThread(eventId: string): Promise<string | 
     if ((createErr as { code?: string }).code === "23505") {
       const reuse = await findEventGroupConversationId(eventId);
       if (reuse) {
-        await reconcileEventGroupAccess(
-          eventId,
-          eventRow.created_by,
-          reuse,
-        );
+        try {
+          await reconcileEventGroupAccess(
+            eventId,
+            eventRow.created_by,
+            reuse,
+          );
+        } catch {
+          // RPC not deployed yet or transient error; conversation row exists.
+        }
         return reuse;
       }
     }
     throw createErr;
   }
 
-  const inserts = [...participantIds].map((profileId) => ({
-    conversation_id: conversationId,
-    profile_id: profileId,
-  }));
-  const { error: participantsErr } = await sb
-    .from(TABLES.conversationParticipants)
-    .upsert(inserts, {
-      onConflict: "conversation_id,profile_id",
-      ignoreDuplicates: true,
-    });
-  if (participantsErr) throw participantsErr;
+  const { error: syncErr } = await sb.rpc(
+    "sync_event_group_participants_for_event",
+    { p_event_id: eventId },
+  );
+  if (syncErr) throw syncErr;
 
   return conversationId;
 }

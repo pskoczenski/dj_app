@@ -21,8 +21,12 @@ export default function ConversationPage({
   params?: Promise<{ conversationId: string }>;
 }) {
   const { conversationId } = useParams<{ conversationId: string }>();
-  const { user } = useCurrentUser();
-  const { conversations } = useConversations();
+  const { user, loading: userLoading } = useCurrentUser();
+  const {
+    conversations,
+    loading: inboxLoading,
+    refetch: refetchInbox,
+  } = useConversations();
   const {
     messages,
     loading,
@@ -40,6 +44,26 @@ export default function ConversationPage({
     () => conversations.find((c) => c.id === conversationId) ?? null,
     [conversations, conversationId],
   );
+
+  /** Inbox may not include this thread yet (e.g. deep link from event). Refetch once per id after inbox settles. */
+  const inboxCatchUpRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!conversationId || !user?.id || inboxLoading) return;
+    if (conversations.some((c) => c.id === conversationId)) {
+      inboxCatchUpRef.current = null;
+      return;
+    }
+    if (inboxCatchUpRef.current === conversationId) return;
+    inboxCatchUpRef.current = conversationId;
+    void refetchInbox();
+  }, [
+    conversationId,
+    user?.id,
+    inboxLoading,
+    conversations,
+    refetchInbox,
+  ]);
 
   useEffect(() => {
     if (!conversation || conversation.type !== "event_group") return;
@@ -59,6 +83,14 @@ export default function ConversationPage({
     }
     previousCount.current = messages.length;
   }, [messages]);
+
+  if (userLoading || inboxLoading) {
+    return (
+      <div className="flex justify-center py-20">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   if (loading && messages.length === 0) {
     return (
