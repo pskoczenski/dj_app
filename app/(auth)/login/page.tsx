@@ -239,13 +239,13 @@ function LoginForm() {
         <div className="h-px flex-1 bg-root-line" />
       </div>
 
-      <button
+      {/* <button
         type="button"
         onClick={handleGoogleLogin}
         className="h-10 w-full rounded-default border border-root-line text-sm font-medium text-stone transition-colors duration-150 hover:border-sage-edge hover:bg-forest-shadow hover:text-bone"
       >
         Continue with Google
-      </button>
+      </button> */}
 
       <p className="mt-6 text-center text-sm text-stone">
         Don&apos;t have an account?{" "}
