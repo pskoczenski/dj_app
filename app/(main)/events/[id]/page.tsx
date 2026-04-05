@@ -19,6 +19,7 @@ import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   AlertDialog,
@@ -304,23 +305,27 @@ export default function EventDetailPage({
         />
       </div>
 
-      {/* Ticket CTA */}
-      {event.ticket_url && (
-        <a
-          href={event.ticket_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={buttonVariants({ variant: "default" })}
-        >
-          <ExternalLink className="mr-1.5 size-4" />
-          Get Tickets
-        </a>
-      )}
-
       {/* Description */}
       {event.description && (
         <div className="prose prose-invert max-w-none text-stone">
           <p className="whitespace-pre-wrap">{event.description}</p>
+        </div>
+      )}
+
+      {/* Ticket CTA — below description, compact, centered */}
+      {event.ticket_url && (
+        <div className="flex justify-center">
+          <a
+            href={event.ticket_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              buttonVariants({ variant: "default"}),
+            )}
+          >
+            <ExternalLink className="mr-1.5 size-4" />
+            Get Tickets
+          </a>
         </div>
       )}
 
