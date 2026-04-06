@@ -72,7 +72,7 @@ describe("eventLineupService", () => {
       const origFrom = mock.client.from;
       mock.client.from = jest.fn((...args) => {
         const b = origFrom(...args);
-        (b as any).then = (resolve: (v: unknown) => void) =>
+        (b as Record<string, unknown>).then = (resolve: (v: unknown) => void) =>
           resolve({ data: [MOCK_LINEUP_ITEM], error: null });
         return b;
       }) as typeof origFrom;

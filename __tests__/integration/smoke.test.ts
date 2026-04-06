@@ -4,43 +4,41 @@
  */
 
 describe("Module smoke tests", () => {
-  it("imports all service modules without circular dependency errors", () => {
-    expect(() => {
-      require("@/lib/services/profiles");
-      require("@/lib/services/events");
-      require("@/lib/services/event-lineup");
-      require("@/lib/services/mixes");
-      require("@/lib/services/follows");
-      require("@/lib/services/search");
-      require("@/lib/services/storage");
-    }).not.toThrow();
+  it("imports all service modules without circular dependency errors", async () => {
+    await expect(Promise.all([
+      import("@/lib/services/profiles"),
+      import("@/lib/services/events"),
+      import("@/lib/services/event-lineup"),
+      import("@/lib/services/mixes"),
+      import("@/lib/services/follows"),
+      import("@/lib/services/search"),
+      import("@/lib/services/storage"),
+    ])).resolves.toBeDefined();
   });
 
-  it("imports all hook modules without errors", () => {
-    expect(() => {
-      require("@/hooks/use-debounce");
-      require("@/hooks/use-current-user");
-      require("@/hooks/use-profile");
-      require("@/hooks/use-events");
-      require("@/hooks/use-event");
-      require("@/hooks/use-mixes");
-    }).not.toThrow();
+  it("imports all hook modules without errors", async () => {
+    await expect(Promise.all([
+      import("@/hooks/use-debounce"),
+      import("@/hooks/use-current-user"),
+      import("@/hooks/use-profile"),
+      import("@/hooks/use-events"),
+      import("@/hooks/use-event"),
+      import("@/hooks/use-mixes"),
+    ])).resolves.toBeDefined();
   });
 
-  it("imports type re-exports without errors", () => {
-    expect(() => {
-      const types = require("@/types");
-      expect(types).toBeDefined();
-    }).not.toThrow();
+  it("imports type re-exports without errors", async () => {
+    const types = await import("@/types");
+    expect(types).toBeDefined();
   });
 
-  it("imports utility modules without errors", () => {
-    expect(() => {
-      require("@/lib/utils");
-      require("@/lib/utils/slug");
-      require("@/lib/utils/embed");
-      require("@/lib/design-tokens");
-      require("@/lib/db/schema-constants");
-    }).not.toThrow();
+  it("imports utility modules without errors", async () => {
+    await expect(Promise.all([
+      import("@/lib/utils"),
+      import("@/lib/utils/slug"),
+      import("@/lib/utils/embed"),
+      import("@/lib/design-tokens"),
+      import("@/lib/db/schema-constants"),
+    ])).resolves.toBeDefined();
   });
 });

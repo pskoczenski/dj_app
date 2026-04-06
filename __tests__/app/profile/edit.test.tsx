@@ -11,9 +11,9 @@ jest.mock("next/navigation", () => ({
 }));
 
 jest.mock("@/components/forms/genre-select", () => ({
-  GenreSelect: ({ value }: { value: unknown[] }) => (
+  GenreSelect: ({ value }: { value: { id: string; name: string }[] }) => (
     <div>
-      {value.map((g: any) => (
+      {value.map((g) => (
         <span key={g.id}>{g.name}</span>
       ))}
     </div>

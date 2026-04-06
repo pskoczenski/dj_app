@@ -103,13 +103,6 @@ function LoginForm() {
     router.push(redirectTo);
   }
 
-  async function handleGoogleLogin() {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-  }
 
   function openForgotPassword() {
     setResetEmail(email);
