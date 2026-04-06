@@ -5,48 +5,60 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * DJ Network design tokens — single source of truth.
- * See docs/design_specs/01-brand-and-color-tokens.md
+ * Mirrorball design tokens — single source of truth.
+ * See docs/design_specs/10-mirrorball-visual-identity-refresh.md
  *
- * shadcn semantic variables are mapped to our palette so all
- * shadcn components render in the botanical dark theme.
+ * shadcn semantic variables map to Mirrorball surfaces and turquoise accents.
+ * Legacy Tailwind color names (bone, dark-moss, fern, …) alias mb tokens for
+ * incremental migration; do not add neon-moss — use mb-turquoise-*.
  */
 :root {
-  /* Backgrounds */
-  --color-deep-loam: #121714;
-  --color-dark-moss: #1A221D;
-  --color-forest-shadow: #232B26;
+  /* Mirrorball surfaces — warm charcoal ladder, flat */
+  --mb-surface-0: #161310;
+  --mb-surface-1: #1c1815;
+  --mb-surface-2: #221e1a;
+  --mb-surface-3: #2a2520;
+  --mb-surface-4: #332d27;
 
-  /* Borders */
-  --color-root-line: #2A3B32;
-  --color-sage-edge: #3D5347;
+  /* Mirrorball accents — dusty turquoise pair */
+  --mb-turquoise-deep: #2d5a5a;
+  --mb-turquoise-mid: #4a8585;
+  --mb-turquoise-pale: #7ab0b0;
+  --mb-turquoise-ice: #a8ccc8;
 
-  /* Primary */
-  --color-fern: #4A7C59;
-  --color-living-fern: #5A9B6B;
+  /* Mirrorball text */
+  --mb-text-primary: #ebe6df;
+  --mb-text-secondary: #9a938a;
+  --mb-text-tertiary: #6b6560;
 
-  /* Accent */
-  --color-lichen-gold: #C9A227;
-  --color-dried-gold: #8B7320;
+  /* Mirrorball borders (alpha on warm off-white) */
+  --mb-border-hair: rgba(255, 248, 235, 0.06);
+  --mb-border-soft: rgba(255, 248, 235, 0.11);
 
-  /* Text */
-  --color-bone: #E8E4DE;
-  --color-stone: #A8B0A4;
-  --color-fog: #6B7569;
+  /* Forms: error / destructive (outside Mirrorball accent ladder) */
+  --color-dried-blood: #8b3a3a;
+  --color-rust-mist: #5c2828;
+  --color-amber-sap: #9b7a2a;
 
-  /* Semantic */
-  --color-new-growth: #3D6B4A;
-  --color-amber-sap: #9B7A2A;
-  --color-dried-blood: #8B3A3A;
-  --color-rust-mist: #5C2828;
+  /* Legacy utility names → Mirrorball (compat) */
+  --color-deep-loam: var(--mb-surface-0);
+  --color-dark-moss: var(--mb-surface-2);
+  --color-forest-shadow: var(--mb-surface-1);
+  --color-root-line: var(--mb-border-hair);
+  --color-sage-edge: var(--mb-border-soft);
+  --color-fern: var(--mb-turquoise-deep);
+  --color-living-fern: var(--mb-turquoise-mid);
+  --color-bone: var(--mb-text-primary);
+  --color-stone: var(--mb-text-secondary);
+  --color-fog: var(--mb-text-tertiary);
+  --color-lichen-gold: var(--mb-turquoise-pale);
+  --color-dried-gold: var(--mb-turquoise-mid);
+  --color-new-growth: var(--mb-turquoise-deep);
 
-  /* Special (reserved — use sparingly) */
-  --color-neon-moss: #7FFF00;
-
-  /* Typography */
-  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
-  --font-body: var(--font-libre-franklin), system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), "Fira Code", monospace;
+  /* --font-space-grotesk, --font-inter, --font-jetbrains-mono set on <html> via next/font */
+  --font-display: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
   /* Radius */
   --radius-sm: 4px;
@@ -58,43 +70,43 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
   --shadow-default: 0 2px 4px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-focus: 0 0 0 2px #4A7C59;
+  --shadow-focus: 0 0 0 2px var(--mb-turquoise-mid);
 
-  /* shadcn semantic → botanical dark (dark-only app, no light theme) */
-  --background: #121714;
-  --foreground: #E8E4DE;
-  --card: #1A221D;
-  --card-foreground: #E8E4DE;
-  --popover: #1A221D;
-  --popover-foreground: #E8E4DE;
-  --primary: #4A7C59;
-  --primary-foreground: #E8E4DE;
-  --secondary: #232B26;
-  --secondary-foreground: #E8E4DE;
-  --muted: #232B26;
-  --muted-foreground: #A8B0A4;
-  --accent: #232B26;
-  --accent-foreground: #E8E4DE;
-  --destructive: #8B3A3A;
-  --border: #2A3B32;
-  --input: #2A3B32;
-  --ring: #4A7C59;
+  /* shadcn semantic → Mirrorball (dark-first) */
+  --background: var(--mb-surface-0);
+  --foreground: var(--mb-text-primary);
+  --card: var(--mb-surface-2);
+  --card-foreground: var(--mb-text-primary);
+  --popover: var(--mb-surface-2);
+  --popover-foreground: var(--mb-text-primary);
+  --primary: var(--mb-turquoise-deep);
+  --primary-foreground: var(--mb-turquoise-ice);
+  --secondary: var(--mb-surface-3);
+  --secondary-foreground: var(--mb-text-primary);
+  --muted: var(--mb-surface-1);
+  --muted-foreground: var(--mb-text-secondary);
+  --accent: var(--mb-turquoise-mid);
+  --accent-foreground: var(--mb-text-primary);
+  --destructive: var(--color-dried-blood);
+  --border: var(--mb-border-hair);
+  --input: var(--mb-surface-3);
+  --ring: var(--mb-turquoise-mid);
   --radius: 0.5rem;
 
-  --sidebar: #1A221D;
-  --sidebar-foreground: #E8E4DE;
-  --sidebar-primary: #4A7C59;
-  --sidebar-primary-foreground: #E8E4DE;
-  --sidebar-accent: #232B26;
-  --sidebar-accent-foreground: #E8E4DE;
-  --sidebar-border: #2A3B32;
-  --sidebar-ring: #4A7C59;
+  --sidebar: var(--mb-surface-1);
+  --sidebar-foreground: var(--mb-text-primary);
+  --sidebar-primary: var(--mb-turquoise-deep);
+  --sidebar-primary-foreground: var(--mb-turquoise-ice);
+  --sidebar-accent: var(--mb-surface-3);
+  --sidebar-accent-foreground: var(--mb-text-primary);
+  --sidebar-border: var(--mb-border-hair);
+  --sidebar-ring: var(--mb-turquoise-mid);
 
-  --chart-1: #4A7C59;
-  --chart-2: #5A9B6B;
-  --chart-3: #C9A227;
-  --chart-4: #A8B0A4;
-  --chart-5: #6B7569;
+  --chart-1: var(--mb-turquoise-deep);
+  --chart-2: var(--mb-turquoise-mid);
+  --chart-3: var(--mb-turquoise-pale);
+  --chart-4: var(--mb-text-secondary);
+  --chart-5: var(--mb-text-tertiary);
 
   /* Motion */
   --duration-fast: 100ms;
@@ -108,35 +120,46 @@
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Tailwind v4 @theme — maps CSS vars to utility classes */
+/* Tailwind v4 @theme — Mirrorball + legacy + shadcn */
 @theme inline {
+  --color-mb-surface-0: var(--mb-surface-0);
+  --color-mb-surface-1: var(--mb-surface-1);
+  --color-mb-surface-2: var(--mb-surface-2);
+  --color-mb-surface-3: var(--mb-surface-3);
+  --color-mb-surface-4: var(--mb-surface-4);
+
+  --color-mb-turquoise-deep: var(--mb-turquoise-deep);
+  --color-mb-turquoise-mid: var(--mb-turquoise-mid);
+  --color-mb-turquoise-pale: var(--mb-turquoise-pale);
+  --color-mb-turquoise-ice: var(--mb-turquoise-ice);
+
+  --color-mb-text-primary: var(--mb-text-primary);
+  --color-mb-text-secondary: var(--mb-text-secondary);
+  --color-mb-text-tertiary: var(--mb-text-tertiary);
+
+  --color-mb-border-hair: var(--mb-border-hair);
+  --color-mb-border-soft: var(--mb-border-soft);
+
   --color-deep-loam: var(--color-deep-loam);
   --color-dark-moss: var(--color-dark-moss);
   --color-forest-shadow: var(--color-forest-shadow);
-
   --color-root-line: var(--color-root-line);
   --color-sage-edge: var(--color-sage-edge);
-
   --color-fern: var(--color-fern);
   --color-living-fern: var(--color-living-fern);
-
   --color-lichen-gold: var(--color-lichen-gold);
   --color-dried-gold: var(--color-dried-gold);
-
   --color-bone: var(--color-bone);
   --color-stone: var(--color-stone);
   --color-fog: var(--color-fog);
-
   --color-new-growth: var(--color-new-growth);
   --color-amber-sap: var(--color-amber-sap);
   --color-dried-blood: var(--color-dried-blood);
   --color-rust-mist: var(--color-rust-mist);
 
-  --color-neon-moss: var(--color-neon-moss);
-
-  --font-display: var(--font-display);
-  --font-body: var(--font-body);
-  --font-mono: var(--font-mono);
+  --font-display: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
   --radius-sm: var(--radius-sm);
   --radius-default: var(--radius-default);
@@ -148,7 +171,6 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-focus: var(--shadow-focus);
 
-  /* shadcn @theme mappings */
   --font-heading: var(--font-display);
   --font-sans: var(--font-body);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -190,40 +212,29 @@
 }
 
 body {
-  background-color: var(--color-deep-loam);
-  color: var(--color-bone);
-  font-family: var(--font-body);
+  background-color: var(--mb-surface-0);
+  color: var(--mb-text-primary);
+  font-family: var(--font-body), ui-sans-serif, sans-serif;
   font-size: 16px;
   line-height: 1.6;
 }
 
-/*
- * Type scale — Fraunces WONK axis by size context.
- *   Hero/display (5xl, 6xl):  WONK 1
- *   Headings (xl–4xl):        WONK 0.5
- *   Smaller Fraunces:         WONK 0
- *
- * Applied via .font-display (Fraunces utility) combined with size.
- * Never use Fraunces below 20px (xl / 1.25rem).
- */
+/* Display headings — Space Grotesk, no optical axis */
 .heading-hero {
-  font-family: var(--font-display);
-  font-variation-settings: "WONK" 1;
-  letter-spacing: 0.02em;
+  font-family: var(--font-display), ui-sans-serif, sans-serif;
+  letter-spacing: -0.02em;
   line-height: 1.05;
 }
 
 .heading-section {
-  font-family: var(--font-display);
-  font-variation-settings: "WONK" 0.5;
-  letter-spacing: 0.02em;
+  font-family: var(--font-display), ui-sans-serif, sans-serif;
+  letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
 .heading-subtle {
-  font-family: var(--font-display);
-  font-variation-settings: "WONK" 0;
-  letter-spacing: 0.02em;
+  font-family: var(--font-display), ui-sans-serif, sans-serif;
+  letter-spacing: -0.015em;
   line-height: 1.4;
 }
 
@@ -265,6 +276,20 @@ body {
 }
 
 @layer base {
+  h1 {
+    font-family: var(--font-display), ui-sans-serif, sans-serif;
+    font-size: clamp(40px, 5vw, 56px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display), ui-sans-serif, sans-serif;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }

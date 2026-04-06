@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import { FernEmptyState } from "@/components/decorative/fern-empty-state";
 import { LoadingSprout } from "@/components/shared/loading-sprout";
 
 interface EmptyStateProps {
@@ -26,9 +25,7 @@ export function EmptyState({
         className,
       )}
     >
-      {showIllustration && (
-        <FernEmptyState className="mb-2 h-16 w-16" />
-      )}
+      {showIllustration ? <div className="mb-2 h-16 w-16 shrink-0" aria-hidden /> : null}
       <h3 className="heading-subtle text-xl font-medium text-bone">{title}</h3>
       {description && <p className="mt-1 text-sm leading-relaxed text-stone">{description}</p>}
       {showSprout && <LoadingSprout className="mt-1" label="Loading suggestions" />}

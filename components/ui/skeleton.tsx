@@ -6,7 +6,7 @@ function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="skeleton"
       aria-busy="true"
       className={cn(
-        "rounded-md bg-dark-moss bg-[linear-gradient(90deg,var(--color-dark-moss),var(--color-forest-shadow),var(--color-dark-moss))] bg-[length:200%_100%] [animation:skeletonShimmer_1.5s_linear_infinite]",
+        "rounded-md bg-mb-surface-2 bg-[linear-gradient(90deg,var(--mb-surface-2),var(--mb-surface-1),var(--mb-surface-2))] bg-[length:200%_100%] [animation:skeletonShimmer_1.5s_linear_infinite]",
         className,
       )}
       {...props}

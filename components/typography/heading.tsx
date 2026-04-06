@@ -15,7 +15,7 @@ const levelStyles: Record<HeadingLevel, string> = {
 };
 
 /**
- * Semantic heading with Fraunces font and level-appropriate WONK axis.
+ * Semantic heading with Space Grotesk display scale classes.
  *
  * `level` controls visual style; `as` overrides the HTML tag when the
  * visual hierarchy differs from the document outline (e.g. a visually

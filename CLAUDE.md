@@ -1,9 +1,9 @@
 @AGENTS.md
 # DJ Network — Project Context
 
-> **Purpose of this file:** This is the single source of truth for AI-assisted development.
+> **Purpose of this file:** High-level orientation for AI-assisted development. **Canonical coding rules** live in **`AGENTS.md`** (Cursor loads it as workspace rules). **Expanded product context, domain notes, agent doc workflow, planning pointers, and recent work** live in **`docs/project-context-for-agents.md`** — read that file for unfamiliar or cross-cutting tasks.
 > Both Cursor and Claude Code read this file automatically. Keep it updated as the project evolves.
-> Last updated: 2026-03-29
+> Last updated: 2026-04-05
 
 ## What This Is
 
@@ -118,6 +118,7 @@ supabase gen types typescript --local > types/supabase.ts  # Regenerate types
 
 ## Notes for AI Assistants
 
+- **`docs/project-context-for-agents.md`** complements **`AGENTS.md`**: product/domain orientation, how to write tech specs, planning backlog pointers (`docs/README.md` TODO), and a recent-work snapshot.
 - **Next.js 16 has breaking changes.** Read `node_modules/next/dist/docs/` before writing Next.js code. Don't assume v14/v15 patterns work.
 - **Tailwind v4** uses a different config format than v3. Check existing usage before adding classes.
 - **Always use the services layer** (`lib/services/`) for data access. Don't write raw Supabase queries in components.

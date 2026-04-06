@@ -25,7 +25,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="fixed inset-x-0 bottom-0 z-40 flex h-14 items-center justify-around border-t border-root-line bg-dark-moss md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 flex h-14 items-center justify-around border-t border-mb-border-hair bg-mb-surface-1 md:hidden"
     >
       <TabLink href="/home" label="Home" active={isActive("/home")}>
         <Home className={iconClass} />
@@ -68,7 +68,11 @@ function TabLink({
         active ? "text-bone" : "text-fog hover:text-stone",
       )}
     >
-      <span className={cn(active ? "text-fern" : "text-stone group-hover:text-fern")}>
+      <span
+        className={cn(
+          active ? "text-mb-turquoise-pale" : "text-stone group-hover:text-mb-turquoise-pale",
+        )}
+      >
         {children}
       </span>
       <span>{label}</span>

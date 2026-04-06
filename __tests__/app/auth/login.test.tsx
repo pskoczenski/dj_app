@@ -98,11 +98,11 @@ describe("LoginPage", () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it("has a Continue with Google button", () => {
+  it("does not show Continue with Google until Supabase Google auth is configured", () => {
     render(<LoginPage />);
     expect(
-      screen.getByRole("button", { name: /google/i })
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: /google/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("opens forgot-password dialog and sends reset email via Supabase", async () => {

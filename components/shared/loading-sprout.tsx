@@ -16,15 +16,15 @@ export function LoadingSprout({
       className={cn("inline-flex items-end gap-1.5", className)}
     >
       <span
-        className="h-2 w-2 rounded-full bg-fern opacity-40 [animation:sproutPulse_1.5s_var(--ease-spring)_infinite]"
+        className="h-2 w-2 rounded-full bg-mb-turquoise-mid opacity-40 [animation:sproutPulse_1.5s_var(--ease-spring)_infinite]"
         style={{ animationDelay: "0ms" }}
       />
       <span
-        className="h-3 w-2 rounded-full bg-fern opacity-40 [animation:sproutPulse_1.5s_var(--ease-spring)_infinite]"
+        className="h-3 w-2 rounded-full bg-mb-turquoise-mid opacity-40 [animation:sproutPulse_1.5s_var(--ease-spring)_infinite]"
         style={{ animationDelay: "150ms" }}
       />
       <span
-        className="h-2 w-2 rounded-full bg-fern opacity-40 [animation:sproutPulse_1.5s_var(--ease-spring)_infinite]"
+        className="h-2 w-2 rounded-full bg-mb-turquoise-mid opacity-40 [animation:sproutPulse_1.5s_var(--ease-spring)_infinite]"
         style={{ animationDelay: "300ms" }}
       />
       <span className="sr-only">{label}</span>
