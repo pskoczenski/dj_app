@@ -11,9 +11,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-fern text-bone hover:bg-living-fern active:bg-fern/90 [a]:hover:bg-living-fern",
+          "bg-primary text-primary-foreground hover:bg-mb-turquoise-mid active:bg-primary [a]:hover:bg-mb-turquoise-mid",
         outline:
-          "border-root-line bg-dark-moss text-stone hover:border-sage-edge hover:text-bone aria-expanded:border-sage-edge aria-expanded:text-bone",
+          "border-border bg-card text-card-foreground hover:border-mb-border-soft hover:bg-mb-surface-2 hover:text-mb-text-primary aria-expanded:border-mb-border-soft aria-expanded:text-mb-text-primary",
         secondary:
           "bg-forest-shadow text-bone hover:bg-dark-moss hover:border-sage-edge border-root-line aria-expanded:bg-dark-moss aria-expanded:text-bone",
         ghost:
