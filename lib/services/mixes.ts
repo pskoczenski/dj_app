@@ -96,6 +96,23 @@ export async function getById(id: string): Promise<Mix | null> {
   return m as Mix;
 }
 
+/** Single mix row with creator profile (for detail views). */
+export async function getByIdWithCreator(
+  id: string,
+): Promise<MixWithCreator | null> {
+  const { data, error } = await supabase()
+    .from(TABLES.mixes)
+    .select(MIX_LIST_SELECT)
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+  const [m] = await genresService.hydrateGenreLabels([data as MixWithCreator]);
+  return m;
+}
+
 export async function create(data: MixInsert): Promise<Mix> {
   if (data.genre_ids?.length) {
     await genresService.ensureGenreIdsExist(data.genre_ids);
@@ -157,6 +174,7 @@ export const mixesService = {
   getAll,
   getByProfile,
   getById,
+  getByIdWithCreator,
   create,
   update,
   softDelete,
