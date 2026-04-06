@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarPlus, Music, AlertCircle } from "lucide-react";
+import { Bookmark, CalendarPlus, Music, AlertCircle } from "lucide-react";
 import type { EventWithLineupPreview, MixWithCreator } from "@/types";
 import { DEFAULT_SIGNUP_CITY_ID } from "@/lib/db/default-city";
 
@@ -260,6 +260,18 @@ export default function HomePage() {
             >
               <Music className="size-4 shrink-0" />
               Add Mix
+            </Link>
+            <Link
+              href="/events?filter=saved"
+              className={buttonVariants({
+                variant: "outline",
+                size: "sm",
+                className:
+                  "h-11 w-full justify-start gap-2 border-mb-border-soft bg-transparent hover:bg-mb-surface-3 hover:text-mb-text-primary",
+              })}
+            >
+              <Bookmark className="size-4 shrink-0" />
+              Saved Events
             </Link>
           </CardContent>
         </Card>

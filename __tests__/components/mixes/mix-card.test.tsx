@@ -180,20 +180,22 @@ describe("MixCard", () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
-  it("has aria-expanded on the card for the inline player state", () => {
+  it("has aria-expanded on the expand control for the inline player state", () => {
     const { rerender } = render(
       <MixCard mix={MOCK_MIX} expanded={false} onToggle={jest.fn()} />,
     );
-    expect(
-      screen.getByRole("article", { name: /summer vibes/i }),
-    ).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: /expand player/i })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
 
     rerender(
       <MixCard mix={MOCK_MIX} expanded={true} onToggle={jest.fn()} />,
     );
-    expect(
-      screen.getByRole("article", { name: /summer vibes/i }),
-    ).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: /collapse player/i })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
   });
 
   it("manageMode delete in overflow menu calls onDelete", async () => {

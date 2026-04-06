@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CommentCountModalTrigger } from "@/components/comments/comment-count-modal-trigger";
 import { EventLikeControl } from "@/components/events/event-like-control";
+import { EventSaveControl } from "@/components/events/event-save-control";
 import { formatSetTime12h } from "@/lib/format-time";
 import type { EventWithLineupPreview } from "@/types";
 
@@ -51,13 +52,17 @@ function statusVariant(status: string) {
 export function EventCard({
   event,
   likedByMe = false,
+  savedByMe = false,
   currentUserId = null,
   onLikeChange,
+  onSaveChange,
 }: {
   event: EventWithLineupPreview;
   likedByMe?: boolean;
+  savedByMe?: boolean;
   currentUserId?: string | null;
   onLikeChange?: (next: { liked: boolean; likesCount: number }) => void;
+  onSaveChange?: (next: { saved: boolean; savesCount: number }) => void;
 }) {
   const location = [
     event.venue,
@@ -177,15 +182,26 @@ export function EventCard({
 
             {/* Lightweight metrics: no divider strip, muted + compact. */}
             <div className="mt-3 flex items-center justify-between gap-2 pb-1">
-              <EventLikeControl
-                eventId={event.id}
-                likesCount={event.likes_count ?? 0}
-                likedByMe={likedByMe}
-                currentUserId={currentUserId}
-                onLikeChange={onLikeChange}
-                variant="inline"
-                className="text-mb-text-tertiary hover:bg-mb-surface-3 hover:text-mb-text-primary"
-              />
+              <div className="flex items-center gap-1">
+                <EventLikeControl
+                  eventId={event.id}
+                  likesCount={event.likes_count ?? 0}
+                  likedByMe={likedByMe}
+                  currentUserId={currentUserId}
+                  onLikeChange={onLikeChange}
+                  variant="inline"
+                  className="text-mb-text-tertiary hover:bg-mb-surface-3 hover:text-mb-text-primary"
+                />
+                <EventSaveControl
+                  eventId={event.id}
+                  savesCount={event.saves_count ?? 0}
+                  savedByMe={savedByMe}
+                  currentUserId={currentUserId}
+                  onSaveChange={onSaveChange}
+                  variant="inline"
+                  className="text-mb-text-tertiary hover:bg-mb-surface-3 hover:text-mb-text-primary"
+                />
+              </div>
               <CommentCountModalTrigger
                 commentableType="event"
                 commentableId={event.id}

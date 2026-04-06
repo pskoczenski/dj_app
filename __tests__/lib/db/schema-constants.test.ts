@@ -7,6 +7,7 @@ describe("Schema constants", () => {
       profiles: "profiles",
       events: "events",
       eventLikes: "event_likes",
+      eventSaves: "event_saves",
       eventLineup: "event_lineup",
       conversations: "conversations",
       conversationParticipants: "conversation_participants",

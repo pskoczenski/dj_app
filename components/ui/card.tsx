@@ -17,7 +17,7 @@ function Card({
       data-size={size}
       data-variant={variant}
       className={cn(
-        "group/card flex flex-col gap-4 overflow-hidden rounded-[14px] border border-mb-border-hair bg-mb-surface-2 py-5 text-sm text-card-foreground has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-4 data-[size=sm]:has-data-[slot=card-footer]:pb-0 data-[variant=elevated]:border-mb-border-soft data-[variant=elevated]:bg-mb-surface-3 data-[variant=elevated]:shadow-lg data-[variant=interactive]:cursor-pointer data-[variant=interactive]:transition-all data-[variant=interactive]:duration-[180ms] data-[variant=interactive]:ease-in-out data-[variant=interactive]:hover:-translate-y-0.5 data-[variant=interactive]:hover:border-mb-border-soft data-[variant=interactive]:hover:bg-mb-surface-3 data-[variant=interactive]:hover:shadow-default *:[img:first-child]:rounded-t-[14px] *:[img:last-child]:rounded-b-[14px]",
+        "group/card flex flex-col gap-4 overflow-hidden rounded-[14px] border border-mb-border-hair bg-mb-surface-2 py-5 text-sm text-card-foreground has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-4 data-[size=sm]:has-data-[slot=card-footer]:pb-0 data-[variant=elevated]:border-mb-border-soft data-[variant=elevated]:bg-mb-surface-3 data-[variant=elevated]:shadow-lg data-[variant=interactive]:cursor-pointer data-[variant=interactive]:transition-colors data-[variant=interactive]:duration-[180ms] data-[variant=interactive]:ease-in-out data-[variant=interactive]:hover:border-mb-border-soft data-[variant=interactive]:hover:bg-mb-surface-3 *:[img:first-child]:rounded-t-[14px] *:[img:last-child]:rounded-b-[14px]",
         className
       )}
       {...props}

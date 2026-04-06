@@ -168,14 +168,13 @@ export function MixCard({
           ? `${mix.title}, player expanded. Press Enter or Space to collapse.`
           : `${mix.title}, collapsed. Press Enter or Space to expand player.`
       }
-      aria-expanded={expanded}
       data-expanded={expanded ? "true" : "false"}
       onClick={handleCardClick}
       onKeyDown={handleCardKeyDown}
       className={cn(
         "group/mix-card relative rounded-[14px] border border-mb-border-hair bg-mb-surface-2 p-4 shadow-sm md:p-5",
-        "cursor-pointer transition-all duration-200 ease-out",
-        "hover:-translate-y-0.5 hover:border-mb-border-soft hover:shadow-lg",
+        "cursor-pointer transition-colors duration-200 ease-out",
+        "hover:border-mb-border-soft",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid focus-visible:ring-offset-2 focus-visible:ring-offset-mb-surface-1",
       )}
     >
