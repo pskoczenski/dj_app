@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { Profile } from "@/types";
@@ -6,6 +7,8 @@ import type { FollowCounts } from "@/lib/services/profiles";
 interface ProfileHeaderProps {
   profile: Profile;
   counts: FollowCounts;
+  /** Rendered directly under the avatar (e.g. edit CTA on own profile). */
+  avatarFooter?: ReactNode;
   onFollowersClick?: () => void;
   onFollowingClick?: () => void;
 }
@@ -13,6 +16,7 @@ interface ProfileHeaderProps {
 export function ProfileHeader({
   profile,
   counts,
+  avatarFooter,
   onFollowersClick,
   onFollowingClick,
 }: ProfileHeaderProps) {
@@ -33,17 +37,20 @@ export function ProfileHeader({
 
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
-      <Avatar className="size-28 sm:size-32">
-        {profile.profile_image_url && (
-          <AvatarImage src={profile.profile_image_url} alt={profile.display_name} />
-        )}
-        <AvatarFallback className="bg-forest-shadow text-2xl text-bone">
-          {initials}
-        </AvatarFallback>
-      </Avatar>
+      <div className="flex shrink-0 flex-col items-center gap-2 sm:items-start">
+        <Avatar className="size-28 sm:size-32">
+          {profile.profile_image_url && (
+            <AvatarImage src={profile.profile_image_url} alt={profile.display_name} />
+          )}
+          <AvatarFallback className="bg-forest-shadow text-2xl text-bone">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        {avatarFooter}
+      </div>
 
       <div className="flex-1 text-center sm:text-left">
-        <h1 className="font-display text-3xl font-bold tracking-[0.02em] text-bone md:text-4xl">
+        <h1 className="mb-2 font-display text-3xl font-bold tracking-[0.02em] text-bone md:text-4xl">
           {profile.display_name}
         </h1>
         <p className="text-sm text-fog">@{profile.slug}</p>

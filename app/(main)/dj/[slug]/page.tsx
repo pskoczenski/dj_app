@@ -195,17 +195,23 @@ export default function DjProfilePage({
   return (
     <div className="flex flex-col gap-8">
       <section>
-        <ProfileHeader profile={profile} counts={counts} />
+        <ProfileHeader
+          profile={profile}
+          counts={counts}
+          avatarFooter={
+            isOwnProfile ? (
+              <Link
+                href="/profile/edit"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                Edit Profile
+              </Link>
+            ) : null
+          }
+        />
 
-        <div className="mt-4 flex items-center gap-3">
-          {isOwnProfile ? (
-            <Link
-              href="/profile/edit"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Edit Profile
-            </Link>
-          ) : currentUser ? (
+        {!isOwnProfile && currentUser ? (
+          <div className="mt-4 flex items-center gap-3">
             <div className="flex items-center gap-2">
               <FollowButton
                 isFollowing={following}
@@ -229,8 +235,8 @@ export default function DjProfilePage({
                 }
               />
             </div>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </section>
 
       {profile.social_links && (
