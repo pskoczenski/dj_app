@@ -27,7 +27,7 @@ describe("Landing page", () => {
     render(Page);
 
     expect(
-      screen.getByRole("heading", { level: 1, name: /anastomosis/i }),
+      screen.getByRole("heading", { level: 1, name: /dreamtree/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/grassroots/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /get started/i })).toHaveAttribute(

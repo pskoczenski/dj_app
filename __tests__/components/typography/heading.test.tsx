@@ -10,7 +10,7 @@ describe("Heading", () => {
   });
 
   it.each([1, 2, 3, 4] as const)(
-    "renders h%i with the correct WONK class",
+    "renders h%i with the correct display heading class",
     (level) => {
       render(<Heading level={level}>Heading {level}</Heading>);
       const el = screen.getByRole("heading", { level });

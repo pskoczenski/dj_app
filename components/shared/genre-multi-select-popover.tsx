@@ -161,12 +161,13 @@ export function GenreMultiSelectPopover({
                     onClick={() => toggle(g.id)}
                     className={cn(
                       "flex w-full items-center justify-between rounded-default px-2 py-2 text-left text-sm text-bone motion-safe:transition-colors hover:bg-forest-shadow/80",
-                      selected && "bg-neon-moss/10 ring-1 ring-neon-moss/30",
+                      selected &&
+                        "bg-mb-turquoise-deep/15 ring-1 ring-mb-turquoise-mid/30",
                     )}
                   >
                     <span>{g.name}</span>
                     {selected ? (
-                      <span className="text-xs text-neon-moss" aria-hidden>
+                      <span className="text-xs text-mb-turquoise-pale" aria-hidden>
                         ✓
                       </span>
                     ) : null}

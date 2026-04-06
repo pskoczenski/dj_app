@@ -52,7 +52,7 @@ export function GenreFilterBar({
         className={cn(
           "h-9 shrink-0 rounded-full px-3 text-xs motion-safe:transition-colors",
           selected &&
-            "border-neon-moss/40 bg-neon-moss/15 text-bone hover:bg-neon-moss/25",
+            "border-mb-turquoise-mid/40 bg-mb-turquoise-deep/15 text-bone hover:bg-mb-turquoise-deep/25",
         )}
       >
         {g.name}

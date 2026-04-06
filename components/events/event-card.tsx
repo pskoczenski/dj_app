@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Calendar, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CornerVineAccent } from "@/components/decorative/corner-vine-accent";
 import { CommentCountModalTrigger } from "@/components/comments/comment-count-modal-trigger";
 import { EventLikeControl } from "@/components/events/event-like-control";
 import { formatSetTime12h } from "@/lib/format-time";
@@ -79,13 +78,8 @@ export function EventCard({
       >
         <Link
           href={`/events/${event.id}`}
-          className="flex min-h-0 flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-moss/50 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-moss"
+          className="flex min-h-0 flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid/50 focus-visible:ring-offset-2 focus-visible:ring-offset-mb-surface-2"
         >
-          <CornerVineAccent
-            corner="top-right"
-            className="absolute right-2 top-2 z-10 h-8 w-8"
-            opacity={0.1}
-          />
           {event.flyer_image_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img

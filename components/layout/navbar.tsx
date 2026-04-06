@@ -24,11 +24,11 @@ export function Navbar({ user }: NavbarProps) {
   const { count: unread } = useUnreadCount();
 
   return (
-    <header className="hidden border-b border-root-line bg-dark-moss md:block">
+    <header className="hidden border-b border-mb-border-hair bg-mb-surface-1 md:block">
       <nav className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
         <Link
           href="/home"
-          className="heading-subtle shrink-0 text-xl font-bold text-bone"
+          className="shrink-0 font-display text-sm font-semibold uppercase tracking-[0.14em] text-mb-text-primary"
         >
           Dreamtree
         </Link>
@@ -41,7 +41,7 @@ export function Navbar({ user }: NavbarProps) {
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 pathname.startsWith(href)
-                  ? "text-bone underline decoration-fern decoration-2 underline-offset-8"
+                  ? "text-bone underline decoration-mb-turquoise-mid decoration-2 underline-offset-8"
                   : "text-stone hover:text-bone",
               )}
             >
@@ -59,7 +59,7 @@ export function Navbar({ user }: NavbarProps) {
           >
             <MessageCircle className="size-5" />
             {unread > 0 ? (
-              <span className="absolute -right-0.5 -top-0.5 rounded-full bg-fern px-1 text-[10px] leading-4 text-bone">
+              <span className="absolute -right-0.5 -top-0.5 rounded-full bg-mb-turquoise-deep px-1 text-[10px] leading-4 text-mb-turquoise-ice">
                 {unread > 9 ? "9+" : unread}
               </span>
             ) : null}

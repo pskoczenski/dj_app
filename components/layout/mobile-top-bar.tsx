@@ -12,10 +12,10 @@ interface MobileTopBarProps {
 
 export function MobileTopBar({ user }: MobileTopBarProps) {
   return (
-    <header className="flex h-12 items-center gap-3 border-b border-root-line bg-dark-moss px-4 md:hidden">
+    <header className="flex h-12 items-center gap-3 border-b border-mb-border-hair bg-mb-surface-1 px-4 md:hidden">
       <Link
         href="/home"
-        className="heading-subtle min-w-0 flex-1 truncate text-xl font-bold text-bone"
+        className="min-w-0 flex-1 truncate font-display text-sm font-semibold uppercase tracking-[0.14em] text-mb-text-primary"
       >
         Dreamtree
       </Link>

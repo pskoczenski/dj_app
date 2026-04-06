@@ -77,10 +77,12 @@ function formatAriaEventDate(ev: CalendarEvent): string {
 }
 
 function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
+  const [reduced, setReduced] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
     const fn = () => setReduced(mq.matches);
     mq.addEventListener("change", fn);
     return () => mq.removeEventListener("change", fn);
@@ -157,7 +159,7 @@ export function EventCalendar({
           size="icon-sm"
           onClick={goPrev}
           aria-label="Previous month"
-          className="shrink-0 text-bone hover:bg-forest-shadow/80"
+          className="shrink-0 text-bone hover:bg-mb-surface-1/80"
         >
           <ChevronLeft className="size-5" />
         </Button>
@@ -185,7 +187,7 @@ export function EventCalendar({
             size="icon-sm"
             onClick={goNext}
             aria-label="Next month"
-            className="text-bone hover:bg-forest-shadow/80"
+            className="text-bone hover:bg-mb-surface-1/80"
           >
             <ChevronRight className="size-5" />
           </Button>
@@ -200,7 +202,7 @@ export function EventCalendar({
 
       <div
         className={cn(
-          "overflow-hidden rounded-default border border-root-line bg-dark-moss/80 shadow-default",
+          "overflow-hidden rounded-default border border-mb-border-hair bg-mb-surface-2/80 shadow-default",
           !reducedMotion && "motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200",
         )}
         key={monthKey}
@@ -212,7 +214,7 @@ export function EventCalendar({
         >
           <div
             role="row"
-            className="grid grid-cols-7 border-b border-root-line bg-forest-shadow/50"
+            className="grid grid-cols-7 border-b border-mb-border-hair bg-mb-surface-1/50"
           >
             {DOW.map((label) => (
               <div
@@ -225,11 +227,11 @@ export function EventCalendar({
             ))}
           </div>
 
-          {weeks.map((week, wi) => (
+          {weeks.map((week) => (
             <div
               key={week[0]!.getTime()}
               role="row"
-              className="grid grid-cols-7 border-b border-root-line last:border-b-0"
+              className="grid grid-cols-7 border-b border-mb-border-hair last:border-b-0"
             >
               {week.map((dayDate) => {
                 const key = toISODate(dayDate);
@@ -246,8 +248,10 @@ export function EventCalendar({
                     key={key}
                     role="gridcell"
                     className={cn(
-                      "relative flex min-h-[5.5rem] flex-col gap-0.5 border-r border-root-line p-1 last:border-r-0 md:min-h-[7.5rem]",
-                      !inMonth && "bg-forest-shadow/30",
+                      "relative flex min-h-[5.5rem] flex-col gap-0.5 border-r border-mb-border-hair p-1 last:border-r-0 md:min-h-[7.5rem]",
+                      !inMonth && "bg-mb-surface-1/30",
+                      isTodayCell &&
+                        "shadow-[inset_0_0_0_1px_rgba(122,176,176,0.22)]",
                     )}
                   >
                     <div className="flex shrink-0 justify-between gap-1">
@@ -257,7 +261,7 @@ export function EventCalendar({
                           !inMonth && "text-fog",
                           inMonth && !isTodayCell && "text-stone",
                           isTodayCell &&
-                            "rounded-full bg-neon-moss/25 text-bone ring-1 ring-neon-moss/50",
+                            "rounded-full bg-mb-turquoise-deep text-mb-turquoise-ice",
                         )}
                       >
                         {dayDate.getDate()}
@@ -279,7 +283,7 @@ export function EventCalendar({
                               trigger={
                                 <button
                                   type="button"
-                                  className="w-full truncate rounded-default border-l-2 border-neon-moss/70 bg-transparent py-0.5 pl-1.5 text-left text-[11px] text-bone hover:bg-forest-shadow/70 focus-visible:ring-2 focus-visible:ring-neon-moss/50 md:text-xs"
+                                  className="w-full truncate rounded-default border-l-2 border-mb-turquoise-mid bg-mb-surface-2 py-0.5 pl-1.5 text-left text-[11px] text-bone hover:bg-mb-surface-3/70 focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid/50 md:text-xs"
                                   title={ev.title}
                                   aria-label={`View event: ${ev.title}, ${formatAriaEventDate(ev)}`}
                                 >
@@ -295,7 +299,7 @@ export function EventCalendar({
                               trigger={
                                 <button
                                   type="button"
-                                  className="text-left text-[10px] font-medium text-neon-moss hover:underline focus-visible:ring-2 focus-visible:ring-neon-moss/50 md:text-xs"
+                                  className="text-left text-[10px] font-medium text-mb-turquoise-pale hover:underline focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid/50 md:text-xs"
                                   aria-label={`Show ${overflow} more events on ${formatDayShort(dayDate)}`}
                                 >
                                   +{overflow} more
@@ -317,7 +321,7 @@ export function EventCalendar({
                                   .map((ev) => (
                                     <span
                                       key={ev.id}
-                                      className="size-1.5 shrink-0 rounded-full bg-neon-moss"
+                                      className="size-1.5 shrink-0 rounded-full bg-mb-turquoise-mid"
                                     />
                                   ))}
                               </div>
@@ -327,7 +331,7 @@ export function EventCalendar({
                                 trigger={
                                   <button
                                     type="button"
-                                    className="w-full rounded-default border border-root-line py-1 text-[10px] text-fog hover:bg-forest-shadow/80 focus-visible:ring-2 focus-visible:ring-neon-moss/50"
+                                    className="w-full rounded-default border border-mb-border-hair py-1 text-[10px] text-fog hover:bg-mb-surface-1/80 focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid/50"
                                     aria-label={`Open ${dayEvents.length} events on ${formatDayShort(dayDate)}`}
                                   >
                                     View day

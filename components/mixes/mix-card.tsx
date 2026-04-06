@@ -302,7 +302,7 @@ export function MixCard({
             className={cn(
               "size-4 shrink-0 transition-colors",
               liked
-                ? "fill-neon-moss text-neon-moss"
+                ? "fill-mb-turquoise-pale text-mb-turquoise-pale"
                 : "fill-transparent text-fog",
             )}
             strokeWidth={liked ? 0 : 2}
