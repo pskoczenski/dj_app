@@ -55,6 +55,7 @@ export function CityAutocomplete({
 
   useEffect(() => {
     setInputValue(value ? formatCity(value) : "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value?.id]);
 
   const trimmedInput = inputValue.trim();

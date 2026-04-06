@@ -97,6 +97,7 @@ export default function DjProfilePage({
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id]);
 
   const refetchMixes = useCallback(async () => {

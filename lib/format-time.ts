@@ -22,7 +22,7 @@ export function parseLineupSetTimeToPostgres(raw: string): string | null {
 
   const m12 = s.match(/^(\d{1,2}):(\d{2})\s*([AaPp])\.?[Mm]\.?\s*$/);
   if (m12) {
-    let h = parseInt(m12[1], 10);
+    const h = parseInt(m12[1], 10);
     const min = m12[2];
     const ap = m12[3].toUpperCase();
     const mi = parseInt(min, 10);

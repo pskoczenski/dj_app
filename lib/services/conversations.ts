@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
 import type {
   ConversationInboxItem,
-  ConversationParticipant,
   EventStatus,
   Profile,
 } from "@/types";
@@ -186,7 +185,7 @@ async function findEventGroupConversationId(eventId: string): Promise<string | n
 async function reconcileEventGroupAccess(
   eventId: string,
   eventCreatedBy: string,
-  conversationId: string,
+  _conversationId: string, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Promise<void> {
   const userId = await resolveCurrentUserId();
   if (eventCreatedBy === userId) {

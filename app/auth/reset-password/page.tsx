@@ -21,8 +21,6 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    let unsub: (() => void) | undefined;
-
     (async () => {
       try {
         const { data } = await supabase.auth.getSession();
@@ -41,9 +39,7 @@ export default function ResetPasswordPage() {
       },
     );
 
-    unsub = () => data.subscription.unsubscribe();
-
-    return () => unsub?.();
+    return () => data.subscription.unsubscribe();
   }, [supabase]);
 
   async function handleSubmit(e: React.FormEvent) {

@@ -161,6 +161,7 @@ export default function EditProfilePage() {
     };
     // hookProfile?.id: stable when profile row is loaded (object identity from hook may change).
     // Omit router — useRouter() identity can change every render and would retrigger this effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLoading, hasAuthSession, hookProfile?.id]);
 
   async function checkSlug(value: string) {

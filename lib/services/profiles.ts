@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES, VIEWS } from "@/lib/db/schema-constants";
 import { genresService } from "@/lib/services/genres";
-import type { Profile, ProfileUpdate, ProfileFollowCounts } from "@/types";
+import type { Profile, ProfileUpdate } from "@/types";
 
 export interface FollowCounts {
   followersCount: number;

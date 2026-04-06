@@ -248,6 +248,7 @@ export function EventForm({
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event?.id, event?.city_id, event?.cities?.id, mode]);
 
   const editHydrationReady =
