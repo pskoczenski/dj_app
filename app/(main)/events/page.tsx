@@ -229,15 +229,20 @@ function EventsBrowser() {
         <h1 className="font-display text-2xl font-bold text-bone">Events</h1>
         <div className="flex flex-wrap items-center gap-2">
           <div
-            className="flex rounded-default border border-root-line p-0.5"
+            className="flex rounded-default border border-mb-border-hair bg-mb-surface-2 p-[3px]"
             role="group"
             aria-label="Events view mode"
           >
             <Button
               type="button"
-              variant={viewMode === "list" ? "secondary" : "ghost"}
+              variant="ghost"
               size="sm"
-              className="gap-1.5"
+              className={cn(
+                "gap-1.5 rounded-[5px] shadow-none",
+                viewMode === "list"
+                  ? "bg-mb-surface-3 text-mb-text-primary hover:bg-mb-surface-3 hover:text-mb-text-primary"
+                  : "bg-transparent text-mb-text-tertiary hover:bg-transparent hover:text-mb-text-primary",
+              )}
               aria-pressed={viewMode === "list"}
               onClick={() => setViewMode("list")}
               aria-label="List view"
@@ -247,9 +252,14 @@ function EventsBrowser() {
             </Button>
             <Button
               type="button"
-              variant={viewMode === "calendar" ? "secondary" : "ghost"}
+              variant="ghost"
               size="sm"
-              className="gap-1.5"
+              className={cn(
+                "gap-1.5 rounded-[5px] shadow-none",
+                viewMode === "calendar"
+                  ? "bg-mb-surface-3 text-mb-text-primary hover:bg-mb-surface-3 hover:text-mb-text-primary"
+                  : "bg-transparent text-mb-text-tertiary hover:bg-transparent hover:text-mb-text-primary",
+              )}
               aria-pressed={viewMode === "calendar"}
               onClick={() => setViewMode("calendar")}
               aria-label="Calendar view"

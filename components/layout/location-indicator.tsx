@@ -1,6 +1,5 @@
 "use client";
 
-import { MapPin } from "lucide-react";
 import { useLocation } from "@/hooks/use-location";
 import { LocationPickerPopover } from "@/components/layout/location-picker-popover";
 import { cn } from "@/lib/utils";
@@ -18,37 +17,27 @@ export function LocationIndicator({ className }: LocationIndicatorProps) {
       trigger={
         <>
           <span
-            className="inline-flex shrink-0"
+            className={cn(
+              "size-1.5 shrink-0 rounded-full bg-mb-turquoise-pale",
+              isExploring && "bg-mb-turquoise-mid",
+            )}
             title={
               isExploring
                 ? "Exploring another city — open to switch or go home"
                 : undefined
             }
-          >
-            <MapPin
-              className={cn(
-                "size-4",
-                isExploring ? "text-lichen-gold" : "text-stone",
-              )}
-              aria-hidden
-            />
-          </span>
+            aria-hidden
+          />
           <span
             className={cn(
-              "hidden max-w-[10rem] truncate md:inline",
-              isExploring && "font-medium text-lichen-gold",
+              "max-w-[7rem] truncate sm:max-w-[10rem] md:max-w-[12rem]",
+              isExploring && "font-medium text-mb-turquoise-pale",
             )}
           >
             {activeCity.name}, {activeCity.state_code}
           </span>
           {isExploring ? (
-            <>
-              <span
-                className="hidden size-2 shrink-0 rounded-full bg-lichen-gold md:inline"
-                aria-hidden
-              />
-              <span className="sr-only">Exploring outside your home city.</span>
-            </>
+            <span className="sr-only">Exploring outside your home city.</span>
           ) : null}
         </>
       }

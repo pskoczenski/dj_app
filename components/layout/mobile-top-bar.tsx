@@ -13,7 +13,7 @@ interface MobileTopBarProps {
 
 export function MobileTopBar({ user }: MobileTopBarProps) {
   return (
-    <header className="flex h-12 items-center gap-3 border-b border-mb-border-hair bg-mb-surface-1 px-4 md:hidden">
+    <header className="sticky top-0 z-40 flex min-h-12 items-center gap-3 border-b border-mb-border-hair bg-mb-surface-0 px-4 py-2 md:hidden">
       <Link href="/home" className="min-w-0 flex-1 truncate">
         <Wordmark className="text-sm" />
       </Link>
@@ -22,7 +22,7 @@ export function MobileTopBar({ user }: MobileTopBarProps) {
         <Link
           href="/search"
           aria-label="Search"
-          className="rounded-md p-1.5 text-stone transition-colors hover:text-bone"
+          className="rounded-md p-1.5 text-mb-text-secondary transition-colors hover:text-mb-text-primary"
         >
           <Search className="size-5" />
         </Link>

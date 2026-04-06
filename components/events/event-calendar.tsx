@@ -283,7 +283,12 @@ export function EventCalendar({
                               trigger={
                                 <button
                                   type="button"
-                                  className="w-full truncate rounded-default border-l-2 border-mb-turquoise-mid bg-mb-surface-2 py-0.5 pl-1.5 text-left text-[11px] text-bone hover:bg-mb-surface-3/70 focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid/50 md:text-xs"
+                                  className={cn(
+                                    "w-full truncate rounded-[0_3px_3px_0] border-l-2 bg-mb-surface-2 py-0.5 pl-1.5 text-left text-[11px] hover:bg-mb-surface-3 focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid/50 md:text-xs",
+                                    isTodayCell
+                                      ? "border-mb-turquoise-pale text-mb-turquoise-ice hover:text-mb-text-primary"
+                                      : "border-mb-turquoise-mid text-mb-text-secondary hover:text-mb-text-primary",
+                                  )}
                                   title={ev.title}
                                   aria-label={`View event: ${ev.title}, ${formatAriaEventDate(ev)}`}
                                 >
@@ -299,7 +304,7 @@ export function EventCalendar({
                               trigger={
                                 <button
                                   type="button"
-                                  className="text-left text-[10px] font-medium text-mb-turquoise-pale hover:underline focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid/50 md:text-xs"
+                                  className="text-left text-[10px] font-medium text-mb-text-tertiary hover:text-mb-turquoise-pale hover:underline focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid/50 md:text-xs"
                                   aria-label={`Show ${overflow} more events on ${formatDayShort(dayDate)}`}
                                 >
                                   +{overflow} more

@@ -56,6 +56,7 @@ export function LocationPickerPopover({
       clearResults();
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRecent(readRecentCities());
     const t = window.requestAnimationFrame(() => {
       inputRef.current?.focus();
@@ -90,7 +91,7 @@ export function LocationPickerPopover({
         aria-label={`Current location: ${activeCity.name}, ${activeCity.state_code}. Click to change.`}
         aria-haspopup="dialog"
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-md border border-transparent px-2 py-1.5 text-left text-sm font-medium text-bone outline-none transition-colors hover:bg-forest-shadow hover:text-bone focus-visible:border-fern focus-visible:ring-3 focus-visible:ring-ring/50",
+          "inline-flex max-w-full items-center gap-1.5 rounded-md border border-transparent px-[10px] py-1.5 text-left text-[13px] font-medium text-mb-text-secondary outline-none transition-colors hover:bg-mb-surface-2 hover:text-mb-text-secondary focus-visible:border-mb-turquoise-mid focus-visible:ring-3 focus-visible:ring-ring/50",
           triggerClassName,
         )}
       >
@@ -182,6 +183,7 @@ export function LocationPickerPopover({
                     <button
                       type="button"
                       role="option"
+                      aria-selected={false}
                       className="w-full rounded-md px-2 py-2 text-left text-sm text-bone hover:bg-deep-loam"
                       onClick={() => pickCity(city)}
                     >

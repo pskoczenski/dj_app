@@ -11,7 +11,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-mb-turquoise-mid active:bg-primary [a]:hover:bg-mb-turquoise-mid",
+          "border border-mb-turquoise-mid bg-primary text-primary-foreground hover:bg-mb-turquoise-mid hover:text-mb-text-primary active:bg-primary [a]:hover:bg-mb-turquoise-mid [a]:hover:text-mb-text-primary",
         outline:
           "border-border bg-card text-card-foreground hover:border-mb-border-soft hover:bg-mb-surface-2 hover:text-mb-text-primary aria-expanded:border-mb-border-soft aria-expanded:text-mb-text-primary",
         secondary:
