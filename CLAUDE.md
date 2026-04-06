@@ -1,5 +1,5 @@
 @AGENTS.md
-# DJ Network — Project Context
+# Mirrorball — Project Context
 
 > **Purpose of this file:** High-level orientation for AI-assisted development. **Canonical coding rules** live in **`AGENTS.md`** (Cursor loads it as workspace rules). **Expanded product context, domain notes, agent doc workflow, planning pointers, and recent work** live in **`docs/project-context-for-agents.md`** — read that file for unfamiliar or cross-cutting tasks.
 > Both Cursor and Claude Code read this file automatically. Keep it updated as the project evolves.
@@ -7,7 +7,7 @@
 
 ## What This Is
 
-DJ Network is a grassroots networking platform for DJs — discover events, share mixes, and connect with the community. Think of it as a niche social platform where the content is events and mixes, not posts.
+**Mirrorball** is a home for the people keeping the dance floor honest — a networking platform for DJs: discover events, share mixes, and connect with the community. Think of it as a niche social platform where the content is events and mixes, not posts.
 
 **Target users:** DJs (bedroom to professional), promoters, and electronic music fans in local scenes.
 

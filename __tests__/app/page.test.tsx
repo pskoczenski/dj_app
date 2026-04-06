@@ -27,9 +27,9 @@ describe("Landing page", () => {
     render(Page);
 
     expect(
-      screen.getByRole("heading", { level: 1, name: /dreamtree/i }),
+      screen.getByRole("heading", { level: 1, name: /mirrorball/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/grassroots/i)).toBeInTheDocument();
+    expect(screen.getByText(/dance floor honest/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /get started/i })).toHaveAttribute(
       "href",
       "/signup",

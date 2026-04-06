@@ -1,8 +1,8 @@
-## Dreamtree — MVP
+## Mirrorball — MVP
 
 **Live deployment (MVP):** [https://dj-app-kohl.vercel.app/](https://dj-app-kohl.vercel.app/)
 
-Dreamtree is a grassroots networking platform for DJs — discover events, share mixes, follow artists, search the network, and message other users. **Browse** can follow your **active city**: events (list + calendar) and search (DJs + events) respect **`useLocation` / `activeCity`**; home and mixes are not city-filtered.
+**Mirrorball** is a home for the people keeping the dance floor honest — a networking app for DJs: discover **events**, share **mixes**, follow **profiles**, search the network, and message other users. **Browse** can follow your **active city**: events (list + calendar) and search (DJs + events) respect **`useLocation` / `activeCity`**; home and mixes are not city-filtered.
 
 Built with **Next.js 16** (App Router), **Supabase** (Postgres, Auth, Storage), **Tailwind CSS v4**, and **shadcn/ui**.
 

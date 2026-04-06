@@ -1,4 +1,4 @@
--- DJ Network — initial schema
+-- Mirrorball — initial schema
 -- Apply via Supabase SQL Editor or `supabase db reset` (local CLI).
 -- Postgres does not support IF NOT EXISTS for CREATE TYPE;
 -- this migration is designed to run once on a fresh database.
