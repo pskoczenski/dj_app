@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { Wordmark } from "@/components/layout/wordmark";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -14,11 +15,12 @@ export default async function Home() {
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4">
-      <h1 className="font-display text-4xl font-bold tracking-wide">
-        Dreamtree
+      <h1 className="flex justify-center">
+        <Wordmark className="text-4xl font-bold tracking-[0.14em]" />
       </h1>
       <p className="max-w-md text-center text-stone">
-        A grassroots DJ networking platform. Connect, share, and elevate.
+        A home for the people keeping the dance floor honest. Connect, share,
+        and elevate.
       </p>
       <div className="flex gap-4">
         <Link

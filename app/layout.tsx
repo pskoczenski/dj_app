@@ -25,12 +25,24 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+// TODO(mirrorball): Replace default Next/favicon and add branded og-image when design assets are ready.
 export const metadata: Metadata = {
   title: {
-    template: "%s | Dreamtree",
-    default: "Dreamtree",
+    default: "Mirrorball",
+    template: "%s — Mirrorball",
   },
-  description: "A grassroots DJ networking platform",
+  description: "A home for the people keeping the dance floor honest.",
+  openGraph: {
+    title: "Mirrorball",
+    description: "A home for the people keeping the dance floor honest.",
+    siteName: "Mirrorball",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mirrorball",
+    description: "A home for the people keeping the dance floor honest.",
+  },
 };
 
 export default function RootLayout({

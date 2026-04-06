@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useUnreadCount } from "@/hooks/use-unread-count";
 import { AvatarDropdown } from "./avatar-dropdown";
 import { LocationIndicator } from "./location-indicator";
+import { Wordmark } from "./wordmark";
 import type { CurrentUser } from "@/hooks/use-current-user";
 
 const NAV_LINKS = [
@@ -26,11 +27,8 @@ export function Navbar({ user }: NavbarProps) {
   return (
     <header className="hidden border-b border-mb-border-hair bg-mb-surface-1 md:block">
       <nav className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
-        <Link
-          href="/home"
-          className="shrink-0 font-display text-sm font-semibold uppercase tracking-[0.14em] text-mb-text-primary"
-        >
-          Dreamtree
+        <Link href="/home" className="shrink-0">
+          <Wordmark className="text-sm" />
         </Link>
 
         <div className="flex items-center gap-1">

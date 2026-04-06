@@ -1,7 +1,8 @@
 {
-  "name": "dj_app",
+  "name": "mirrorball",
   "version": "0.1.0",
   "private": true,
+  "description": "Mirrorball — a home for the people keeping the dance floor honest.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
