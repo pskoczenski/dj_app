@@ -28,7 +28,7 @@ export function Navbar({ user }: NavbarProps) {
     <header className="sticky top-0 z-40 hidden border-b border-mb-border-hair bg-mb-surface-0 md:block">
       <nav className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-[18px] md:px-10">
         <Link href="/home" className="shrink-0">
-          <Wordmark className="text-sm" />
+          <Wordmark className="text-lg" />
         </Link>
 
         <div className="flex items-center gap-1">
