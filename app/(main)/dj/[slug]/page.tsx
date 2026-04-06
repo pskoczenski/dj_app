@@ -6,12 +6,15 @@ import { useProfile } from "@/hooks/use-profile";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useLikedMixIds } from "@/hooks/use-liked-mix-ids";
 import { followsService } from "@/lib/services/follows";
+import { eventsService } from "@/lib/services/events";
 import { mixesService } from "@/lib/services/mixes";
+import { useLikedEventIds } from "@/hooks/use-liked-event-ids";
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { SocialLinks } from "@/components/profile/social-links";
 import { FollowButton } from "@/components/profile/follow-button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { MixCard } from "@/components/mixes/mix-card";
+import { EventCard } from "@/components/events/event-card";
 import { QuickMessageDialog } from "@/components/messages/QuickMessageDialog";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -26,7 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import type { MixWithCreator } from "@/types";
+import type { EventWithLineupPreview, MixWithCreator } from "@/types";
 
 export default function DjProfilePage({
   params,
@@ -42,13 +45,30 @@ export default function DjProfilePage({
 
   const [mixes, setMixes] = useState<MixWithCreator[]>([]);
   const [mixesLoading, setMixesLoading] = useState(false);
+  const [profileEvents, setProfileEvents] = useState<EventWithLineupPreview[]>(
+    [],
+  );
+  const [eventsLoading, setEventsLoading] = useState(false);
   const [expandedMixId, setExpandedMixId] = useState<string | null>(null);
   const [mixToDelete, setMixToDelete] = useState<MixWithCreator | null>(null);
 
   const mixIds = useMemo(() => mixes.map((m) => m.id), [mixes]);
   const serverLikedIds = useLikedMixIds(mixIds, currentUser?.id);
   const mixesListKey = mixIds.join(",");
+
+  const profileEventIds = useMemo(
+    () => profileEvents.map((e) => e.id),
+    [profileEvents],
+  );
+  const serverLikedEventIds = useLikedEventIds(
+    profileEventIds,
+    currentUser?.id,
+  );
+  const profileEventsListKey = profileEventIds.join("\0");
   const [optimisticLiked, setOptimisticLiked] = useState<
+    Record<string, boolean>
+  >({});
+  const [optimisticEventLiked, setOptimisticEventLiked] = useState<
     Record<string, boolean>
   >({});
 
@@ -56,12 +76,36 @@ export default function DjProfilePage({
     setOptimisticLiked({});
   }, [mixesListKey]);
 
+  useEffect(() => {
+    setOptimisticEventLiked({});
+  }, [profileEventsListKey]);
+
   const likedByMe = useCallback(
     (mixId: string) =>
       Object.hasOwn(optimisticLiked, mixId)
         ? optimisticLiked[mixId]
         : serverLikedIds.has(mixId),
     [optimisticLiked, serverLikedIds],
+  );
+
+  const likedEventByMe = useCallback(
+    (eventId: string) =>
+      Object.hasOwn(optimisticEventLiked, eventId)
+        ? optimisticEventLiked[eventId]
+        : serverLikedEventIds.has(eventId),
+    [optimisticEventLiked, serverLikedEventIds],
+  );
+
+  const handleProfileEventLikeChange = useCallback(
+    (eventId: string, next: { liked: boolean; likesCount: number }) => {
+      setProfileEvents((prev) =>
+        prev.map((e) =>
+          e.id === eventId ? { ...e, likes_count: next.likesCount } : e,
+        ),
+      );
+      setOptimisticEventLiked((o) => ({ ...o, [eventId]: next.liked }));
+    },
+    [],
   );
 
   const isOwnProfile =
@@ -93,6 +137,30 @@ export default function DjProfilePage({
       })
       .finally(() => {
         if (!cancelled) setMixesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id]);
+
+  useEffect(() => {
+    if (!profile) {
+      setProfileEvents([]);
+      return;
+    }
+    let cancelled = false;
+    setEventsLoading(true);
+    eventsService
+      .getByProfile(profile.id)
+      .then((data) => {
+        if (!cancelled) setProfileEvents(data);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Could not load events.");
+      })
+      .finally(() => {
+        if (!cancelled) setEventsLoading(false);
       });
     return () => {
       cancelled = true;
@@ -352,13 +420,58 @@ export default function DjProfilePage({
       </AlertDialog>
 
       <section>
-        <h2 className="mb-3 heading-subtle text-xl font-semibold text-bone">
-          Events
-        </h2>
-        <EmptyState
-          title="No events yet"
-          description="No upcoming or past events to show."
-        />
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="heading-subtle text-xl font-semibold text-bone">
+            Events
+          </h2>
+          {isOwnProfile && (
+            <Link
+              href="/events/create"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              New Event
+            </Link>
+          )}
+        </div>
+        {eventsLoading ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Skeleton className="h-40 w-full rounded-default" />
+            <Skeleton className="h-40 w-full rounded-default" />
+          </div>
+        ) : profileEvents.length === 0 ? (
+          <EmptyState
+            title="No events yet"
+            description={
+              isOwnProfile
+                ? "Events you create or are on the lineup for will show here, including past gigs."
+                : "No upcoming or past events to show."
+            }
+            action={
+              isOwnProfile ? (
+                <Link
+                  href="/events/create"
+                  className={buttonVariants({ size: "sm" })}
+                >
+                  Create event
+                </Link>
+              ) : undefined
+            }
+          />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {profileEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                likedByMe={likedEventByMe(event.id)}
+                currentUserId={currentUser?.id ?? null}
+                onLikeChange={(next) =>
+                  handleProfileEventLikeChange(event.id, next)
+                }
+              />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
