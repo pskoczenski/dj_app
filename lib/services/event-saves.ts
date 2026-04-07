@@ -91,7 +91,10 @@ export async function getSavedEvents(
 
   // Preserve save-date ordering
   const byId = new Map(
-    (data ?? []).map((e) => [e.id, e as unknown as EventWithLineupPreview]),
+    (data ?? []).map((e) => {
+      const event = e as unknown as EventWithLineupPreview;
+      return [event.id, event];
+    }),
   );
   const ordered = eventIds.map((id) => byId.get(id)).filter(Boolean) as EventWithLineupPreview[];
 

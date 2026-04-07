@@ -150,6 +150,27 @@ describe("EventCard", () => {
     expect(screen.getByRole("article")).toBeInTheDocument();
   });
 
+  it("renders blur background layer and foreground image when flyer url is set", () => {
+    const { container } = render(
+      <EventCard
+        event={{ ...MOCK_EVENT, flyer_image_url: "https://cdn/flyer.jpg" }}
+      />,
+    );
+    // Use querySelectorAll to include aria-hidden elements (removed from a11y tree).
+    const flyerImgs = Array.from(container.querySelectorAll("img")).filter(
+      (img) => img.getAttribute("src") === "https://cdn/flyer.jpg",
+    );
+    expect(flyerImgs).toHaveLength(2);
+
+    const bgLayer = flyerImgs.find((img) => img.hasAttribute("aria-hidden"));
+    expect(bgLayer).toBeTruthy();
+
+    const fgLayer = flyerImgs.find(
+      (img) => img.getAttribute("alt") === "Underground Session",
+    );
+    expect(fgLayer).toBeTruthy();
+  });
+
   it("renders like control with count", () => {
     render(<EventCard event={MOCK_EVENT} />);
     expect(screen.getByRole("button", { name: /like this event/i })).toHaveTextContent(

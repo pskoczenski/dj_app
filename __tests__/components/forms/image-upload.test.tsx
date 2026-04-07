@@ -1,6 +1,40 @@
+import React from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ImageUpload } from "@/components/forms/image-upload";
+
+// Controllable mock: tests set `mockCropBehavior` to decide what the dialog does.
+type CropBehavior = "confirm" | "cancel";
+let mockCropBehavior: CropBehavior = "confirm";
+
+jest.mock("@/components/forms/image-crop-dialog", () => ({
+  ImageCropDialog: ({
+    open,
+    onConfirm,
+    onCancel,
+    originalFileName,
+    originalFileType,
+  }: {
+    open: boolean;
+    onConfirm: (f: File) => void;
+    onCancel: () => void;
+    imageSrc: string;
+    originalFileName: string;
+    originalFileType: string;
+  }) => {
+    React.useEffect(() => {
+      if (!open) return;
+      if (mockCropBehavior === "confirm") {
+        const blob = new Blob([""], { type: originalFileType });
+        onConfirm(new File([blob], originalFileName, { type: originalFileType }));
+      } else {
+        onCancel();
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open]);
+    return null;
+  },
+}));
 
 function makeFile(name: string, type: string, sizeBytes: number): File {
   const buffer = new ArrayBuffer(sizeBytes);
@@ -16,6 +50,10 @@ beforeAll(() => {
   global.URL.revokeObjectURL = jest.fn();
 });
 
+beforeEach(() => {
+  mockCropBehavior = "confirm";
+});
+
 describe("ImageUpload", () => {
   it("renders an upload area with a file input", () => {
     render(
@@ -25,7 +63,7 @@ describe("ImageUpload", () => {
     expect(getFileInput()).toBeInTheDocument();
   });
 
-  it("calls onUploadComplete when a valid file is selected", async () => {
+  it("calls onUploadComplete after crop confirm with a valid file", async () => {
     const onUpload = jest.fn().mockResolvedValue("https://cdn/avatar.jpg");
     const user = userEvent.setup();
 
@@ -37,7 +75,22 @@ describe("ImageUpload", () => {
     await waitFor(() => {
       expect(onUpload).toHaveBeenCalledTimes(1);
     });
-    expect(onUpload).toHaveBeenCalledWith(file);
+    expect(onUpload.mock.calls[0][0]).toBeInstanceOf(File);
+  });
+
+  it("does not call onUploadComplete when crop is cancelled", async () => {
+    mockCropBehavior = "cancel";
+    const onUpload = jest.fn();
+
+    render(<ImageUpload onUploadComplete={onUpload} label="Upload avatar" />);
+
+    const file = makeFile("photo.jpg", "image/jpeg", 1024);
+    fireEvent.change(getFileInput(), { target: { files: [file] } });
+
+    // Give effects time to run and confirm onUpload was never called.
+    await waitFor(() => {
+      expect(onUpload).not.toHaveBeenCalled();
+    });
   });
 
   it("shows an error for an invalid file type", async () => {

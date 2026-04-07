@@ -81,12 +81,22 @@ export function EventPreviewModal({
       >
         <div className="relative">
           {cardEvent.flyer_image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={cardEvent.flyer_image_url}
-              alt={cardEvent.title}
-              className="aspect-[2/1] w-full object-cover"
-            />
+            <div className="relative aspect-[2/1] w-full overflow-hidden">
+              {/* Blur fill — scale-110 hides the soft edge that blur-xl produces */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={cardEvent.flyer_image_url}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={cardEvent.flyer_image_url}
+                alt={cardEvent.title}
+                className="relative z-10 h-full w-full object-contain"
+              />
+            </div>
           ) : (
             <div className="aspect-[2/1] w-full bg-mb-surface-3" aria-hidden />
           )}
@@ -95,7 +105,7 @@ export function EventPreviewModal({
             aria-label="Close"
             className={cn(
               // Strong close affordance: always legible over artwork.
-              "absolute right-3 top-3 inline-flex size-10 items-center justify-center rounded-full",
+              "absolute right-3 top-3 z-20 inline-flex size-10 items-center justify-center rounded-full",
               "bg-black/45 text-mb-text-primary shadow-sm ring-1 ring-white/10",
               "supports-backdrop-filter:backdrop-blur-md",
               "transition-colors hover:bg-black/60",

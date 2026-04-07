@@ -36,6 +36,7 @@ export function calendarEventToCardEvent(
     created_at: null,
     updated_at: null,
     likes_count: ce.likes_count ?? 0,
+    saves_count: 0,
     event_lineup: undefined,
   };
 }

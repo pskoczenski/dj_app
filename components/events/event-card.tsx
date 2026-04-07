@@ -99,12 +99,22 @@ export function EventCard({
         >
           <div className="relative">
             {event.flyer_image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={event.flyer_image_url}
-                alt={event.title}
-                className="aspect-[2/1] w-full shrink-0 object-cover"
-              />
+              <div className="relative aspect-[2/1] w-full shrink-0 overflow-hidden">
+                {/* Blur fill — scale-110 hides the soft edge that blur-xl produces */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={event.flyer_image_url}
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
+                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={event.flyer_image_url}
+                  alt={event.title}
+                  className="relative z-10 h-full w-full object-contain"
+                />
+              </div>
             ) : (
               <div className="aspect-[2/1] w-full shrink-0 bg-mb-surface-3" aria-hidden />
             )}
