@@ -3,7 +3,7 @@
 
 > **Purpose of this file:** High-level orientation for AI-assisted development. **Canonical coding rules** live in **`AGENTS.md`** (Cursor loads it as workspace rules). **Expanded product context, domain notes, agent doc workflow, planning pointers, and recent work** live in **`docs/project-context-for-agents.md`** — read that file for unfamiliar or cross-cutting tasks.
 > Both Cursor and Claude Code read this file automatically. Keep it updated as the project evolves.
-> Last updated: 2026-04-05
+> Last updated: 2026-04-07
 
 ## What This Is
 
@@ -35,14 +35,14 @@ components/
   events/               # EventCard, EventForm, LineupBuilder, etc.
   mixes/                # MixEmbed, MixCard
   profile/              # ProfileHeader, FollowButton, SocialLinks
-  forms/                # GenreTagInput, ImageUpload
+  forms/                # GenreTagInput, ImageUpload, ImageCropDialog
 hooks/                  # Client-side data hooks (useCurrentUser, useProfile, etc.)
 lib/
   auth/                 # Route helpers, session
   db/                   # Schema constants
   services/             # Business logic: profiles, events, mixes, follows, search, storage
   supabase/             # Client / server / middleware helpers
-  utils/                # Embed URL transform, slug generation
+  utils/                # Embed URL transform, slug generation, image crop utility
 types/                  # Generated Supabase types (regenerate with `supabase gen types`)
 supabase/migrations/    # SQL migrations (apply with `supabase db push`)
 ```
@@ -86,7 +86,7 @@ supabase/migrations/    # SQL migrations (apply with `supabase db push`)
 **Working:**
 - Auth (login, signup, session management)
 - DJ profiles (create, edit, view, avatar upload)
-- Events (create, edit, view, flyer upload, lineup builder)
+- Events (create, edit, view, flyer upload with mandatory 2:1 crop modal, lineup builder)
 - Mixes (create, embed from external platforms, cover art)
 - Follow system
 - Search
