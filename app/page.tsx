@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { Wordmark } from "@/components/layout/wordmark";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -13,27 +16,67 @@ export default async function Home() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4">
-      <h1 className="font-display text-4xl font-bold tracking-wide">
-        Dreamtree
-      </h1>
-      <p className="max-w-md text-center text-stone">
-        A grassroots DJ networking platform. Connect, share, and elevate.
-      </p>
-      <div className="flex gap-4">
-        <Link
-          href="/signup"
-          className="rounded-default bg-fern px-6 py-2.5 text-sm font-medium text-bone transition-colors hover:bg-living-fern"
-        >
-          Get Started
+    <div className="flex min-h-screen flex-col bg-mb-surface-0 text-mb-text-primary">
+      <nav
+        className="flex items-center justify-between border-b border-mb-border-hair px-6 py-5 md:px-10 md:py-[18px]"
+        aria-label="Site"
+      >
+        <Link href="/" className="shrink-0 focus-visible:outline-none">
+          <Wordmark className="text-sm" />
         </Link>
-        <Link
-          href="/login"
-          className="rounded-default border border-root-line px-6 py-2.5 text-sm font-medium text-stone transition-colors hover:border-sage-edge hover:text-bone"
-        >
-          Log In
-        </Link>
-      </div>
-    </main>
+        <div className="flex items-center gap-1 sm:gap-4">
+          <Link
+            href="/login"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+          >
+            Log in
+          </Link>
+          <Link
+            href="/signup"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+          >
+            Sign up
+          </Link>
+        </div>
+      </nav>
+
+      <main className="mx-auto w-full max-w-[900px] flex-1 px-6 pb-12 pt-20 md:px-10 md:pt-[140px]">
+        <h1 className="max-w-[780px] font-display text-[36px] font-medium leading-[1.1] tracking-[-0.015em] text-mb-text-primary md:text-[52px]">
+          A home for the people keeping the dance floor honest.
+        </h1>
+
+        <div className="mt-10 max-w-[600px] space-y-5 text-base leading-[1.75] text-mb-text-secondary md:text-[17px]">
+          <p>
+            Mirrorball is built for the djs, organizers, and the people who show
+            up for the music. It&apos;s where you find the night you didn&apos;t
+            know about, the mix you might have missed, the dj nobody&apos;s told
+            you about yet.
+          </p>
+          <p>The scene deserves a place of its own.</p>
+        </div>
+
+        <div className="mt-14 flex flex-wrap items-center gap-3">
+          <Link
+            href="/signup"
+            className={cn(buttonVariants({ variant: "default" }))}
+          >
+            Create an account
+          </Link>
+          <Link
+            href="/login"
+            className={cn(buttonVariants({ variant: "outline" }))}
+          >
+            Login
+          </Link>
+        </div>
+      </main>
+
+      <footer className="mx-auto mt-auto w-full max-w-[900px] px-6 pb-10 pt-32 md:px-10 md:pt-[200px]">
+        <p className="flex flex-wrap items-center gap-x-2 text-xs text-mb-text-tertiary">
+          <Wordmark className="text-xs" />
+          <span>&copy; Mirrorball</span>
+        </p>
+      </footer>
+    </div>
   );
 }

@@ -15,6 +15,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ---
 
+## Extended context
+
+This file is the **compact engineering contract**. For **product orientation**, **domain summaries**, **documentation / planning workflow for agents**, **TODO pointers**, and **recent work**, read **`docs/project-context-for-agents.md`** first on larger or unfamiliar tasks.
+
+---
+
 ## Architecture & data flow
 
 All data flows through a consistent pattern. Do not skip layers.

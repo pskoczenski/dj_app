@@ -300,11 +300,11 @@ export async function getByProfile(
     }
   }
 
-  const sorted = merged.sort(
-    (ab, bb) =>
-      new Date(ab.start_date).getTime() - new Date(bb.start_date).getTime(),
+  merged.sort(
+    (a, b) =>
+      new Date(b.start_date).getTime() - new Date(a.start_date).getTime(),
   );
-  return genresService.hydrateGenreLabels(sorted);
+  return genresService.hydrateGenreLabels(merged);
 }
 
 export async function create(data: EventInsert): Promise<Event> {

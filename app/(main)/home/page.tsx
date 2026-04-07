@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarPlus, Music, AlertCircle } from "lucide-react";
+import { Bookmark, CalendarPlus, Music, AlertCircle } from "lucide-react";
 import type { EventWithLineupPreview, MixWithCreator } from "@/types";
 import { DEFAULT_SIGNUP_CITY_ID } from "@/lib/db/default-city";
 
@@ -161,67 +161,117 @@ export default function HomePage() {
     .toUpperCase();
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row">
+    <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
       {/* Sidebar */}
-      <aside className="flex flex-col gap-4 lg:w-[300px] lg:shrink-0">
+      <aside
+        aria-label="User profile and actions"
+        className="flex flex-col gap-5 lg:w-[270px] lg:shrink-0"
+      >
         {/* Profile card */}
         <Card>
-          <CardContent className="flex flex-col items-center gap-4 pt-6">
-            <Avatar className="size-20">
+          {/* One container only: structure via spacing + type, not nested borders. */}
+          {/* Slightly tighter bottom padding to reduce dead space under CTA. */}
+          <CardContent className="flex flex-col items-center px-4 pb-3 pt-4">
+            <Avatar className="size-20 ring-1 ring-mb-border-soft ring-inset">
               {user.avatarUrl ? (
                 <AvatarImage
                   src={user.avatarUrl}
                   alt={user.displayName}
-                  className="box-border border-2 border-border"
+                  className="box-border"
                 />
               ) : (
                 <AvatarFallback>{initials}</AvatarFallback>
               )}
             </Avatar>
-            <div className="text-center">
-              <p className="heading-subtle text-xl font-bold text-bone">
+            {/* Avatar → name: 12–16px. Name + handle: tight pair (2–4px). */}
+            <div className="mt-3 text-center leading-tight">
+              <p className="heading-subtle text-lg font-bold text-bone">
                 {user.displayName}
               </p>
-              <p className="text-xs text-fog">@{user.slug}</p>
+              <p className="mt-0.5 text-xs text-fog">@{user.slug}</p>
             </div>
-            <div className="flex gap-4 text-sm text-stone">
-              <span>
-                <strong className="text-bone">{counts.followersCount}</strong>{" "}
-                followers
-              </span>
-              <span>
-                <strong className="text-bone">{counts.followingCount}</strong>{" "}
-                following
-              </span>
+            {/* Handle → stats: ~32px. No borders/dividers; spacing + type does the work. */}
+            <div className="mt-5 flex w-full items-center justify-center gap-14">
+              <div className="flex flex-col items-center">
+                <span className="text-base font-semibold tabular-nums text-mb-text-primary">
+                  {counts.followersCount}
+                </span>
+                <span className="mt-1 text-[11px] font-medium uppercase tracking-[0.12em] text-mb-text-tertiary/80">
+                  Followers
+                </span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-base font-semibold tabular-nums text-mb-text-primary">
+                  {counts.followingCount}
+                </span>
+                <span className="mt-1 text-[11px] font-medium uppercase tracking-[0.12em] text-mb-text-tertiary/80">
+                  Following
+                </span>
+              </div>
             </div>
-            <Link
-              href={`/dj/${user.slug}`}
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              View Profile
-            </Link>
+
+            {/* Stats → action: whitespace instead of an internal divider. */}
+            <div className="mt-4 w-full">
+              <Link
+                href={`/dj/${user.slug}`}
+                className={buttonVariants({
+                  // Option A: full-width ghost button with subtle border + gentle hover fill.
+                  variant: "ghost",
+                  size: "sm",
+                  className:
+                    "h-11 w-full justify-center border border-mb-border-soft bg-transparent text-mb-text-primary hover:bg-mb-surface-3/60 hover:text-mb-text-primary",
+                })}
+              >
+                View Profile
+              </Link>
+            </div>
           </CardContent>
         </Card>
 
         {/* Quick actions */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-bone">Quick Actions</CardTitle>
+            {/* Eyebrow-style label to differentiate from content titles. */}
+            <CardTitle className="text-xs font-medium uppercase tracking-[0.14em] text-mb-text-tertiary">
+              Quick Actions
+            </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-2">
+          <CardContent className="flex flex-col gap-2.5">
             <Link
               href="/events/create"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
+              className={buttonVariants({
+                variant: "outline",
+                size: "sm",
+                className:
+                  "h-11 w-full justify-start gap-2 border-mb-border-soft bg-transparent hover:bg-mb-surface-3 hover:text-mb-text-primary",
+              })}
             >
-              <CalendarPlus className="mr-1.5 size-4" />
+              <CalendarPlus className="size-4 shrink-0" />
               Create Event
             </Link>
             <Link
               href="/mixes/new"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
+              className={buttonVariants({
+                variant: "outline",
+                size: "sm",
+                className:
+                  "h-11 w-full justify-start gap-2 border-mb-border-soft bg-transparent hover:bg-mb-surface-3 hover:text-mb-text-primary",
+              })}
             >
-              <Music className="mr-1.5 size-4" />
+              <Music className="size-4 shrink-0" />
               Add Mix
+            </Link>
+            <Link
+              href="/events?filter=saved"
+              className={buttonVariants({
+                variant: "outline",
+                size: "sm",
+                className:
+                  "h-11 w-full justify-start gap-2 border-mb-border-soft bg-transparent hover:bg-mb-surface-3 hover:text-mb-text-primary",
+              })}
+            >
+              <Bookmark className="size-4 shrink-0" />
+              Saved Events
             </Link>
           </CardContent>
         </Card>
@@ -245,6 +295,7 @@ export default function HomePage() {
 
         {/* Events near you */}
         <section>
+          {/* Heading row: aligns baseline with sidebar while keeping feed rhythm. */}
           <h2 className="mb-4 heading-subtle text-xl font-bold text-bone">
             Events Near You
           </h2>

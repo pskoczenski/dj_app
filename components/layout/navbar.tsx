@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useUnreadCount } from "@/hooks/use-unread-count";
 import { AvatarDropdown } from "./avatar-dropdown";
 import { LocationIndicator } from "./location-indicator";
+import { Wordmark } from "./wordmark";
 import type { CurrentUser } from "@/hooks/use-current-user";
 
 const NAV_LINKS = [
@@ -24,13 +25,10 @@ export function Navbar({ user }: NavbarProps) {
   const { count: unread } = useUnreadCount();
 
   return (
-    <header className="hidden border-b border-root-line bg-dark-moss md:block">
-      <nav className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
-        <Link
-          href="/home"
-          className="heading-subtle shrink-0 text-xl font-bold text-bone"
-        >
-          Dreamtree
+    <header className="sticky top-0 z-40 hidden border-b border-mb-border-hair bg-mb-surface-0 md:block">
+      <nav className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-[18px] md:px-10">
+        <Link href="/home" className="shrink-0">
+          <Wordmark className="text-lg" />
         </Link>
 
         <div className="flex items-center gap-1">
@@ -41,8 +39,8 @@ export function Navbar({ user }: NavbarProps) {
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 pathname.startsWith(href)
-                  ? "text-bone underline decoration-fern decoration-2 underline-offset-8"
-                  : "text-stone hover:text-bone",
+                  ? "text-mb-text-primary underline decoration-mb-turquoise-mid decoration-2 underline-offset-8"
+                  : "text-mb-text-secondary hover:text-mb-text-primary",
               )}
             >
               {label}
@@ -55,11 +53,11 @@ export function Navbar({ user }: NavbarProps) {
           <Link
             href="/messages"
             aria-label="Messages"
-            className="relative rounded-md p-2 text-stone transition-colors hover:text-bone"
+            className="relative rounded-md p-2 text-mb-text-secondary transition-colors hover:text-mb-text-primary"
           >
             <MessageCircle className="size-5" />
             {unread > 0 ? (
-              <span className="absolute -right-0.5 -top-0.5 rounded-full bg-fern px-1 text-[10px] leading-4 text-bone">
+              <span className="absolute -right-0.5 -top-0.5 rounded-full bg-mb-turquoise-deep px-1 text-[10px] leading-4 text-mb-turquoise-ice">
                 {unread > 9 ? "9+" : unread}
               </span>
             ) : null}
@@ -67,7 +65,7 @@ export function Navbar({ user }: NavbarProps) {
           <Link
             href="/search"
             aria-label="Search"
-            className="rounded-md p-2 text-stone transition-colors hover:text-bone"
+            className="rounded-md p-2 text-mb-text-secondary transition-colors hover:text-mb-text-primary"
           >
             <Search className="size-5" />
           </Link>

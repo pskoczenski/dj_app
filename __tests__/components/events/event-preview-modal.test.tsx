@@ -1,12 +1,22 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+const mockPush = jest.fn();
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
+  usePathname: () => "/events",
+}));
+
 jest.mock("@/hooks/use-current-user", () => ({
   useCurrentUser: () => ({ user: null }),
 }));
 
 jest.mock("@/hooks/use-liked-event-ids", () => ({
   useLikedEventIds: () => new Set<string>(),
+}));
+
+jest.mock("@/hooks/use-comment-count", () => ({
+  useCommentCount: () => ({ count: 0, loading: false }),
 }));
 
 import { EventPreviewModal } from "@/components/events/event-preview-modal";
@@ -23,12 +33,6 @@ beforeAll(() => {
     dispatchEvent: jest.fn(),
   }));
 });
-
-jest.mock("@/components/events/event-card", () => ({
-  EventCard: ({ event }: { event: { title: string } }) => (
-    <div data-testid="event-card">{event.title}</div>
-  ),
-}));
 
 const EVENT = {
   id: "evt-1",
@@ -62,12 +66,10 @@ describe("EventPreviewModal", () => {
 
     await user.click(screen.getByRole("button", { name: /open preview/i }));
 
-    expect(await screen.findByTestId("event-card")).toHaveTextContent(
-      "Night Market",
-    );
-    expect(screen.getByRole("link", { name: /view event/i })).toHaveAttribute(
-      "href",
-      "/events/evt-1",
-    );
+    expect(
+      await screen.findByRole("heading", { name: "Night Market" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /close/i })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /view event/i })).toBeNull();
   });
 });

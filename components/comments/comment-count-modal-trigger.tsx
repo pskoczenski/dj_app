@@ -50,7 +50,7 @@ export function CommentCountModalTrigger({
       <button
         type="button"
         className={cn(
-          "inline-flex min-w-[4.25rem] items-center justify-center gap-1 rounded-default px-2 py-1 text-sm text-fog transition-colors hover:bg-forest-shadow/80 hover:text-bone",
+          "inline-flex min-w-[4.25rem] items-center justify-center gap-1 rounded-default px-2 py-1 text-sm text-mb-text-tertiary transition-colors hover:bg-mb-surface-3 hover:text-mb-text-primary",
           className,
         )}
         aria-label={ariaLabel}
@@ -60,7 +60,9 @@ export function CommentCountModalTrigger({
         {loading ? (
           <Skeleton className="h-4 w-7 rounded-sm" aria-hidden />
         ) : (
-          <span className="min-w-[1ch] tabular-nums text-bone">{count}</span>
+          <span className="min-w-[1ch] tabular-nums text-mb-text-secondary">
+            {count}
+          </span>
         )}
       </button>
     );

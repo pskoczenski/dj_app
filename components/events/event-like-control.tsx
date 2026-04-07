@@ -75,7 +75,7 @@ export function EventLikeControl({
       aria-pressed={liked}
       aria-label={liked ? "Unlike this event" : "Like this event"}
       className={cn(
-        "flex items-center gap-1 rounded-default px-1.5 py-1 text-fog transition-colors hover:bg-forest-shadow/80 hover:text-bone disabled:opacity-50",
+        "flex items-center gap-0.5 rounded-default px-1.5 py-1 text-fog transition-colors hover:bg-forest-shadow/80 hover:text-bone disabled:opacity-50",
         variant === "footer" && "text-bone/90",
         className,
       )}
@@ -84,15 +84,13 @@ export function EventLikeControl({
         className={cn(
           "size-4 shrink-0 transition-colors",
           liked
-            ? "fill-neon-moss text-neon-moss"
+            ? "fill-mb-turquoise-pale text-mb-turquoise-pale"
             : "fill-transparent text-fog",
         )}
         strokeWidth={liked ? 0 : 2}
         aria-hidden
       />
-      <span className="min-w-[1.25rem] text-right text-xs tabular-nums text-bone">
-        {likesCount}
-      </span>
+      <span className="text-xs tabular-nums text-bone">{likesCount}</span>
     </button>
   );
 }

@@ -7,7 +7,7 @@ export default function DjNotFound() {
         DJ not found
       </h1>
       <p className="text-stone">
-        This profile doesn't exist or has been removed.
+        This profile doesn&apos;t exist or has been removed.
       </p>
       <Link
         href="/events"

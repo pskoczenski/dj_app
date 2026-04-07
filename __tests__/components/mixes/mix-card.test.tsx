@@ -63,7 +63,7 @@ describe("MixCard", () => {
     mockToggleLike.mockResolvedValue({ liked: true, likesCount: 8 });
   });
 
-  it("renders the mix title and platform badge", () => {
+  it("renders the mix title and platform in metadata", () => {
     render(
       <MixCard mix={MOCK_MIX} expanded={false} onToggle={jest.fn()} />,
     );
@@ -132,11 +132,18 @@ describe("MixCard", () => {
     expect(screen.getByText("deep house")).toBeInTheDocument();
   });
 
-  it("renders duration", () => {
+  it("toggles the player when the card surface is clicked", async () => {
+    const user = userEvent.setup();
+    const onToggle = jest.fn();
     render(
-      <MixCard mix={MOCK_MIX} expanded={false} onToggle={jest.fn()} />,
+      <MixCard mix={MOCK_MIX} expanded={false} onToggle={onToggle} />,
     );
-    expect(screen.getByText("1:32:00")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("article", { name: /summer vibes/i }),
+    );
+    expect(onToggle).toHaveBeenCalledTimes(1);
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it("does not show embed when collapsed", () => {
@@ -161,36 +168,37 @@ describe("MixCard", () => {
     expect(screen.getByText("A chill summer mix.")).toBeInTheDocument();
   });
 
-  it("calls onToggle when title button is clicked", async () => {
+  it("calls onToggle when Expand player button is clicked", async () => {
     const user = userEvent.setup();
     const onToggle = jest.fn();
     render(
       <MixCard mix={MOCK_MIX} expanded={false} onToggle={onToggle} />,
     );
 
-    await user.click(
-      screen.getByRole("button", { name: /summer vibes/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /expand player/i }));
+
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
-  it("has aria-expanded on the toggle button", () => {
+  it("has aria-expanded on the expand control for the inline player state", () => {
     const { rerender } = render(
       <MixCard mix={MOCK_MIX} expanded={false} onToggle={jest.fn()} />,
     );
-    expect(
-      screen.getByRole("button", { name: /summer vibes/i }),
-    ).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: /expand player/i })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
 
     rerender(
       <MixCard mix={MOCK_MIX} expanded={true} onToggle={jest.fn()} />,
     );
-    expect(
-      screen.getByRole("button", { name: /summer vibes/i }),
-    ).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: /collapse player/i })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
   });
 
-  it("manageMode delete button calls onDelete", async () => {
+  it("manageMode delete in overflow menu calls onDelete", async () => {
     const user = userEvent.setup();
     const onDelete = jest.fn();
     render(
@@ -203,20 +211,22 @@ describe("MixCard", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /delete mix/i }));
+    await user.click(screen.getByRole("button", { name: /manage mix/i }));
+    const del = await screen.findByText(/^delete$/i);
+    await user.click(del);
+
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
-  it("renders comment count and opens comments modal without toggling expand", async () => {
+  it("renders comment count and opens comments modal without navigating", async () => {
     const user = userEvent.setup();
-    const onToggle = jest.fn();
     render(
-      <MixCard mix={MOCK_MIX} expanded={false} onToggle={onToggle} />,
+      <MixCard mix={MOCK_MIX} expanded={false} onToggle={jest.fn()} />,
     );
 
     await user.click(screen.getByRole("button", { name: /9 comments/i }));
 
-    expect(onToggle).not.toHaveBeenCalled();
+    expect(mockPush).not.toHaveBeenCalled();
     const dialog = screen.getByRole("dialog");
     expect(
       within(dialog).getByRole("heading", { name: /summer vibes/i }),

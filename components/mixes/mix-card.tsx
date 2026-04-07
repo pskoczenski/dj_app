@@ -4,20 +4,27 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { MixEmbed } from "@/components/mixes/mix-embed";
 import { CommentCountModalTrigger } from "@/components/comments/comment-count-modal-trigger";
 import { mixLikesService } from "@/lib/services/mix-likes";
 import { cn } from "@/lib/utils";
 import {
+  ArrowDown,
+  ArrowUp,
   ChevronDown,
   ChevronUp,
-  ArrowUp,
-  ArrowDown,
+  Heart,
+  MoreHorizontal,
+  Music,
   Pencil,
   Trash2,
-  Heart,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { MixWithCreator } from "@/types";
@@ -36,12 +43,9 @@ interface MixCardProps {
   mix: MixWithCreator;
   expanded: boolean;
   onToggle: () => void;
-  /** Whether the signed-in user has liked this mix (from batched query). */
   likedByMe?: boolean;
   currentUserId?: string | null;
-  /** Called after a successful like/unlike so parents can sync `likes_count` and UI. */
   onLikeChange?: (next: { liked: boolean; likesCount: number }) => void;
-  /** Owner-only toolbar: reorder, edit, delete */
   manageMode?: boolean;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -66,6 +70,14 @@ function platformLabel(platform: string): string {
       return "Link";
   }
 }
+
+const manageMenuVisibility = cn(
+  "transition-opacity duration-200 ease-out",
+  "max-sm:opacity-100",
+  "[@media(pointer:coarse)]:opacity-100",
+  "[@media(hover:hover)_and_(pointer:fine)_and_(min-width:640px)]:opacity-0",
+  "[@media(hover:hover)_and_(pointer:fine)_and_(min-width:640px)]:group-hover/mix-card:opacity-100",
+);
 
 export function MixCard({
   mix,
@@ -99,7 +111,8 @@ export function MixCard({
     setLikesCount(mix.likes_count ?? 0);
   }, [mix.likes_count, mix.id]);
 
-  async function handleLikeClick() {
+  async function handleLikeClick(e: React.MouseEvent) {
+    e.stopPropagation();
     if (!currentUserId) {
       router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
       return;
@@ -123,196 +136,285 @@ export function MixCard({
     }
   }
 
+  function handleCardActivate() {
+    onToggle();
+  }
+
+  function handleCardKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      const t = e.target as HTMLElement;
+      if (t.closest("[data-mix-card-stop-nav]")) return;
+      e.preventDefault();
+      handleCardActivate();
+    }
+  }
+
+  function handleCardClick(e: React.MouseEvent) {
+    const t = e.target as HTMLElement;
+    if (t.closest("[data-mix-card-stop-nav]")) return;
+    handleCardActivate();
+  }
+
+  function handleExpandToggle(e: React.MouseEvent) {
+    e.stopPropagation();
+    onToggle();
+  }
+
   return (
-    <Card
-      size="sm"
-      className="relative transition-colors hover:ring-sage-edge"
+    <article
+      tabIndex={0}
+      aria-label={
+        expanded
+          ? `${mix.title}, player expanded. Press Enter or Space to collapse.`
+          : `${mix.title}, collapsed. Press Enter or Space to expand player.`
+      }
+      data-expanded={expanded ? "true" : "false"}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      className={cn(
+        "group/mix-card relative rounded-[14px] border border-mb-border-hair bg-mb-surface-2 p-4 shadow-sm md:p-5",
+        "cursor-pointer transition-colors duration-200 ease-out",
+        "hover:border-mb-border-soft",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid focus-visible:ring-offset-2 focus-visible:ring-offset-mb-surface-1",
+      )}
     >
-      <CardHeader className="pb-1.5">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-start gap-1.5">
-            <button
-              type="button"
-              onClick={onToggle}
-              aria-expanded={expanded}
-              className="min-w-0 flex-1 text-left"
-            >
-              <CardTitle className="text-bone">{mix.title}</CardTitle>
-            </button>
-            <div className="flex shrink-0 items-start gap-0.5">
-              {mix.cover_image_url && !expanded && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={mix.cover_image_url}
-                    alt={mix.title}
-                    className="h-16 max-h-16 w-16 shrink-0 rounded-default object-cover"
-                  />
-              )}
-              <button
-                type="button"
-                onClick={onToggle}
-                aria-expanded={expanded}
-                aria-label={expanded ? "Collapse mix" : "Expand mix"}
-                className="rounded-default p-1 text-fog hover:bg-forest-shadow/80 hover:text-bone"
+      <div className="relative flex gap-3 sm:gap-4">
+        <div className="relative shrink-0">
+          <div
+            className={cn(
+              "relative overflow-hidden rounded-[10px] shadow-md ring-1 ring-mb-border-hair ring-inset",
+              "size-20 sm:size-24 md:size-28",
+            )}
+          >
+            {mix.cover_image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={mix.cover_image_url}
+                alt=""
+                className="size-full object-cover"
+              />
+            ) : (
+              <div
+                className="flex size-full items-center justify-center bg-mb-surface-3 text-mb-text-tertiary"
+                aria-hidden
               >
-                {expanded ? (
-                  <ChevronUp className="size-4 shrink-0" />
-                ) : (
-                  <ChevronDown className="size-4 shrink-0" />
-                )}
-              </button>
-              
-            </div>
-            {manageMode && (
-              <div className="flex shrink-0 items-center gap-0.5 self-start">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Move mix up"
-                  disabled={disableMoveUp}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMoveUp?.();
-                  }}
-                >
-                  <ArrowUp className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Move mix down"
-                  disabled={disableMoveDown}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMoveDown?.();
-                  }}
-                >
-                  <ArrowDown className="size-4" />
-                </Button>
-                <Link
-                  href={`/mixes/${mix.id}/edit`}
-                  className={buttonVariants({
-                    variant: "ghost",
-                    size: "icon-sm",
-                  })}
-                  aria-label="Edit mix"
-                >
-                  <Pencil className="size-4" />
-                </Link>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="text-dried-blood hover:text-bone"
-                  aria-label="Delete mix"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete?.();
-                  }}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
+                <Music className="size-8 sm:size-9" />
               </div>
             )}
           </div>
-          <p className="flex flex-wrap items-center gap-x-1 text-xs text-stone">
-            {creatorName ? (
-              creatorSlug ? (
-                <Link
-                  href={`/dj/${creatorSlug}`}
-                  className="font-medium text-fern hover:underline"
-                >
-                  {creatorName}
-                </Link>
-              ) : (
-                <span className="font-medium text-bone">{creatorName}</span>
-              )
-            ) : null}
-            {creatorName ? (
-              <span className="text-fog" aria-hidden>
+        </div>
+
+        {/* Main column */}
+        <div className="flex min-w-0 flex-1 flex-col gap-2 pr-[3.25rem] sm:pr-14">
+          <div className="min-w-0 space-y-2">
+            <h2 className="font-display text-lg font-semibold leading-snug tracking-tight text-mb-text-primary md:text-xl">
+              {mix.title}
+            </h2>
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] leading-snug text-mb-text-secondary md:text-sm">
+              {creatorName ? (
+                creatorSlug ? (
+                  <Link
+                    href={`/dj/${creatorSlug}`}
+                    data-mix-card-stop-nav
+                    className="font-medium text-mb-turquoise-pale hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid focus-visible:ring-offset-2 focus-visible:ring-offset-mb-surface-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {creatorName}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-mb-text-primary">
+                    {creatorName}
+                  </span>
+                )
+              ) : null}
+              {creatorName ? (
+                <span className="text-mb-text-tertiary" aria-hidden>
+                  ·
+                </span>
+              ) : null}
+              <span className="text-mb-text-tertiary">
+                {platformLabel(mix.platform)}
+              </span>
+              <span className="text-mb-text-tertiary" aria-hidden>
                 ·
               </span>
-            ) : null}
-            <span className="text-fog">
-              Added{" "}
-              <time dateTime={mix.created_at ?? undefined}>{addedLabel}</time>
-            </span>
-          </p>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-1.5 pb-9 pt-0">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-            <Badge variant="outline" className="text-[10px] sm:text-xs">
-              {platformLabel(mix.platform)}
-            </Badge>
-            {mix.duration && (
-              <span className="text-xs text-fog">{mix.duration}</span>
-            )}
+              <span className="text-mb-text-tertiary">
+                Added{" "}
+                <time dateTime={mix.created_at ?? undefined}>{addedLabel}</time>
+              </span>
+            </p>
           </div>
-          <CommentCountModalTrigger
-            commentableType="mix"
-            commentableId={mix.id}
-            title={mix.title}
-            variant="badge"
-            className="shrink-0"
-            stopPropagation
-          />
-        </div>
-        {mix.genres && mix.genres.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {mix.genres.map((g) => (
-              <Badge key={g} variant="secondary" className="text-[10px] sm:text-xs">
-                {g}
-              </Badge>
-            ))}
-          </div>
-        )}
-        {expanded && (
-          <div className="mt-1">
-            <MixEmbed
-              url={mix.embed_url}
-              platform={mix.platform}
-              title={mix.title}
-            />
-            {mix.description && (
-              <p className="mt-2 whitespace-pre-wrap text-sm text-stone">
-                {mix.description}
-              </p>
-            )}
-          </div>
-        )}
-      </CardContent>
 
-      <div className="pointer-events-none absolute bottom-2 right-2 md:right-3">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            void handleLikeClick();
-          }}
-          disabled={likePending}
-          aria-pressed={liked}
-          aria-label={liked ? "Unlike this mix" : "Like this mix"}
-          className="pointer-events-auto flex items-center gap-1 rounded-default px-1.5 py-1 text-fog transition-colors hover:bg-forest-shadow/80 hover:text-bone disabled:opacity-50"
+          {mix.genres && mix.genres.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {mix.genres.map((g) => (
+                <Badge
+                  key={g}
+                  variant="outline"
+                  className="h-auto min-h-0 rounded-full border-mb-border-soft bg-transparent px-3 py-1 text-[11px] font-medium text-mb-text-tertiary md:text-xs"
+                >
+                  {g}
+                </Badge>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="mt-auto flex flex-wrap items-center justify-end gap-4 pt-2">
+            <div
+              className="flex items-center gap-4 text-[13px] tabular-nums text-mb-text-tertiary"
+              data-mix-card-stop-nav
+            >
+              <button
+                type="button"
+                aria-pressed={liked}
+                aria-label={liked ? "Unlike this mix" : "Like this mix"}
+                disabled={likePending}
+                onClick={handleLikeClick}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 transition-colors",
+                  "hover:text-mb-text-primary",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid focus-visible:ring-offset-2 focus-visible:ring-offset-mb-surface-2",
+                  "disabled:opacity-50",
+                )}
+              >
+                <Heart
+                  className={cn(
+                    "size-4 shrink-0 transition-colors",
+                    liked
+                      ? "fill-mb-turquoise-pale text-mb-turquoise-pale"
+                      : "fill-transparent text-mb-text-tertiary",
+                  )}
+                  strokeWidth={liked ? 0 : 2}
+                  aria-hidden
+                />
+                <span className="text-mb-text-secondary">{likesCount}</span>
+              </button>
+              <CommentCountModalTrigger
+                commentableType="mix"
+                commentableId={mix.id}
+                title={mix.title}
+                variant="badge"
+                stopPropagation
+                className="inline-flex min-w-0 items-center gap-1.5 rounded-md px-1 py-0.5 text-[13px] text-mb-text-tertiary hover:bg-transparent hover:text-mb-text-primary"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Expand chevron + optional manage menu */}
+        <div
+          className="absolute right-0 top-0 z-10 flex flex-col items-end gap-1.5"
+          data-mix-card-stop-nav
         >
-          <Heart
+          <button
+            type="button"
+            aria-expanded={expanded}
+            aria-label={expanded ? "Collapse player" : "Expand player"}
+            onClick={handleExpandToggle}
             className={cn(
-              "size-4 shrink-0 transition-colors",
-              liked
-                ? "fill-neon-moss text-neon-moss"
-                : "fill-transparent text-fog",
+              "inline-flex size-11 shrink-0 items-center justify-center rounded-xl",
+              "border border-mb-border-soft bg-mb-surface-3 text-mb-text-primary shadow-sm",
+              "hover:border-mb-turquoise-mid/50 hover:bg-mb-surface-4 hover:text-mb-turquoise-pale",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid focus-visible:ring-offset-2 focus-visible:ring-offset-mb-surface-2",
             )}
-            strokeWidth={liked ? 0 : 2}
-            aria-hidden
-          />
-          <span className="min-w-[1.25rem] text-right text-xs tabular-nums text-bone">
-            {likesCount}
-          </span>
-        </button>
+          >
+            {expanded ? (
+              <ChevronUp className="size-6" strokeWidth={2.25} aria-hidden />
+            ) : (
+              <ChevronDown className="size-6" strokeWidth={2.25} aria-hidden />
+            )}
+          </button>
+
+          {manageMode ? (
+            <div className={cn(manageMenuVisibility)}>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  type="button"
+                  aria-label="Manage mix"
+                  onClick={(e) => e.stopPropagation()}
+                  className={cn(
+                    "inline-flex size-9 items-center justify-center rounded-lg",
+                    "text-mb-text-tertiary hover:bg-mb-surface-3 hover:text-mb-text-primary",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid focus-visible:ring-offset-2 focus-visible:ring-offset-mb-surface-2",
+                  )}
+                >
+                  <MoreHorizontal className="size-5" aria-hidden />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  sideOffset={8}
+                  className="min-w-44"
+                >
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/mixes/${mix.id}/edit`);
+                    }}
+                    className="gap-2"
+                  >
+                    <Pencil className="size-4" aria-hidden />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={disableMoveUp}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMoveUp?.();
+                    }}
+                    className="gap-2"
+                  >
+                    <ArrowUp className="size-4" aria-hidden />
+                    Move up
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={disableMoveDown}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMoveDown?.();
+                    }}
+                    className="gap-2"
+                  >
+                    <ArrowDown className="size-4" aria-hidden />
+                    Move down
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete?.();
+                    }}
+                    className="gap-2"
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : null}
+        </div>
       </div>
-    </Card>
+
+      {expanded ? (
+        <section
+          aria-label="Inline mix player"
+          className="relative mt-4 border-t border-mb-border-hair pt-4"
+          data-mix-card-stop-nav
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MixEmbed
+            url={mix.embed_url}
+            platform={mix.platform}
+            title={mix.title}
+          />
+          {mix.description ? (
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-mb-text-secondary">
+              {mix.description}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+    </article>
   );
 }

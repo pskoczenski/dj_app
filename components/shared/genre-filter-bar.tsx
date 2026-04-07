@@ -46,13 +46,14 @@ export function GenreFilterBar({
         key={key}
         type="button"
         size="sm"
-        variant={selected ? "secondary" : "outline"}
+        variant="outline"
         aria-pressed={selected}
         onClick={() => toggle(g.id)}
         className={cn(
-          "h-9 shrink-0 rounded-full px-3 text-xs motion-safe:transition-colors",
-          selected &&
-            "border-neon-moss/40 bg-neon-moss/15 text-bone hover:bg-neon-moss/25",
+          "h-auto min-h-9 shrink-0 rounded-full border px-[14px] py-[7px] text-xs font-normal motion-safe:transition-colors",
+          selected
+            ? "border-mb-turquoise-mid bg-mb-turquoise-deep text-mb-turquoise-ice hover:border-mb-turquoise-mid hover:bg-mb-turquoise-deep hover:text-mb-turquoise-ice"
+            : "border-mb-border-soft bg-transparent text-mb-text-secondary hover:border-mb-turquoise-mid hover:bg-transparent hover:text-mb-text-primary",
         )}
       >
         {g.name}
@@ -72,7 +73,7 @@ export function GenreFilterBar({
             type="button"
             variant="ghost"
             size="sm"
-            className="h-9 shrink-0 text-fern hover:text-bone"
+            className="h-9 shrink-0 text-mb-turquoise-pale hover:text-mb-text-primary"
             onClick={() => onChange([])}
             aria-label="Clear all genre filters"
           >

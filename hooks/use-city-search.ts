@@ -25,6 +25,7 @@ export function useCitySearch() {
 
   useEffect(() => {
     if (debouncedQuery.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
       setNoResults(false);
       setLoading(false);

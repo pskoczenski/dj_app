@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { validateImageFile } from "@/lib/services/storage";
 import { cn } from "@/lib/utils";
 import { ImagePlus, X } from "lucide-react";
+import { ImageCropDialog } from "@/components/forms/image-crop-dialog";
 
 interface ImageUploadProps {
   currentUrl?: string | null;
@@ -25,6 +26,10 @@ export function ImageUpload({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingSrc, setPendingSrc] = useState<string | null>(null);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+
   async function handleFile(file: File) {
     setError(null);
     const validation = validateImageFile(file);
@@ -34,18 +39,43 @@ export function ImageUpload({
     }
 
     const objectUrl = URL.createObjectURL(file);
-    setPreview(objectUrl);
+    setPendingFile(file);
+    setPendingSrc(objectUrl);
+    setCropDialogOpen(true);
+  }
+
+  async function handleCropConfirm(croppedFile: File) {
+    setCropDialogOpen(false);
+    if (pendingSrc) {
+      URL.revokeObjectURL(pendingSrc);
+      setPendingSrc(null);
+    }
+
+    const previewUrl = URL.createObjectURL(croppedFile);
+    setPreview(previewUrl);
     setUploading(true);
 
     try {
-      const url = await onUploadComplete(file);
+      const url = await onUploadComplete(croppedFile);
+      URL.revokeObjectURL(previewUrl);
       setPreview(url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
       setPreview(currentUrl ?? null);
     } finally {
       setUploading(false);
+      setPendingFile(null);
     }
+  }
+
+  function handleCropCancel() {
+    setCropDialogOpen(false);
+    if (pendingSrc) {
+      URL.revokeObjectURL(pendingSrc);
+    }
+    setPendingSrc(null);
+    setPendingFile(null);
+    if (inputRef.current) inputRef.current.value = "";
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -125,6 +155,17 @@ export function ImageUpload({
         <p role="alert" className="text-xs text-dried-blood">
           {error}
         </p>
+      )}
+
+      {pendingSrc && (
+        <ImageCropDialog
+          open={cropDialogOpen}
+          imageSrc={pendingSrc}
+          originalFileName={pendingFile?.name ?? "flyer.jpg"}
+          originalFileType={pendingFile?.type ?? "image/jpeg"}
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+        />
       )}
     </div>
   );

@@ -248,6 +248,7 @@ export function EventForm({
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event?.id, event?.city_id, event?.cities?.id, mode]);
 
   const editHydrationReady =
@@ -566,7 +567,8 @@ export function EventForm({
 
       {/* Flyer */}
       <div>
-        <p className="mb-2 text-sm font-medium text-bone">Event Flyer</p>
+        <p className="mb-1 text-sm font-medium text-bone">Event Flyer</p>
+        <p className="mb-2 text-xs text-stone">Best size: 1200×600px · 2:1 landscape</p>
         <ImageUpload
           currentUrl={flyerUrl}
           onUploadComplete={async (file) => {

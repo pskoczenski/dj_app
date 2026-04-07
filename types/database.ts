@@ -123,6 +123,7 @@ export type Database = {
           id: string
           latitude: number | null
           likes_count: number
+          saves_count: number
           longitude: number | null
           start_date: string
           start_time: string | null
@@ -148,6 +149,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           likes_count?: number
+          saves_count?: number
           longitude?: number | null
           start_date: string
           start_time?: string | null
@@ -173,6 +175,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           likes_count?: number
+          saves_count?: number
           longitude?: number | null
           start_date?: string
           start_time?: string | null
@@ -243,6 +246,42 @@ export type Database = {
           },
           {
             foreignKeyName: "event_likes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_saves: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_saves_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_saves_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"

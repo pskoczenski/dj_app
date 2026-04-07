@@ -1,22 +1,20 @@
 import type { Metadata } from "next";
-import { Fraunces, Libre_Franklin, JetBrains_Mono, Geist } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
-const libreFranklin = Libre_Franklin({
-  variable: "--font-libre-franklin",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -27,12 +25,24 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+// TODO(mirrorball): Replace default Next/favicon and add branded og-image when design assets are ready.
 export const metadata: Metadata = {
   title: {
-    template: "%s | Dreamtree",
-    default: "Dreamtree",
+    default: "Mirrorball",
+    template: "%s — Mirrorball",
   },
-  description: "A grassroots DJ networking platform",
+  description: "A home for the people keeping the dance floor honest.",
+  openGraph: {
+    title: "Mirrorball",
+    description: "A home for the people keeping the dance floor honest.",
+    siteName: "Mirrorball",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mirrorball",
+    description: "A home for the people keeping the dance floor honest.",
+  },
 };
 
 export default function RootLayout({
@@ -43,7 +53,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("dark", "h-full", "antialiased", fraunces.variable, libreFranklin.variable, jetbrainsMono.variable, "font-sans", geist.variable)}
+      className={cn(
+        "dark",
+        "h-full",
+        "antialiased",
+        spaceGrotesk.variable,
+        inter.variable,
+        jetbrainsMono.variable,
+        "font-sans",
+      )}
     >
       <body className="min-h-full flex flex-col">
         {children}

@@ -4,9 +4,8 @@ type PlatformIconProps = SVGProps<SVGSVGElement> & {
   size?: number;
 };
 
-function base(props: PlatformIconProps, size = 20) {
-  const s = props.size ?? size;
-  const { size: _, ...rest } = props;
+function base({ size, ...rest }: PlatformIconProps, defaultSize = 20) {
+  const s = size ?? defaultSize;
   return { width: s, height: s, viewBox: "0 0 24 24", fill: "currentColor", ...rest };
 }
 

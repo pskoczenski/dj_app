@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { ConversationInboxItem } from "@/types";
 
@@ -38,26 +38,19 @@ export function ConversationListItem({
     .slice(0, 2)
     .toUpperCase();
 
+  const avatarSrc = isDm
+    ? conversation.otherParticipant?.profile_image_url ?? null
+    : conversation.event?.flyer_image_url ?? null;
+
   return (
     <Link
       href={href}
       className="flex items-center gap-3 rounded-default border border-root-line p-3 transition-colors hover:border-sage-edge"
     >
       <Avatar className="size-10">
-        {(isDm
-          ? conversation.otherParticipant?.profile_image_url
-          : conversation.event?.flyer_image_url) && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={
-              isDm
-                ? conversation.otherParticipant?.profile_image_url ?? ""
-                : conversation.event?.flyer_image_url ?? ""
-            }
-            alt={title}
-            className="size-full object-cover"
-          />
-        )}
+        {avatarSrc ? (
+          <AvatarImage src={avatarSrc} alt={title} />
+        ) : null}
         <AvatarFallback className="text-xs">{initials}</AvatarFallback>
       </Avatar>
 

@@ -84,7 +84,7 @@ export async function getAll(): Promise<Genre[]> {
   return (data ?? []) as Genre[];
 }
 
-function notInIds(query: any, ids: string[]) {
+function notInIds<Q extends { not: (col: string, op: string, val: string) => Q }>(query: Q, ids: string[]): Q {
   const unique = [...new Set(ids.filter(Boolean))];
   if (unique.length === 0) return query;
   // PostgREST expects `in.(a,b,c)` format; Supabase `.not("id","in", "(...)" )`

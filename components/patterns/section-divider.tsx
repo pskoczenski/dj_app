@@ -1,4 +1,3 @@
-import { RootLineDivider } from "@/components/decorative/root-line-divider";
 import { cn } from "@/lib/utils";
 
 interface SectionDividerProps {
@@ -7,8 +6,8 @@ interface SectionDividerProps {
 
 export function SectionDivider({ className }: SectionDividerProps) {
   return (
-    <div className={cn("py-2", className)}>
-      <RootLineDivider />
+    <div className={cn("py-2", className)} role="presentation">
+      <div className="h-px w-full bg-mb-border-hair" />
     </div>
   );
 }

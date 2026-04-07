@@ -11,6 +11,7 @@ export function useCommentCount(commentableType: CommentableType, commentableId:
   useEffect(() => {
     let cancelled = false;
     if (!commentableId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCount(0);
       setLoading(false);
       return;
