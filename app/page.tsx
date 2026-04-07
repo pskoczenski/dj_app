@@ -47,12 +47,11 @@ export default async function Home() {
 
         <div className="mt-10 max-w-[600px] space-y-5 text-base leading-[1.75] text-mb-text-secondary md:text-[17px]">
           <p>
-            Mirrorball is built for the djs, organizers, and the people who show
-            up for the music. It&apos;s where you find the night you didn&apos;t
-            know about, the mix you might have missed, the dj nobody&apos;s told
-            you about yet.
+            Mirrorball is where local scenes find each other — the DJs, the
+            organizers, the regulars. Discover the night you might have missed,
+            the mix nobody sent you, the opener worth showing up early for.
           </p>
-          <p>The scene deserves a place of its own.</p>
+          <p>Built for the scene by the people in it.</p>
         </div>
 
         <div className="mt-14 flex flex-wrap items-center gap-3">
