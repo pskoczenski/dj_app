@@ -291,14 +291,15 @@ export default function EventDetailPage({
             <div className="flex items-start gap-2 text-stone">
               <Ticket className="mt-0.5 size-4 shrink-0" aria-hidden />
               <div className="flex flex-col gap-0.5">
-                {detail.map((line, i) => (
+                {detail.slice(0, -1).map((line, i) => (
                   <span key={i}>{line}</span>
                 ))}
-                {event.is_ticketed && (
-                  <span className={detail.length ? "text-xs text-fog" : ""}>
-                    Ticketed event
-                  </span>
-                )}
+                <span className="flex items-baseline gap-2">
+                  {detail.length > 0 && <span>{detail[detail.length - 1]}</span>}
+                  {event.is_ticketed && (
+                    <span className="text-xs text-fog">Ticketed event</span>
+                  )}
+                </span>
               </div>
             </div>
           );
