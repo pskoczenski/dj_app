@@ -32,7 +32,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  buildAdmissionPayload,
+  decomposeAdmission,
+  type AdmissionFormType,
+  type TierRow,
+} from "@/lib/utils/admission-form";
 import type {
+  Admission,
   City,
   Event,
   EventInsert,
@@ -76,6 +85,12 @@ function serializeEditFormState(args: {
   genreIds: string[];
   flyerUrl: string | null;
   lineup: LineupEntry[];
+  admissionType: AdmissionFormType;
+  fixedAmount: string;
+  scaleMin: string;
+  scaleMax: string;
+  tiers: TierRow[];
+  isTicketed: boolean;
 }): string {
   return JSON.stringify({
     title: args.title.trim(),
@@ -92,6 +107,18 @@ function serializeEditFormState(args: {
     genreIds: [...args.genreIds].sort(),
     flyerUrl: args.flyerUrl ?? "",
     lineup: normLineupForDirtyCompare(args.lineup),
+    admission: {
+      type: args.admissionType,
+      fixedAmount: args.fixedAmount.trim(),
+      scaleMin: args.scaleMin.trim(),
+      scaleMax: args.scaleMax.trim(),
+      tiers: args.tiers.map((t) => ({
+        label: t.label.trim(),
+        amount: t.amount.trim(),
+        until: t.until.trim(),
+      })),
+    },
+    isTicketed: args.isTicketed,
   });
 }
 
@@ -166,6 +193,24 @@ export function EventForm({
   );
   const [country, setCountry] = useState(event?.country ?? "");
   const [ticketUrl, setTicketUrl] = useState(event?.ticket_url ?? "");
+
+  // Admission pricing state
+  const {
+    admissionType: initAdmissionType,
+    fixedAmount: initFixedAmount,
+    scaleMin: initScaleMin,
+    scaleMax: initScaleMax,
+    tiers: initTiers,
+  } = decomposeAdmission(event?.admission as Admission | null | undefined);
+  const [admissionType, setAdmissionType] = useState<AdmissionFormType>(initAdmissionType);
+  const [fixedAmount, setFixedAmount] = useState(initFixedAmount);
+  const [scaleMin, setScaleMin] = useState(initScaleMin);
+  const [scaleMax, setScaleMax] = useState(initScaleMax);
+  const [tiers, setTiers] = useState<TierRow[]>(
+    initTiers.map((t) => ({ ...t, id: typeof crypto !== "undefined" ? crypto.randomUUID() : String(Math.random()) }))
+  );
+  const [isTicketed, setIsTicketed] = useState<boolean>(event?.is_ticketed ?? false);
+
   const [selectedGenres, setSelectedGenres] = useState<Genre[]>([]);
   const [flyerUrl, setFlyerUrl] = useState<string | null>(
     event?.flyer_image_url ?? null,
@@ -256,6 +301,7 @@ export function EventForm({
 
   const savedComparable = useMemo(() => {
     if (mode !== "edit" || !event) return "";
+    const decomposed = decomposeAdmission(event.admission as Admission | null | undefined);
     return serializeEditFormState({
       title: event.title ?? "",
       description: event.description ?? "",
@@ -271,6 +317,12 @@ export function EventForm({
       genreIds: event.genre_ids ?? [],
       flyerUrl: event.flyer_image_url ?? null,
       lineup: initialLineup,
+      admissionType: decomposed.admissionType,
+      fixedAmount: decomposed.fixedAmount,
+      scaleMin: decomposed.scaleMin,
+      scaleMax: decomposed.scaleMax,
+      tiers: decomposed.tiers,
+      isTicketed: event.is_ticketed ?? false,
     });
   }, [mode, event, initialLineup]);
 
@@ -293,6 +345,12 @@ export function EventForm({
             genreIds: selectedGenres.map((g) => g.id),
             flyerUrl,
             lineup,
+            admissionType,
+            fixedAmount,
+            scaleMin,
+            scaleMax,
+            tiers,
+            isTicketed,
           }),
     [
       mode,
@@ -311,6 +369,12 @@ export function EventForm({
       selectedGenres,
       flyerUrl,
       lineup,
+      admissionType,
+      fixedAmount,
+      scaleMin,
+      scaleMax,
+      tiers,
+      isTicketed,
     ],
   );
 
@@ -358,6 +422,24 @@ export function EventForm({
     if (!title.trim()) e.title = "Title is required.";
     if (!startDate) e.startDate = "Start date is required.";
     if (!selectedCity) e.cityId = "City is required.";
+    if (admissionType === "fixed") {
+      const v = parseFloat(fixedAmount);
+      if (!fixedAmount.trim() || isNaN(v) || v < 0)
+        e.admission = "Enter a valid price.";
+    }
+    if (admissionType === "sliding_scale") {
+      const min = parseFloat(scaleMin);
+      const max = parseFloat(scaleMax);
+      if (isNaN(min) || isNaN(max) || min < 0 || max < 0)
+        e.admission = "Enter valid min and max prices.";
+      else if (min > max) e.admission = "Min must not exceed max.";
+    }
+    if (admissionType === "tiered") {
+      const hasValid = tiers.some(
+        (t) => t.amount.trim() && !isNaN(parseFloat(t.amount)),
+      );
+      if (!hasValid) e.admission = "Add at least one tier with a valid price.";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -436,6 +518,8 @@ export function EventForm({
           city_id: selectedCity.id,
           country: country || null,
           ticket_url: ticketUrl || null,
+          admission: buildAdmissionPayload({ admissionType, fixedAmount, scaleMin, scaleMax, tiers }),
+          is_ticketed: isTicketed,
           genre_ids,
           flyer_image_url: flyerUrl,
           created_by: currentUserId,
@@ -477,6 +561,8 @@ export function EventForm({
           city_id: selectedCity.id,
           country: country || null,
           ticket_url: ticketUrl || null,
+          admission: buildAdmissionPayload({ admissionType, fixedAmount, scaleMin, scaleMax, tiers }),
+          is_ticketed: isTicketed,
           genre_ids,
           flyer_image_url: flyerUrl,
           status,
@@ -758,6 +844,221 @@ export function EventForm({
           onChange={(e) => setTicketUrl(e.target.value)}
           placeholder="https://..."
         />
+      </div>
+
+      {/* Admission */}
+      <div className="flex flex-col gap-3">
+        <p className="text-sm font-medium text-bone">Admission</p>
+        <Tabs
+          value={admissionType}
+          onValueChange={(v) => setAdmissionType(v as AdmissionFormType)}
+        >
+          <TabsList className="h-auto w-full justify-start bg-mb-surface-3 p-1">
+            {(
+              [
+                ["not_specified", "Not specified"],
+                ["free", "Free"],
+                ["fixed", "Fixed"],
+                ["sliding_scale", "Sliding scale"],
+                ["tiered", "Tiered"],
+              ] as const
+            ).map(([val, label]) => (
+              <TabsTrigger key={val} value={val} className="text-xs">
+                {label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          <TabsContent value="fixed">
+            <div className="mt-3 flex flex-col gap-1">
+              <label
+                htmlFor="admission-fixed-amount"
+                className="text-sm font-medium text-bone"
+              >
+                Price
+              </label>
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-stone text-sm">
+                  $
+                </span>
+                <Input
+                  id="admission-fixed-amount"
+                  type="number"
+                  min={0}
+                  step={1}
+                  placeholder="20"
+                  value={fixedAmount}
+                  onChange={(e) => setFixedAmount(e.target.value)}
+                  className="pl-7"
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="sliding_scale">
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="admission-scale-min"
+                  className="text-sm font-medium text-bone"
+                >
+                  Min
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-stone text-sm">
+                    $
+                  </span>
+                  <Input
+                    id="admission-scale-min"
+                    type="number"
+                    min={0}
+                    step={1}
+                    placeholder="10"
+                    value={scaleMin}
+                    onChange={(e) => setScaleMin(e.target.value)}
+                    className="pl-7"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="admission-scale-max"
+                  className="text-sm font-medium text-bone"
+                >
+                  Max
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-stone text-sm">
+                    $
+                  </span>
+                  <Input
+                    id="admission-scale-max"
+                    type="number"
+                    min={0}
+                    step={1}
+                    placeholder="25"
+                    value={scaleMax}
+                    onChange={(e) => setScaleMax(e.target.value)}
+                    className="pl-7"
+                  />
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="tiered">
+            <div className="mt-3 flex flex-col gap-3">
+              {tiers.map((tier, idx) => (
+                <div key={tier.id} className="flex items-end gap-2">
+                  <div className="flex flex-1 flex-col gap-1">
+                    <label className="text-xs font-medium text-stone">
+                      Label
+                    </label>
+                    <Input
+                      placeholder="Advance"
+                      value={tier.label}
+                      onChange={(e) =>
+                        setTiers((prev) =>
+                          prev.map((t, i) =>
+                            i === idx ? { ...t, label: e.target.value } : t,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="flex w-24 flex-col gap-1">
+                    <label className="text-xs font-medium text-stone">
+                      Price
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-stone text-sm">
+                        $
+                      </span>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        placeholder="15"
+                        value={tier.amount}
+                        onChange={(e) =>
+                          setTiers((prev) =>
+                            prev.map((t, i) =>
+                              i === idx ? { ...t, amount: e.target.value } : t,
+                            ),
+                          )
+                        }
+                        className="pl-7"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-1 flex-col gap-1">
+                    <label className="text-xs font-medium text-stone">
+                      Until (optional)
+                    </label>
+                    <Input
+                      placeholder="before 10pm"
+                      value={tier.until}
+                      onChange={(e) =>
+                        setTiers((prev) =>
+                          prev.map((t, i) =>
+                            i === idx ? { ...t, until: e.target.value } : t,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
+                  {tiers.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        setTiers((prev) => prev.filter((_, i) => i !== idx))
+                      }
+                      aria-label="Remove tier"
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-fit"
+                onClick={() =>
+                  setTiers((prev) => [
+                    ...prev,
+                    {
+                      id: typeof crypto !== "undefined"
+                        ? crypto.randomUUID()
+                        : String(Math.random()),
+                      label: "",
+                      amount: "",
+                      until: "",
+                    },
+                  ])
+                }
+              >
+                + Add tier
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {errors.admission && (
+          <p className="text-xs text-dried-blood">{errors.admission}</p>
+        )}
+
+        {/* Ticketed checkbox — independent of admission type */}
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-bone">
+          <Checkbox
+            checked={isTicketed}
+            onCheckedChange={(checked) => setIsTicketed(Boolean(checked))}
+          />
+          Requires a ticket
+        </label>
       </div>
 
       {/* Genres */}

@@ -109,6 +109,7 @@ export type Database = {
       }
       events: {
         Row: {
+          admission: Json | null
           city_id: string
           country: string | null
           created_at: string | null
@@ -121,6 +122,7 @@ export type Database = {
           genre_ids: string[]
           google_place_id: string | null
           id: string
+          is_ticketed: boolean
           latitude: number | null
           likes_count: number
           saves_count: number
@@ -135,6 +137,7 @@ export type Database = {
           venue: string | null
         }
         Insert: {
+          admission?: Json | null
           city_id: string
           country?: string | null
           created_at?: string | null
@@ -147,6 +150,7 @@ export type Database = {
           genre_ids?: string[]
           google_place_id?: string | null
           id?: string
+          is_ticketed?: boolean
           latitude?: number | null
           likes_count?: number
           saves_count?: number
@@ -161,6 +165,7 @@ export type Database = {
           venue?: string | null
         }
         Update: {
+          admission?: Json | null
           city_id?: string
           country?: string | null
           created_at?: string | null
@@ -173,6 +178,7 @@ export type Database = {
           genre_ids?: string[]
           google_place_id?: string | null
           id?: string
+          is_ticketed?: boolean
           latitude?: number | null
           likes_count?: number
           saves_count?: number

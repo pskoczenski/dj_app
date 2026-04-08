@@ -121,6 +121,10 @@ const baseEditEvent = {
   street_address: null,
   created_at: "2025-01-01",
   updated_at: "2025-01-01",
+  admission: null,
+  is_ticketed: false,
+  likes_count: 0,
+  saves_count: 0,
 };
 
 describe("EventForm", () => {
@@ -235,6 +239,31 @@ describe("EventForm", () => {
     });
   });
 
+  it("includes admission and is_ticketed in create payload", async () => {
+    const user = userEvent.setup();
+    render(<EventForm mode="create" currentUserId="user-1" />);
+
+    await user.type(screen.getByLabelText(/title/i), "Admission Test");
+    await user.type(screen.getByLabelText(/start date/i), "2025-08-01");
+    await selectCityWithAutocomplete(user, /event city/i);
+
+    // Select "Fixed" admission tab
+    await user.click(screen.getByRole("tab", { name: /fixed/i }));
+    const amountInput = screen.getByLabelText(/price/i);
+    await user.type(amountInput, "20");
+
+    await user.click(screen.getByRole("button", { name: /publish/i }));
+
+    await waitFor(() => {
+      expect(eventsService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          admission: { type: "fixed", amount: 20 },
+          is_ticketed: false,
+        }),
+      );
+    });
+  });
+
   it("shows cancel vs delete help and actions in edit mode", () => {
     render(
       <EventForm mode="edit" currentUserId="user-1" event={baseEditEvent} />,
@@ -330,6 +359,10 @@ describe("EventForm", () => {
           street_address: null,
           created_at: "2025-01-01",
           updated_at: "2025-01-01",
+          admission: null,
+          is_ticketed: false,
+          likes_count: 0,
+          saves_count: 0,
         }}
       />,
     );
@@ -389,6 +422,10 @@ describe("EventForm", () => {
           street_address: null,
           created_at: "2025-01-01",
           updated_at: "2025-01-01",
+          admission: null,
+          is_ticketed: false,
+          likes_count: 0,
+          saves_count: 0,
         }}
       />,
     );

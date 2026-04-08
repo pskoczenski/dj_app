@@ -37,12 +37,14 @@ import {
   MapPin,
   ExternalLink,
   Pencil,
+  Ticket,
   Trash2,
   UserMinus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatSetTime12h } from "@/lib/format-time";
-import type { EventLineupWithProfile } from "@/types";
+import { formatAdmissionDetail } from "@/lib/utils/format-admission";
+import type { Admission, EventLineupWithProfile } from "@/types";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
@@ -283,6 +285,24 @@ export default function EventDetailPage({
             <span>{location}</span>
           </div>
         )}
+        {(event.admission || event.is_ticketed) && (() => {
+          const detail = formatAdmissionDetail(event.admission as Admission | null);
+          return (
+            <div className="flex items-start gap-2 text-stone">
+              <Ticket className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <div className="flex flex-col gap-0.5">
+                {detail.map((line, i) => (
+                  <span key={i}>{line}</span>
+                ))}
+                {event.is_ticketed && (
+                  <span className={detail.length ? "text-xs text-fog" : ""}>
+                    Ticketed event
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Genres */}

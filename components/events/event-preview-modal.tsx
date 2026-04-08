@@ -17,8 +17,9 @@ import { CommentCountModalTrigger } from "@/components/comments/comment-count-mo
 import { calendarEventToCardEvent } from "@/lib/calendar-event-adapter";
 import { formatSetTime12h } from "@/lib/format-time";
 import { cn } from "@/lib/utils";
+import { formatAdmissionCompact } from "@/lib/utils/format-admission";
 import { Calendar, MapPin, XIcon } from "lucide-react";
-import type { CalendarEvent } from "@/types";
+import type { Admission, CalendarEvent } from "@/types";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
@@ -152,6 +153,17 @@ export function EventPreviewModal({
                 <span className="line-clamp-2">{location}</span>
               </div>
             ) : null}
+            {(() => {
+              const admStr = formatAdmissionCompact(event.admission as Admission | null);
+              const parts = [admStr, event.is_ticketed ? "Ticketed" : null].filter(Boolean);
+              if (!parts.length) return null;
+              return (
+                <div className="flex items-start gap-2">
+                  <span className="mt-0.5 size-4 shrink-0" aria-hidden />
+                  <span>{parts.join(" · ")}</span>
+                </div>
+              );
+            })()}
           </div>
 
           <div className="flex flex-wrap items-center gap-2 pt-1">

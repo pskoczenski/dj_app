@@ -49,6 +49,8 @@ const EVENT = {
   genre_ids: [] as string[],
   genres: null,
   likes_count: 0,
+  admission: null,
+  is_ticketed: false,
   street_address: null,
   status: "published" as const,
   created_by: "u1",

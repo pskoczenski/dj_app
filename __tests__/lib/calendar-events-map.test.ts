@@ -12,6 +12,8 @@ function ev(overrides: Partial<CalendarEvent> & Pick<CalendarEvent, "id">): Cale
     street_address: null,
     genre_ids: [],
     likes_count: 0,
+    admission: null,
+    is_ticketed: false,
     city_id: "22222222-2222-4222-8222-222222222222",
     city: null,
     state: null,
