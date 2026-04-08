@@ -100,6 +100,8 @@ function toCalendarEvent(
     city: c?.name ?? null,
     state: c?.state_code ?? null,
     likes_count: (row.likes_count as number | null | undefined) ?? 0,
+    admission: (row.admission as import("@/types").Admission | null) ?? null,
+    is_ticketed: (row.is_ticketed as boolean | null | undefined) ?? false,
   };
 }
 

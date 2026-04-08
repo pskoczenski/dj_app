@@ -37,6 +37,8 @@ export function calendarEventToCardEvent(
     updated_at: null,
     likes_count: ce.likes_count ?? 0,
     saves_count: 0,
+    admission: ce.admission ?? null,
+    is_ticketed: ce.is_ticketed ?? false,
     event_lineup: undefined,
   };
 }

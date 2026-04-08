@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CommentCountModalTrigger } from "@/components/comments/comment-count-modal-trigger";
 import { EventLikeControl } from "@/components/events/event-like-control";
 import { EventSaveControl } from "@/components/events/event-save-control";
 import { formatSetTime12h } from "@/lib/format-time";
-import type { EventWithLineupPreview } from "@/types";
+import { formatAdmissionCompact } from "@/lib/utils/format-admission";
+import type { Admission, EventWithLineupPreview } from "@/types";
 
 function lineupDisplayNames(event: EventWithLineupPreview): string[] {
   const rows = event.event_lineup;
@@ -154,6 +155,17 @@ export function EventCard({
                   <span className="line-clamp-2">{location}</span>
                 </div>
               ) : null}
+              {(() => {
+                const admStr = formatAdmissionCompact(event.admission as Admission | null);
+                const parts = [admStr, event.is_ticketed ? "Ticketed" : null].filter(Boolean);
+                if (!parts.length) return null;
+                return (
+                  <div className="flex items-center gap-1.5 text-[13px] text-mb-text-secondary">
+                    <Ticket className="size-4 shrink-0 text-mb-text-tertiary" />
+                    <span>{parts.join(" · ")}</span>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Tags: capped for consistent height. */}

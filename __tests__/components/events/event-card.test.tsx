@@ -69,6 +69,9 @@ const MOCK_EVENT: EventWithLineupPreview = {
   created_at: "2025-01-01",
   updated_at: "2025-01-01",
   genre_ids: [],
+  admission: null,
+  is_ticketed: false,
+  saves_count: 0,
 };
 
 describe("EventCard", () => {
@@ -176,6 +179,40 @@ describe("EventCard", () => {
     expect(screen.getByRole("button", { name: /like this event/i })).toHaveTextContent(
       "7",
     );
+  });
+
+  it("renders admission compact text for fixed price", () => {
+    render(
+      <EventCard
+        event={{ ...MOCK_EVENT, admission: { type: "fixed", amount: 20 } as unknown as null }}
+      />,
+    );
+    expect(screen.getByText("$20")).toBeInTheDocument();
+  });
+
+  it("renders 'Ticketed' label when is_ticketed is true and no admission", () => {
+    render(
+      <EventCard event={{ ...MOCK_EVENT, is_ticketed: true }} />,
+    );
+    expect(screen.getByText("Ticketed")).toBeInTheDocument();
+  });
+
+  it("renders combined admission and ticketed label", () => {
+    render(
+      <EventCard
+        event={{
+          ...MOCK_EVENT,
+          admission: { type: "free" } as unknown as null,
+          is_ticketed: true,
+        }}
+      />,
+    );
+    expect(screen.getByText("Free · Ticketed")).toBeInTheDocument();
+  });
+
+  it("renders no admission row when admission is null and is_ticketed is false", () => {
+    render(<EventCard event={MOCK_EVENT} />);
+    expect(screen.queryByText(/Ticketed/)).not.toBeInTheDocument();
   });
 
   it("renders comment count trigger and opens comments dialog", async () => {

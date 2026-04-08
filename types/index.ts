@@ -4,6 +4,14 @@ type Tables = import("./database").Database["public"]["Tables"];
 type Views = import("./database").Database["public"]["Views"];
 type Enums = import("./database").Database["public"]["Enums"];
 
+// Admission pricing types
+export type AdmissionTier = { label: string; amount: number; until?: string };
+export type Admission =
+  | { type: "free" }
+  | { type: "fixed"; amount: number }
+  | { type: "sliding_scale"; min: number; max: number }
+  | { type: "tiered"; tiers: AdmissionTier[] };
+
 export type City = Tables["cities"]["Row"];
 
 /** Master genre row (public read). */
@@ -38,6 +46,8 @@ export type CalendarEvent = Pick<
   | "status"
   | "created_by"
   | "city_id"
+  | "admission"
+  | "is_ticketed"
 > & {
   city: string | null;
   state: string | null;
