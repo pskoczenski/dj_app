@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -177,12 +178,16 @@ export default function EventDetailPage({
 
       {/* Hero / Flyer */}
       {event.flyer_image_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={event.flyer_image_url}
-          alt={event.title}
-          className="aspect-[2/1] w-full rounded-default object-cover"
-        />
+        <div className="relative aspect-[2/1] w-full overflow-hidden rounded-default">
+          <Image
+            src={event.flyer_image_url}
+            alt={event.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 768px"
+            priority
+          />
+        </div>
       )}
 
       {/* Title & actions */}

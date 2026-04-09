@@ -6,6 +6,21 @@ function supabase() {
   return createClient();
 }
 
+// Small, static table — safe to hold in browser module memory.
+const GENRE_CACHE_TTL_MS = 5 * 60 * 1000;
+let _genreCache: Map<string, { id: string; slug: string; name: string }> | null = null;
+let _genreCacheExpiresAt = 0;
+
+async function getFullGenreCache(): Promise<Map<string, { id: string; slug: string; name: string }>> {
+  const now = Date.now();
+  if (_genreCache && now < _genreCacheExpiresAt) return _genreCache;
+  const { data, error } = await supabase().from(TABLES.genres).select("id, slug, name");
+  if (error) throw error;
+  _genreCache = new Map((data ?? []).map((g) => [g.id, g] as const));
+  _genreCacheExpiresAt = now + GENRE_CACHE_TTL_MS;
+  return _genreCache;
+}
+
 /** Map a user-typed label to seed-data slugs (e.g. "Deep House" → "deep-house"). */
 export function labelToSlug(label: string): string {
   return label
@@ -21,16 +36,10 @@ export async function resolveLabelsToIds(labels: string[]): Promise<string[]> {
   const normalized = [...new Set(labels.map((l) => l.trim()).filter(Boolean))];
   if (normalized.length === 0) return [];
 
-  const { data: all, error } = await supabase()
-    .from(TABLES.genres)
-    .select("id, slug, name");
-
-  if (error) throw error;
-
-  const bySlug = new Map((all ?? []).map((g) => [g.slug, g.id] as const));
-  const byNameLower = new Map(
-    (all ?? []).map((g) => [g.name.toLowerCase(), g.id] as const),
-  );
+  const cache = await getFullGenreCache();
+  const all = [...cache.values()];
+  const bySlug = new Map(all.map((g) => [g.slug, g.id] as const));
+  const byNameLower = new Map(all.map((g) => [g.name.toLowerCase(), g.id] as const));
 
   const ids: string[] = [];
   for (const label of normalized) {
@@ -48,12 +57,9 @@ export async function resolveFilterTokenToId(
 ): Promise<string | null> {
   const trimmed = token.trim();
   if (!trimmed) return null;
-  const { data: all, error } = await supabase()
-    .from(TABLES.genres)
-    .select("id, slug, name");
-  if (error) throw error;
+  const cache = await getFullGenreCache();
   const slug = labelToSlug(trimmed);
-  for (const g of all ?? []) {
+  for (const g of cache.values()) {
     if (g.slug === slug || g.name.toLowerCase() === trimmed.toLowerCase()) {
       return g.id;
     }
@@ -64,14 +70,11 @@ export async function resolveFilterTokenToId(
 export async function getIdToNameMap(ids: string[]): Promise<Map<string, string>> {
   const unique = [...new Set(ids.filter(Boolean))];
   if (unique.length === 0) return new Map();
-
-  const { data, error } = await supabase()
-    .from(TABLES.genres)
-    .select("id, name")
-    .in("id", unique);
-
-  if (error) throw error;
-  return new Map((data ?? []).map((g) => [g.id, g.name] as const));
+  const cache = await getFullGenreCache();
+  return new Map(unique.flatMap((id) => {
+    const g = cache.get(id);
+    return g ? [[id, g.name] as const] : [];
+  }));
 }
 
 export async function getAll(): Promise<Genre[]> {

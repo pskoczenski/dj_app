@@ -159,18 +159,16 @@ describe("EventCard", () => {
         event={{ ...MOCK_EVENT, flyer_image_url: "https://cdn/flyer.jpg" }}
       />,
     );
-    // Use querySelectorAll to include aria-hidden elements (removed from a11y tree).
-    const flyerImgs = Array.from(container.querySelectorAll("img")).filter(
-      (img) => img.getAttribute("src") === "https://cdn/flyer.jpg",
+    // Blur background: raw <img> with aria-hidden and original src.
+    const bgLayer = Array.from(container.querySelectorAll("img")).find(
+      (img) =>
+        img.hasAttribute("aria-hidden") &&
+        img.getAttribute("src") === "https://cdn/flyer.jpg",
     );
-    expect(flyerImgs).toHaveLength(2);
-
-    const bgLayer = flyerImgs.find((img) => img.hasAttribute("aria-hidden"));
     expect(bgLayer).toBeTruthy();
 
-    const fgLayer = flyerImgs.find(
-      (img) => img.getAttribute("alt") === "Underground Session",
-    );
+    // Foreground: Next.js <Image> — matched by alt text (src goes through optimizer).
+    const fgLayer = container.querySelector('img[alt="Underground Session"]');
     expect(fgLayer).toBeTruthy();
   });
 
