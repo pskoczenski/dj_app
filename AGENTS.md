@@ -167,6 +167,10 @@ __tests__/
 - **Components**: render with mocked hooks/props. Test user interactions (click, type, submit) and visible output. Use `screen.getByRole`, `screen.getByText`, etc. — prefer accessible queries.
 - **Do not** make real Supabase calls in tests. All external dependencies are mocked.
 
+- **Workflow:** 
+After implementing any new feature or making multi-file changes, always run the full test suite (`npm test` or equivalent) and fix any failing tests before considering the task complete.
+After the testing instruction\n\nAfter editing TypeScript files, run the linter (`npm run lint` or equivalent) and fix all errors/warnings before finishing. Pay special attention to Next.js server/client boundary rules and ensure 'use client' directives are correct.
+
 ---
 
 ## Common mistakes to avoid

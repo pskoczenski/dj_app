@@ -20,7 +20,7 @@
 | Styling | Tailwind CSS v4 | v4 syntax differs from v3 |
 | Components | shadcn/ui | Primitives in `components/ui/` |
 | Testing | Jest + React Testing Library | Tests in `__tests__/` mirror source tree |
-| Hosting | TODO: fill in (Vercel?) | |
+| Hosting | Vercel |
 
 ## Project Structure
 
@@ -81,6 +81,11 @@ supabase/migrations/    # SQL migrations (apply with `supabase db push`)
 
 **Testing:** Tests mirror the source tree in `__tests__/`. Run with `npm test`.
 
+**Workflow:** 
+After implementing any new feature or making multi-file changes, always run the full test suite (`npm test` or equivalent) and fix any failing tests before considering the task complete.
+after the testing instruction\n\nAfter editing TypeScript files, run the linter (`npm run lint` or equivalent) and fix all errors/warnings before finishing. Pay special attention to Next.js server/client boundary rules and ensure 'use client' directives are correct.
+
+
 ## Current State (as of 2026-03-29)
 
 **Working:**
@@ -112,6 +117,7 @@ npm run dev              # Start dev server at localhost:3000
 npm test                 # Run tests
 npm run test:watch       # Tests in watch mode
 npm run build            # Production build
+npm run lint
 supabase db push         # Apply migrations
 supabase gen types typescript --local > types/supabase.ts  # Regenerate types
 ```

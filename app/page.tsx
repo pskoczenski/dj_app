@@ -42,8 +42,12 @@ export default async function Home() {
 
       <main className="mx-auto w-full max-w-[900px] flex-1 px-6 pb-12 pt-20 md:px-10 md:pt-[140px]">
         <h1 className="max-w-[780px] font-display text-[36px] font-medium leading-[1.1] tracking-[-0.015em] text-mb-text-primary md:text-[52px]">
-          A home for the people keeping the dance floor honest.
+          Welcome to Mirrorball.
         </h1>
+        <br />
+        <h3 className="max-w-[780px] font-display text-[24px] font-medium leading-[1.1] tracking-[-0.015em] text-mb-text-primary md:text-[36px]">
+          A home for the people keeping the dance floor honest.
+        </h3>
 
         <div className="mt-10 max-w-[600px] space-y-5 text-base leading-[1.75] text-mb-text-secondary md:text-[17px]">
           <p>

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState, type ReactElement } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -91,11 +92,12 @@ export function EventPreviewModal({
                 aria-hidden
                 className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
               />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={cardEvent.flyer_image_url}
                 alt={cardEvent.title}
-                className="relative z-10 h-full w-full object-contain"
+                fill
+                className="relative z-10 object-contain"
+                sizes="(max-width: 640px) 100vw, 512px"
               />
             </div>
           ) : (

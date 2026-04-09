@@ -22,14 +22,14 @@ describe("Landing page (Mirrorball manifesto)", () => {
     mockUser = null;
   });
 
-  it("renders the tagline as the page h1", async () => {
+  it("renders the site name as the page h1", async () => {
     const Page = await Home();
     render(Page);
 
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: /keeping the dance floor honest/i,
+        name: /welcome to mirrorball/i,
       }),
     ).toBeInTheDocument();
   });
