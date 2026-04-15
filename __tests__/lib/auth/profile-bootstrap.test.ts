@@ -33,4 +33,22 @@ describe("profileDefaultsFromAuthUser", () => {
       profileType: "dj",
     });
   });
+
+  it("accepts venue and producer metadata values", () => {
+    const venueUser = makeUser({
+      user_metadata: { display_name: "Club 99", profile_type: "venue" },
+    });
+    const producerUser = makeUser({
+      user_metadata: { display_name: "Beat Crafter", profile_type: "producer" },
+    });
+
+    expect(profileDefaultsFromAuthUser(venueUser)).toEqual({
+      displayName: "Club 99",
+      profileType: "venue",
+    });
+    expect(profileDefaultsFromAuthUser(producerUser)).toEqual({
+      displayName: "Beat Crafter",
+      profileType: "producer",
+    });
+  });
 });

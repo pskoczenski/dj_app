@@ -804,7 +804,7 @@ export type Database = {
         | "spotify"
         | "apple_music"
         | "other"
-      profile_type: "dj" | "promoter" | "fan"
+      profile_type: "dj" | "promoter" | "venue" | "producer" | "fan"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -943,7 +943,7 @@ export const Constants = {
         "apple_music",
         "other",
       ],
-      profile_type: ["dj", "promoter", "fan"],
+      profile_type: ["dj", "promoter", "venue", "producer", "fan"],
     },
   },
 } as const

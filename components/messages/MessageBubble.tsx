@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import type { MessageWithSender } from "@/types";
 
@@ -27,6 +27,8 @@ export function MessageBubble({
     .slice(0, 2)
     .toUpperCase();
 
+  const avatarSrc = message.sender?.profile_image_url ?? null;
+
   return (
     <div
       className={cn("flex gap-2", isOwn ? "justify-end" : "justify-start")}
@@ -34,13 +36,8 @@ export function MessageBubble({
     >
       {!isOwn && (
         <Avatar className="mt-0.5 size-8">
-          {message.sender?.profile_image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={message.sender.profile_image_url}
-              alt={name}
-              className="size-full object-cover"
-            />
+          {avatarSrc ? (
+            <AvatarImage src={avatarSrc} alt={name} />
           ) : null}
           <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
         </Avatar>

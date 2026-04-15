@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ensureProfileForUser } from "@/lib/auth/profile-bootstrap";
+import { isProfileType } from "@/lib/constants/profile-types";
 import {
   Dialog,
   DialogContent,
@@ -75,19 +76,16 @@ function LoginForm() {
     if (user) {
       const metadata = (user.user_metadata ?? {}) as {
         display_name?: string;
-        profile_type?: ProfileType;
+        profile_type?: string;
       };
 
       const fallbackName =
         metadata.display_name ||
         user.email?.split("@")[0] ||
         "New User";
-      const fallbackType: ProfileType =
-        metadata.profile_type === "promoter" ||
-        metadata.profile_type === "fan" ||
-        metadata.profile_type === "dj"
-          ? metadata.profile_type
-          : "dj";
+      const fallbackType: ProfileType = isProfileType(metadata.profile_type)
+        ? metadata.profile_type
+        : "dj";
 
       try {
         await ensureProfileForUser({
