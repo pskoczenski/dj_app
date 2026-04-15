@@ -33,6 +33,8 @@ describe("SignupPage", () => {
     expect(
       screen.getByRole("radio", { name: /promoter/i })
     ).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /venue/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /producer/i })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /fan/i })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /sign up/i })

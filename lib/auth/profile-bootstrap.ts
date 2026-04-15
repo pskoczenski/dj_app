@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { isProfileType } from "@/lib/constants/profile-types";
 import { generateUniqueSlug } from "@/lib/utils/slug";
 import type { ProfileType } from "@/types";
 import { DEFAULT_SIGNUP_CITY_ID } from "@/lib/db/default-city";
@@ -18,8 +19,7 @@ export function profileDefaultsFromAuthUser(user: User): {
     user.email?.split("@")[0] ||
     "New User";
   const pt = metadata.profile_type;
-  const profileType: ProfileType =
-    pt === "promoter" || pt === "fan" || pt === "dj" ? pt : "dj";
+  const profileType: ProfileType = isProfileType(pt) ? pt : "dj";
   return { displayName, profileType };
 }
 

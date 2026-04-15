@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { toast } from "sonner";
 import type { ReactNode } from "react";
@@ -101,11 +101,11 @@ export function QuickMessageDialog({
         <div className="flex items-center gap-3">
           <Avatar className="size-10">
             {recipientImageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={recipientImageUrl} alt={recipientName} className="size-full object-cover" />
-            ) : (
-              <AvatarFallback className="text-xs">{initialsFromName(recipientName)}</AvatarFallback>
-            )}
+              <AvatarImage src={recipientImageUrl} alt={recipientName} />
+            ) : null}
+            <AvatarFallback className="text-xs">
+              {initialsFromName(recipientName)}
+            </AvatarFallback>
           </Avatar>
         </div>
 

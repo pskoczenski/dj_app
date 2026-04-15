@@ -5,13 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ensureProfileForUser } from "@/lib/auth/profile-bootstrap";
+import { PROFILE_TYPE_OPTIONS } from "@/lib/constants/profile-types";
 import type { ProfileType } from "@/types";
-
-const PROFILE_TYPES: { value: ProfileType; label: string }[] = [
-  { value: "dj", label: "DJ" },
-  { value: "promoter", label: "Promoter" },
-  { value: "fan", label: "Fan" },
-];
 
 export default function SignupPage() {
   const router = useRouter();
@@ -148,7 +143,7 @@ export default function SignupPage() {
         <fieldset>
           <legend className="mb-2 text-sm text-stone">I am a…</legend>
           <div className="flex gap-4">
-            {PROFILE_TYPES.map(({ value, label }) => (
+            {PROFILE_TYPE_OPTIONS.map(({ value, label }) => (
               <label
                 key={value}
                 className="flex cursor-pointer items-center gap-2 text-sm text-bone"

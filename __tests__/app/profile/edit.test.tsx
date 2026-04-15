@@ -156,6 +156,8 @@ describe("EditProfilePage", () => {
 
     expect(screen.getByRole("radio", { name: /dj/i })).toBeChecked();
     expect(screen.getByRole("radio", { name: /promoter/i })).not.toBeChecked();
+    expect(screen.getByRole("radio", { name: /venue/i })).not.toBeChecked();
+    expect(screen.getByRole("radio", { name: /producer/i })).not.toBeChecked();
   });
 
   it("uses city combobox instead of separate city/state fields", async () => {

@@ -17,6 +17,7 @@ import { CharacterCounter } from "@/components/shared/character-counter";
 import { GenreSelect } from "@/components/forms/genre-select";
 import { ImageUpload } from "@/components/forms/image-upload";
 import { CityAutocomplete } from "@/components/forms/city-autocomplete";
+import { PROFILE_TYPE_OPTIONS } from "@/lib/constants/profile-types";
 import { citiesService } from "@/lib/services/cities";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { storageService } from "@/lib/services/storage";
@@ -33,12 +34,6 @@ const SOCIAL_PLATFORMS = [
   "mixcloud",
   "website",
 ] as const;
-
-const PROFILE_TYPES: { value: ProfileType; label: string }[] = [
-  { value: "dj", label: "DJ" },
-  { value: "promoter", label: "Promoter" },
-  { value: "fan", label: "Fan" },
-];
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -317,7 +312,7 @@ export default function EditProfilePage() {
             Profile Type
           </legend>
           <div className="flex gap-4">
-            {PROFILE_TYPES.map(({ value, label }) => (
+            {PROFILE_TYPE_OPTIONS.map(({ value, label }) => (
               <label
                 key={value}
                 className="flex cursor-pointer items-center gap-2 text-sm text-bone"

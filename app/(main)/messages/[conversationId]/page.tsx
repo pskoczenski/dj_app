@@ -9,7 +9,7 @@ import { MessageBubble } from "@/components/messages/MessageBubble";
 import { CancelledBanner } from "@/components/events/cancelled-banner";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useConversations } from "@/hooks/use-conversations";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -134,6 +134,10 @@ export default function ConversationPage({
     .slice(0, 2)
     .toUpperCase();
 
+  const headerAvatarSrc = isDm
+    ? conversation.otherParticipant?.profile_image_url ?? null
+    : conversation.event?.flyer_image_url ?? null;
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-3">
       <div className="flex items-center gap-3">
@@ -141,20 +145,9 @@ export default function ConversationPage({
           <ArrowLeft className="size-5" />
         </Link>
         <Avatar className="size-10">
-          {(isDm
-            ? conversation.otherParticipant?.profile_image_url
-            : conversation.event?.flyer_image_url) && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={
-                isDm
-                  ? conversation.otherParticipant?.profile_image_url ?? ""
-                  : conversation.event?.flyer_image_url ?? ""
-              }
-              alt={headerTitle}
-              className="size-full object-cover"
-            />
-          )}
+          {headerAvatarSrc ? (
+            <AvatarImage src={headerAvatarSrc} alt={headerTitle} />
+          ) : null}
           <AvatarFallback className="text-xs">{initials}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
