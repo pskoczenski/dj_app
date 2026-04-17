@@ -10,6 +10,7 @@ import { eventsService } from "@/lib/services/events";
 import { mixesService } from "@/lib/services/mixes";
 import { useLikedEventIds } from "@/hooks/use-liked-event-ids";
 import { ProfileHeader } from "@/components/profile/profile-header";
+import { FollowersModal } from "@/components/profile/followers-modal";
 import { SocialLinks } from "@/components/profile/social-links";
 import { FollowButton } from "@/components/profile/follow-button";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -51,6 +52,8 @@ export default function DjProfilePage({
   const [eventsLoading, setEventsLoading] = useState(false);
   const [expandedMixId, setExpandedMixId] = useState<string | null>(null);
   const [mixToDelete, setMixToDelete] = useState<MixWithCreator | null>(null);
+  const [followersOpen, setFollowersOpen] = useState(false);
+  const [followingOpen, setFollowingOpen] = useState(false);
 
   const mixIds = useMemo(() => mixes.map((m) => m.id), [mixes]);
   const serverLikedIds = useLikedMixIds(mixIds, currentUser?.id);
@@ -276,6 +279,22 @@ export default function DjProfilePage({
               </Link>
             ) : null
           }
+          onFollowersClick={() => setFollowersOpen(true)}
+          onFollowingClick={() => setFollowingOpen(true)}
+        />
+        <FollowersModal
+          open={followersOpen}
+          onOpenChange={setFollowersOpen}
+          profileId={profile.id}
+          type="followers"
+          title={`${counts.followersCount} ${counts.followersCount === 1 ? "follower" : "followers"}`}
+        />
+        <FollowersModal
+          open={followingOpen}
+          onOpenChange={setFollowingOpen}
+          profileId={profile.id}
+          type="following"
+          title={`${counts.followingCount} following`}
         />
 
         {!isOwnProfile && currentUser ? (
