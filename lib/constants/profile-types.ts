@@ -11,3 +11,7 @@ export const PROFILE_TYPE_OPTIONS: { value: ProfileType; label: string }[] = [
 export function isProfileType(value: string | undefined): value is ProfileType {
   return PROFILE_TYPE_OPTIONS.some((option) => option.value === value);
 }
+
+export function getProfileTypeLabel(type: ProfileType): string {
+  return PROFILE_TYPE_OPTIONS.find((o) => o.value === type)?.label ?? type;
+}

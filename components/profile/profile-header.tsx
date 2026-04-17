@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { getProfileTypeLabel } from "@/lib/constants/profile-types";
 import type { Profile } from "@/types";
 import type { FollowCounts } from "@/lib/services/profiles";
 
@@ -50,9 +51,14 @@ export function ProfileHeader({
       </div>
 
       <div className="flex-1 text-center sm:text-left">
-        <h1 className="mb-2 font-display text-3xl font-bold tracking-[0.02em] text-bone md:text-4xl">
+        <h1 className="mb-1 font-display text-3xl font-bold tracking-[0.02em] text-bone md:text-4xl">
           {profile.display_name}
         </h1>
+        <div className="mb-1 flex items-center gap-2">
+          <Badge variant="outline" className="text-[10px]">
+            {getProfileTypeLabel(profile.profile_type)}
+          </Badge>
+        </div>
         <p className="text-sm text-fog">@{profile.slug}</p>
 
         {location && <p className="mt-1 text-sm text-stone">{location}</p>}

@@ -27,6 +27,8 @@ import { Search as SearchIcon } from "lucide-react";
 import { GenreFilterBar } from "@/components/shared/genre-filter-bar";
 import type { Profile, EventWithLineupPreview, MixWithCreator } from "@/types";
 import { areQueryStringsEqual } from "@/lib/utils/compare-query-string";
+import { PROFILE_TYPE_OPTIONS, getProfileTypeLabel } from "@/lib/constants/profile-types";
+import type { ProfileType } from "@/types";
 
 type TabValue = "all" | "djs" | "events" | "mixes";
 
@@ -62,6 +64,7 @@ function SearchBrowser() {
   /** When true, DJ + event search is scoped to `activeCity`; mixes are never scoped. */
   const [scopeToActiveCity, setScopeToActiveCity] = useState(true);
   const [selectedGenreIds, setSelectedGenreIds] = useState<string[]>([]);
+  const [selectedProfileTypes, setSelectedProfileTypes] = useState<ProfileType[]>([]);
 
   const eventIds = useMemo(() => events.map((e) => e.id), [events]);
   const serverLikedIds = useLikedEventIds(eventIds, currentUser?.id);
@@ -95,13 +98,14 @@ function SearchBrowser() {
   }
 
   const runSearch = useCallback(
-    async (q: string, cityScoped: boolean, genreIds: string[]) => {
+    async (q: string, cityScoped: boolean, genreIds: string[], profileTypes: ProfileType[]) => {
       const qTrim = q.trim();
       const locationOpts =
         cityScoped && activeCity.id ? { cityId: activeCity.id } : {};
       const djOpts = {
         ...locationOpts,
         ...(genreIds.length > 0 ? { genreIds } : {}),
+        ...(profileTypes.length > 0 ? { profileTypes } : {}),
       };
 
       if (qTrim.length < 2) {
@@ -146,8 +150,8 @@ function SearchBrowser() {
   );
 
   useEffect(() => {
-    void runSearch(debouncedQuery, scopeToActiveCity, selectedGenreIds);
-  }, [debouncedQuery, scopeToActiveCity, selectedGenreIds, runSearch]);
+    void runSearch(debouncedQuery, scopeToActiveCity, selectedGenreIds, selectedProfileTypes);
+  }, [debouncedQuery, scopeToActiveCity, selectedGenreIds, selectedProfileTypes, runSearch]);
 
   // Sync to URL (do not depend on `router` — unstable identity can retrigger forever)
   useEffect(() => {
@@ -207,7 +211,31 @@ function SearchBrowser() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <p className="text-xs text-fog">DJ results — filter by genre</p>
+        <p className="text-xs text-fog">Filter by type</p>
+        <div className="flex flex-wrap gap-1.5">
+          {PROFILE_TYPE_OPTIONS.map((opt) => (
+            <Button
+              key={opt.value}
+              type="button"
+              variant={selectedProfileTypes.includes(opt.value) ? "secondary" : "outline"}
+              size="sm"
+              onClick={() =>
+                setSelectedProfileTypes((prev) =>
+                  prev.includes(opt.value)
+                    ? prev.filter((t) => t !== opt.value)
+                    : [...prev, opt.value],
+                )
+              }
+              aria-pressed={selectedProfileTypes.includes(opt.value)}
+            >
+              {opt.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-fog">Filter by genre</p>
         <GenreFilterBar
           selectedGenreIds={selectedGenreIds}
           onChange={setSelectedGenreIds}
@@ -222,7 +250,7 @@ function SearchBrowser() {
       >
         <TabsList variant="line">
           <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="djs">DJs</TabsTrigger>
+          <TabsTrigger value="djs">People</TabsTrigger>
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="mixes">Mixes</TabsTrigger>
         </TabsList>
@@ -241,8 +269,8 @@ function SearchBrowser() {
               selectedGenreIds.length > 0 &&
               debouncedQuery.trim().length < 2
                 ? scopeToActiveCity
-                  ? `No DJs matching these genres in ${activeCity.name}.`
-                  : "No DJs matching these genres."
+                  ? `No people matching these genres in ${activeCity.name}.`
+                  : "No people matching these genres."
                 : "No results"
             }
             description={
@@ -261,7 +289,7 @@ function SearchBrowser() {
                   <section>
                     <div className="mb-3 flex items-center justify-between">
                       <h2 className="heading-subtle text-xl font-bold text-bone">
-                        DJs
+                        People
                       </h2>
                       {djs.length > 3 && (
                         <button
@@ -332,7 +360,7 @@ function SearchBrowser() {
             {/* DJs tab */}
             <TabsContent value="djs">
               <h2 className="mb-3 heading-subtle text-xl font-bold text-bone">
-                DJs
+                People
               </h2>
               {djs.length > 0 ? (
                 <DjResultsList profiles={djs} />
@@ -341,9 +369,9 @@ function SearchBrowser() {
                   title={
                     selectedGenreIds.length > 0
                       ? scopeToActiveCity
-                        ? `No DJs matching these genres in ${activeCity.name}.`
-                        : "No DJs matching these genres."
-                      : "No DJs found"
+                        ? `No people matching these genres in ${activeCity.name}.`
+                        : "No people matching these genres."
+                      : "No people found"
                   }
                   description=""
                 />
@@ -424,12 +452,17 @@ function DjResultsList({ profiles }: { profiles: Profile[] }) {
               <p className="text-sm font-medium text-bone">{p.display_name}</p>
               <p className="text-xs text-fog">@{p.slug}</p>
             </div>
-            {p.cities && (
-              <span className="text-xs text-fog">
-                {p.cities.name}
-                {p.cities.state_code ? `, ${p.cities.state_code}` : ""}
-              </span>
-            )}
+            <div className="flex shrink-0 items-center gap-2">
+              <Badge variant="outline" className="text-[10px]">
+                {getProfileTypeLabel(p.profile_type)}
+              </Badge>
+              {p.cities && (
+                <span className="text-xs text-fog">
+                  {p.cities.name}
+                  {p.cities.state_code ? `, ${p.cities.state_code}` : ""}
+                </span>
+              )}
+            </div>
           </Link>
         );
       })}
