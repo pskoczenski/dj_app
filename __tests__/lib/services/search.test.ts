@@ -8,6 +8,7 @@ function chainMock() {
     chain.or = jest.fn().mockReturnValue(chain);
     chain.is = jest.fn().mockReturnValue(chain);
     chain.order = jest.fn().mockReturnValue(chain);
+    chain.textSearch = jest.fn().mockReturnValue(chain);
     chain.limit = jest.fn().mockResolvedValue({ data: [], error: null });
     return chain;
   };
@@ -46,7 +47,7 @@ jest.mock("@/lib/services/genres", () => ({
   },
 }));
 
-import { searchDjs } from "@/lib/services/search";
+import { searchDjs, searchEvents, searchMixes } from "@/lib/services/search";
 
 describe("searchDjs", () => {
   beforeEach(() => {
@@ -60,13 +61,21 @@ describe("searchDjs", () => {
     expect(mock.client.from).not.toHaveBeenCalled();
   });
 
-  it("queries profiles table with ilike filter", async () => {
+  it("uses textSearch with websearch type on search_vector", async () => {
     await searchDjs("berlin");
     const b = mock.builder(0);
     expect(mock.client.from).toHaveBeenCalledWith("profiles");
-    expect(b.or).toHaveBeenCalledWith(
-      expect.stringContaining("%berlin%"),
-    );
+    expect(b.textSearch).toHaveBeenCalledWith("search_vector", "berlin", {
+      type: "websearch",
+      config: "english",
+    });
+  });
+
+  it("skips textSearch filter when query is short but genreIds are set", async () => {
+    await searchDjs("a", { genreIds: ["genre-1"] });
+    const b = mock.builder(0);
+    expect(b.textSearch).not.toHaveBeenCalled();
+    expect(b.overlaps).toHaveBeenCalledWith("genre_ids", ["genre-1"]);
   });
 
   it("applies city filter when cityId provided", async () => {
@@ -91,5 +100,57 @@ describe("searchDjs", () => {
     await searchDjs("berlin", { profileTypes: [] });
     const b = mock.builder(0);
     expect(b.in).not.toHaveBeenCalled();
+  });
+});
+
+describe("searchEvents", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mock = chainMock();
+  });
+
+  it("returns empty array for empty query", async () => {
+    const result = await searchEvents("  ");
+    expect(result).toEqual([]);
+    expect(mock.client.from).not.toHaveBeenCalled();
+  });
+
+  it("uses textSearch with websearch type on search_vector", async () => {
+    await searchEvents("techno night");
+    const b = mock.builder(0);
+    expect(mock.client.from).toHaveBeenCalledWith("events");
+    expect(b.textSearch).toHaveBeenCalledWith("search_vector", "techno night", {
+      type: "websearch",
+      config: "english",
+    });
+  });
+
+  it("applies city filter when cityId provided", async () => {
+    await searchEvents("rave", { cityId: "city-nyc" });
+    const b = mock.builder(0);
+    expect(b.eq).toHaveBeenCalledWith("city_id", "city-nyc");
+  });
+});
+
+describe("searchMixes", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mock = chainMock();
+  });
+
+  it("returns empty array for empty query", async () => {
+    const result = await searchMixes("   ");
+    expect(result).toEqual([]);
+    expect(mock.client.from).not.toHaveBeenCalled();
+  });
+
+  it("uses textSearch with websearch type on search_vector", async () => {
+    await searchMixes("deep house");
+    const b = mock.builder(0);
+    expect(mock.client.from).toHaveBeenCalledWith("mixes");
+    expect(b.textSearch).toHaveBeenCalledWith("search_vector", "deep house", {
+      type: "websearch",
+      config: "english",
+    });
   });
 });

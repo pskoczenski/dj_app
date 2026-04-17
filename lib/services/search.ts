@@ -38,10 +38,10 @@ export async function searchDjs(
     .is("deleted_at", null);
 
   if (qTrim.length >= 2) {
-    const term = `%${qTrim}%`;
-    q = q.or(
-      `display_name.ilike.${term},bio.ilike.${term},cities.name.ilike.${term}`,
-    );
+    q = q.textSearch("search_vector", qTrim, {
+      type: "websearch",
+      config: "english",
+    });
   }
 
   if (options.cityId) {
@@ -68,16 +68,19 @@ export async function searchEvents(
   query: string,
   options: SearchServiceOptions = {},
 ): Promise<EventWithLineupPreview[]> {
+  const qTrim = query.trim();
+  if (!qTrim) return [];
+
   const limit = options.limit ?? 20;
-  const term = `%${query}%`;
   let q = supabase()
     .from(TABLES.events)
     .select(EVENT_LIST_WITH_LINEUP)
     .is("deleted_at", null)
     .eq("status", "published")
-    .or(
-      `title.ilike.${term},description.ilike.${term},venue.ilike.${term},street_address.ilike.${term},cities.name.ilike.${term}`,
-    );
+    .textSearch("search_vector", qTrim, {
+      type: "websearch",
+      config: "english",
+    });
 
   if (options.cityId) {
     q = q.eq("city_id", options.cityId);
@@ -97,12 +100,17 @@ export async function searchMixes(
   query: string,
   limit = 20,
 ): Promise<MixWithCreator[]> {
-  const term = `%${query}%`;
+  const qTrim = query.trim();
+  if (!qTrim) return [];
+
   const { data, error } = await supabase()
     .from(TABLES.mixes)
     .select(MIX_LIST_SELECT)
     .is("deleted_at", null)
-    .or(`title.ilike.${term},description.ilike.${term}`)
+    .textSearch("search_vector", qTrim, {
+      type: "websearch",
+      config: "english",
+    })
     .order("created_at", { ascending: false })
     .limit(limit);
 
