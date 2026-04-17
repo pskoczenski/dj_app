@@ -9,10 +9,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  CONVERSATIONS_POLL_INTERVAL_MS,
-  conversationsService,
-} from "@/lib/services/conversations";
+import { conversationsService } from "@/lib/services/conversations";
+import { createClient } from "@/lib/supabase/client";
 import type { ConversationInboxItem } from "@/types";
 
 type MessagingInboxContextValue = {
@@ -75,11 +73,21 @@ export function MessagingInboxProvider({
 
   useEffect(() => {
     if (!userId) return;
-    const timer = setInterval(() => {
-      void fetchInbox({ background: true });
-    }, CONVERSATIONS_POLL_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, [fetchInbox, userId]);
+    const client = createClient();
+    const channel = client
+      .channel(`inbox:${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        () => {
+          void fetchInbox({ background: true });
+        },
+      )
+      .subscribe();
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, [userId, fetchInbox]);
 
   const refetch = useCallback(
     () => fetchInbox({ background: false }),

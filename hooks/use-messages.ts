@@ -1,13 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  DEFAULT_MESSAGES_PAGE_SIZE,
-  MESSAGES_POLL_INTERVAL_MS,
-  messagesService,
-} from "@/lib/services/messages";
+import { DEFAULT_MESSAGES_PAGE_SIZE, messagesService } from "@/lib/services/messages";
 import { conversationsService } from "@/lib/services/conversations";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { createClient } from "@/lib/supabase/client";
 import type { MessageWithSender } from "@/types";
 
 function uniqueById(items: MessageWithSender[]): MessageWithSender[] {
@@ -127,10 +124,28 @@ export function useMessages(conversationId: string) {
 
   useEffect(() => {
     if (!conversationId || !user?.id) return;
-    const timer = setInterval(() => {
-      void fetchLatest();
-    }, MESSAGES_POLL_INTERVAL_MS);
-    return () => clearInterval(timer);
+    const client = createClient();
+    const channel = client
+      .channel(`messages:${conversationId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const row = payload.new as { sender_id?: string };
+          // Own messages are already handled optimistically in sendMessage
+          if (row.sender_id === user.id) return;
+          void fetchLatest();
+        },
+      )
+      .subscribe();
+    return () => {
+      void client.removeChannel(channel);
+    };
   }, [conversationId, fetchLatest, user?.id]);
 
   return {

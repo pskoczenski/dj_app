@@ -1,13 +1,25 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { MessagingInboxProvider } from "@/hooks/messaging-inbox-provider";
 
 const mockGetInbox = jest.fn();
 jest.mock("@/lib/services/conversations", () => ({
-  CONVERSATIONS_POLL_INTERVAL_MS: 30000,
   conversationsService: {
     getInbox: (...a: unknown[]) => mockGetInbox(...a),
   },
+}));
+
+const mockRemoveChannel = jest.fn();
+const mockChannelObj = {
+  on: jest.fn(() => mockChannelObj),
+  subscribe: jest.fn(() => mockChannelObj),
+};
+const mockSupabaseClient = {
+  channel: jest.fn(() => mockChannelObj),
+  removeChannel: mockRemoveChannel,
+};
+jest.mock("@/lib/supabase/client", () => ({
+  createClient: () => mockSupabaseClient,
 }));
 
 import { useConversations } from "@/hooks/use-conversations";
@@ -22,22 +34,28 @@ function inboxWrapper({ children }: { children: ReactNode }) {
 
 describe("useConversations", () => {
   beforeEach(() => {
-    jest.useFakeTimers();
     jest.clearAllMocks();
   });
-  afterEach(() => jest.useRealTimers());
 
-  it("polls at 30s interval", async () => {
+  it("loads conversations on mount", async () => {
     mockGetInbox.mockResolvedValue([]);
-    const { result } = renderHook(() => useConversations(), {
-      wrapper: inboxWrapper,
-    });
+    const { result } = renderHook(() => useConversations(), { wrapper: inboxWrapper });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(mockGetInbox).toHaveBeenCalledTimes(1);
+  });
 
-    await act(async () => {
-      jest.advanceTimersByTime(30000);
-    });
-    expect(mockGetInbox).toHaveBeenCalledTimes(2);
+  it("subscribes to realtime inbox channel", async () => {
+    mockGetInbox.mockResolvedValue([]);
+    renderHook(() => useConversations(), { wrapper: inboxWrapper });
+    await waitFor(() => expect(mockChannelObj.subscribe).toHaveBeenCalled());
+    expect(mockSupabaseClient.channel).toHaveBeenCalledWith("inbox:user-1");
+  });
+
+  it("removes channel when provider unmounts", async () => {
+    mockGetInbox.mockResolvedValue([]);
+    const { unmount } = renderHook(() => useConversations(), { wrapper: inboxWrapper });
+    await waitFor(() => expect(mockChannelObj.subscribe).toHaveBeenCalled());
+    unmount();
+    expect(mockRemoveChannel).toHaveBeenCalledWith(mockChannelObj);
   });
 });

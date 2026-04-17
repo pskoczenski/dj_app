@@ -3,7 +3,6 @@ import { TABLES } from "@/lib/db/schema-constants";
 import { conversationsService } from "@/lib/services/conversations";
 import type { MessageWithSender } from "@/types";
 
-export const MESSAGES_POLL_INTERVAL_MS = 5_000;
 export const DEFAULT_MESSAGES_PAGE_SIZE = 30;
 
 function supabase() {
