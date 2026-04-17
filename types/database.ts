@@ -111,7 +111,7 @@ export type Database = {
         Row: {
           admission: Json | null
           city_id: string
-          search_vector: string | null
+          search_vector?: string | null
           country: string | null
           created_at: string | null
           created_by: string
@@ -648,7 +648,7 @@ export type Database = {
       mixes: {
         Row: {
           cover_image_url: string | null
-          search_vector: string | null
+          search_vector?: string | null
           created_at: string | null
           deleted_at: string | null
           description: string | null
@@ -715,7 +715,7 @@ export type Database = {
       profiles: {
         Row: {
           bio: string | null
-          search_vector: string | null
+          search_vector?: string | null
           city_id: string
           country: string | null
           created_at: string | null
