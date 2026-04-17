@@ -6,8 +6,6 @@ import type {
   Profile,
 } from "@/types";
 
-export const CONVERSATIONS_POLL_INTERVAL_MS = 30_000;
-
 function supabase() {
   return createClient();
 }
