@@ -3,7 +3,7 @@ import { TABLES } from "@/lib/db/schema-constants";
 import { EVENT_LIST_WITH_LINEUP } from "@/lib/services/events";
 import { MIX_LIST_SELECT } from "@/lib/services/mixes";
 import { genresService } from "@/lib/services/genres";
-import type { Profile, EventWithLineupPreview, MixWithCreator } from "@/types";
+import type { Profile, EventWithLineupPreview, MixWithCreator, ProfileType } from "@/types";
 
 function supabase() {
   return createClient();
@@ -15,6 +15,8 @@ export type SearchServiceOptions = {
   cityId?: string;
   /** OR match: profile `genre_ids` overlaps any of these UUIDs (DJs only). */
   genreIds?: string[];
+  /** When set, restricts profile search to these profile types. */
+  profileTypes?: ProfileType[];
 };
 
 export async function searchDjs(
@@ -48,6 +50,10 @@ export async function searchDjs(
 
   if (options.genreIds?.length) {
     q = q.overlaps("genre_ids", options.genreIds);
+  }
+
+  if (options.profileTypes?.length) {
+    q = q.in("profile_type", options.profileTypes);
   }
 
   const { data, error } = await q

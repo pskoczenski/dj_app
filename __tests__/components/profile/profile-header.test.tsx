@@ -63,4 +63,19 @@ describe("ProfileHeader", () => {
     render(<ProfileHeader profile={profile} counts={counts} />);
     expect(screen.getByText("DS")).toBeInTheDocument();
   });
+
+  it("renders profile type badge", () => {
+    render(<ProfileHeader profile={profile} counts={counts} />);
+    expect(screen.getByText("DJ")).toBeInTheDocument();
+  });
+
+  it("renders correct label for non-dj profile types", () => {
+    render(
+      <ProfileHeader
+        profile={{ ...profile, profile_type: "venue" }}
+        counts={counts}
+      />,
+    );
+    expect(screen.getByText("Venue")).toBeInTheDocument();
+  });
 });

@@ -82,7 +82,7 @@ describe("SearchPage", () => {
     renderSearch();
     expect(screen.getByLabelText("Search")).toBeInTheDocument();
     expect(screen.getByText("All")).toBeInTheDocument();
-    expect(screen.getByText("DJs")).toBeInTheDocument();
+    expect(screen.getByText("People")).toBeInTheDocument();
     expect(screen.getByText("Events")).toBeInTheDocument();
     expect(screen.getByText("Mixes")).toBeInTheDocument();
   });
