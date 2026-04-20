@@ -21,7 +21,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Search as SearchIcon } from "lucide-react";
 import { GenreFilterBar } from "@/components/shared/genre-filter-bar";
@@ -438,14 +438,7 @@ function DjResultsList({ profiles }: { profiles: Profile[] }) {
             className="flex items-center gap-3 rounded-default border border-root-line p-3 transition-colors hover:border-sage-edge"
           >
             <Avatar className="size-10">
-              {p.profile_image_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={p.profile_image_url}
-                  alt={p.display_name}
-                  className="size-full object-cover"
-                />
-              )}
+              <AvatarImage src={p.profile_image_url ?? undefined} alt={p.display_name} />
               <AvatarFallback className="text-xs">{initials}</AvatarFallback>
             </Avatar>
             <div className="flex-1">

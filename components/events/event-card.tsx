@@ -74,6 +74,11 @@ export function EventCard({
   ]
     .filter(Boolean)
     .join(", ");
+  const mapsUrl = location
+    ? event.google_place_id
+      ? `https://www.google.com/maps/place/?q=place_id:${event.google_place_id}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
+    : null;
   const headingId = `event-title-${event.id}`;
   const djNames = lineupDisplayNames(event);
   const dateTimeLine = formatEventDateTimeLine(event);
@@ -151,10 +156,20 @@ export function EventCard({
                 <Calendar className="mt-[2px] size-4 shrink-0 text-mb-text-tertiary" />
                 <span>{dateTimeLine}</span>
               </div>
-              {location ? (
+              {location && mapsUrl ? (
                 <div className="flex items-start gap-2">
                   <MapPin className="mt-[2px] size-4 shrink-0 text-mb-text-tertiary" />
-                  <span className="line-clamp-2">{location}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      window.open(mapsUrl, "_blank", "noopener,noreferrer");
+                    }}
+                    className="line-clamp-2 cursor-pointer text-left hover:underline"
+                  >
+                    {location}
+                  </button>
                 </div>
               ) : null}
               {(() => {

@@ -121,9 +121,18 @@ describe("EventCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders venue and city", () => {
+  it("renders venue and city as a Google Maps button", () => {
+    const openSpy = jest.spyOn(window, "open").mockImplementation(() => null);
     render(<EventCard event={MOCK_EVENT} />);
-    expect(screen.getByText(/Holocene, Portland, OR/)).toBeInTheDocument();
+    const btn = screen.getByRole("button", { name: /Holocene, Portland, OR/ });
+    expect(btn).toBeInTheDocument();
+    btn.click();
+    expect(openSpy).toHaveBeenCalledWith(
+      expect.stringContaining("google.com/maps"),
+      "_blank",
+      "noopener,noreferrer",
+    );
+    openSpy.mockRestore();
   });
 
   it("renders genre badges", () => {
