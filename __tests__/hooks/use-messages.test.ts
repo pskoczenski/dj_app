@@ -192,10 +192,28 @@ describe("useMessages", () => {
     await waitFor(() => expect(capturedBroadcastCallback).not.toBeNull());
 
     await act(async () => {
-      capturedBroadcastCallback?.({ payload: { userId: "other-user" } });
+      capturedBroadcastCallback?.({ payload: { userId: "other-user", active: true } });
     });
 
     await waitFor(() => expect(result.current.typingPeerIds).toContain("other-user"));
+  });
+
+  it("clears typing peer when broadcast sends active false", async () => {
+    mockGetMessages.mockResolvedValue([]);
+    const { result } = renderHook(() => useMessages("conv-1"));
+    await waitFor(() => expect(capturedBroadcastCallback).not.toBeNull());
+
+    await act(async () => {
+      capturedBroadcastCallback?.({ payload: { userId: "other-user", active: true } });
+    });
+    await waitFor(() => expect(result.current.typingPeerIds).toContain("other-user"));
+
+    await act(async () => {
+      capturedBroadcastCallback?.({ payload: { userId: "other-user", active: false } });
+    });
+    await waitFor(() =>
+      expect(result.current.typingPeerIds).not.toContain("other-user"),
+    );
   });
 
   it("notifyTyping sends broadcast when subscribed", async () => {
@@ -211,6 +229,23 @@ describe("useMessages", () => {
       type: "broadcast",
       event: "typing",
       payload: { userId: "user-1", active: true },
+    });
+  });
+
+  it("notifyTyping(false) sends stop signal without throttle", async () => {
+    mockGetMessages.mockResolvedValue([]);
+    const { result } = renderHook(() => useMessages("conv-1"));
+    await waitFor(() => expect(mockSubscribe).toHaveBeenCalled());
+    mockSendBroadcast.mockClear();
+
+    await act(async () => {
+      result.current.notifyTyping(false);
+    });
+
+    expect(mockSendBroadcast).toHaveBeenCalledWith({
+      type: "broadcast",
+      event: "typing",
+      payload: { userId: "user-1", active: false },
     });
   });
 });

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ComposeBar } from "@/components/messages/ComposeBar";
+import { TypingDots } from "@/components/messages/typing-dots";
 import { MessageBubble } from "@/components/messages/MessageBubble";
 import { CancelledBanner } from "@/components/events/cancelled-banner";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
@@ -85,17 +86,17 @@ export default function ConversationPage({
     if (conversation?.type === "dm" && conversation.otherParticipant) {
       const other = conversation.otherParticipant;
       if (typingPeerIds.includes(other.id)) {
-        return `${other.display_name} is typing…`;
+        return `${other.display_name} is typing`;
       }
-      return "Someone is typing…";
+      return "Someone is typing";
     }
     const names = typingPeerIds
       .map((id) => groupParticipants.find((p) => p.id === id)?.display_name)
       .filter((n): n is string => Boolean(n));
-    if (names.length === 0) return "Someone is typing…";
-    if (names.length === 1) return `${names[0]} is typing…`;
-    if (names.length === 2) return `${names[0]} and ${names[1]} are typing…`;
-    return `${names[0]} and ${names.length - 1} others are typing…`;
+    if (names.length === 0) return "Someone is typing";
+    if (names.length === 1) return `${names[0]} is typing`;
+    if (names.length === 2) return `${names[0]} and ${names[1]} are typing`;
+    return `${names[0]} and ${names.length - 1} others are typing`;
   }, [conversation, groupParticipants, typingPeerIds]);
 
   useEffect(() => {
@@ -225,8 +226,9 @@ export default function ConversationPage({
       </div>
 
       {typingLabel ? (
-        <p className="px-1 text-xs text-fog min-h-[1.25rem]" aria-live="polite">
-          {typingLabel}
+        <p className="flex min-h-[1.25rem] items-center px-1 text-xs text-fog" aria-live="polite">
+          <span>{typingLabel}</span>
+          <TypingDots />
         </p>
       ) : (
         <div className="min-h-[1.25rem]" aria-hidden />
@@ -235,7 +237,7 @@ export default function ConversationPage({
       <ComposeBar
         sending={sending}
         onDraftChange={(draft) => {
-          if (draft.trim().length > 0) notifyTyping();
+          notifyTyping(draft.trim().length > 0);
         }}
         onSend={async (body) => {
           await sendMessage(body);

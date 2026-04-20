@@ -129,15 +129,18 @@ export function useMessages(conversationId: string) {
     [conversationId, markAsReadIfNew, user],
   );
 
-  const notifyTyping = useCallback(() => {
+  /** `isActive` false = user cleared the compose box; send immediately so peers hide the indicator. */
+  const notifyTyping = useCallback((isActive = true) => {
     if (!userId || !realtimeSubscribedRef.current || !channelRef.current) return;
-    const now = Date.now();
-    if (now - lastTypingSentAtRef.current < TYPING_SEND_MIN_MS) return;
-    lastTypingSentAtRef.current = now;
+    if (isActive) {
+      const now = Date.now();
+      if (now - lastTypingSentAtRef.current < TYPING_SEND_MIN_MS) return;
+      lastTypingSentAtRef.current = now;
+    }
     void channelRef.current.send({
       type: "broadcast",
       event: "typing",
-      payload: { userId, active: true },
+      payload: { userId, active: isActive },
     });
   }, [userId]);
 
@@ -225,9 +228,17 @@ export function useMessages(conversationId: string) {
         },
       )
       .on("broadcast", { event: "typing" }, (broadcastPayload) => {
-        const inner = broadcastPayload.payload as { userId?: string } | undefined;
+        const inner = broadcastPayload.payload as
+          | { userId?: string; active?: boolean }
+          | undefined;
         const uid = inner?.userId;
-        refreshPeerTyping(uid ?? "");
+        if (!uid || uid === userId) return;
+        const active = inner?.active !== false;
+        if (!active) {
+          clearPeerTyping(uid);
+          return;
+        }
+        refreshPeerTyping(uid);
       })
       .subscribe((status) => {
         realtimeSubscribedRef.current = status === "SUBSCRIBED";
