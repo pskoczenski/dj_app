@@ -131,9 +131,13 @@ function EventsBrowser() {
     searchParams.get("view") === "calendar" ? "calendar" : "list";
 
   const routerRef = useRef(router);
-  routerRef.current = router;
   const searchParamsRef = useRef(searchParams);
-  searchParamsRef.current = searchParams;
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
 
   function setViewMode(mode: "list" | "calendar") {
     const params = new URLSearchParams(searchParams.toString());

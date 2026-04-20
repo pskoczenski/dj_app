@@ -16,9 +16,11 @@ import { LogOut, Pencil, User } from "lucide-react";
 
 interface AvatarDropdownProps {
   user: CurrentUser;
+  /** First-time tour anchor (desktop navbar only; mobile uses the Me tab). */
+  ftueAnchor?: string;
 }
 
-export function AvatarDropdown({ user }: AvatarDropdownProps) {
+export function AvatarDropdown({ user, ftueAnchor }: AvatarDropdownProps) {
   const router = useRouter();
 
   async function handleLogout() {
@@ -31,6 +33,7 @@ export function AvatarDropdown({ user }: AvatarDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
+        data-ftue={ftueAnchor}
         className="flex size-8 cursor-pointer items-center justify-center rounded-full border border-mb-border-soft bg-mb-surface-3 text-mb-turquoise-pale outline-none transition-colors hover:bg-mb-surface-3 hover:text-mb-text-primary focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid"
         aria-label="User menu"
       >

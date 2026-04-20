@@ -27,7 +27,7 @@ export function useGenres() {
     let alive = true;
     if (cachedGenres) return;
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setLoading(true);
     void fetchAllGenres()
       .then((g) => {

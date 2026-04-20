@@ -56,7 +56,7 @@ export function LocationPickerPopover({
       clearResults();
       return;
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setRecent(readRecentCities());
     const t = window.requestAnimationFrame(() => {
       inputRef.current?.focus();
@@ -88,6 +88,7 @@ export function LocationPickerPopover({
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         type="button"
+        data-ftue="ftue-location"
         aria-label={`Current location: ${activeCity.name}, ${activeCity.state_code}. Click to change.`}
         aria-haspopup="dialog"
         className={cn(

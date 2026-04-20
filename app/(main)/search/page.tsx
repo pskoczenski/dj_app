@@ -44,9 +44,13 @@ function SearchBrowser() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const routerRef = useRef(router);
-  routerRef.current = router;
   const searchParamsRef = useRef(searchParams);
-  searchParamsRef.current = searchParams;
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
   const { activeCity } = useLocation();
   const { user: currentUser } = useCurrentUser();
 

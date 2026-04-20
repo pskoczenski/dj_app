@@ -27,21 +27,41 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
       aria-label="Mobile navigation"
       className="fixed inset-x-0 bottom-0 z-40 flex h-14 items-center justify-around border-t border-mb-border-hair bg-mb-surface-0 md:hidden"
     >
-      <TabLink href="/home" label="Home" active={isActive("/home")}>
+      <TabLink
+        href="/home"
+        label="Home"
+        active={isActive("/home")}
+        dataFtue="ftue-nav-home"
+      >
         <Home className={iconClass} />
       </TabLink>
 
-      <TabLink href="/events" label="Events" active={isActive("/events")}>
+      <TabLink
+        href="/events"
+        label="Events"
+        active={isActive("/events")}
+        dataFtue="ftue-nav-events"
+      >
         <CalendarDays className={iconClass} />
       </TabLink>
 
       <QuickCreateMenu />
 
-      <TabLink href="/mixes" label="Mixes" active={isActive("/mixes")}>
+      <TabLink
+        href="/mixes"
+        label="Mixes"
+        active={isActive("/mixes")}
+        dataFtue="ftue-nav-mixes"
+      >
         <Disc3 className={iconClass} />
       </TabLink>
 
-      <TabLink href={profileHref} label="Me" active={isActive("/dj/")}>
+      <TabLink
+        href={profileHref}
+        label="Me"
+        active={isActive("/dj/")}
+        dataFtue="ftue-profile"
+      >
         <UserCircle className={iconClass} />
       </TabLink>
     </nav>
@@ -52,17 +72,21 @@ function TabLink({
   href,
   label,
   active,
+  dataFtue,
   children,
 }: {
   href: string;
   label: string;
   active: boolean;
+  /** Spotlight anchor for first-time user tour */
+  dataFtue?: string;
   children: React.ReactNode;
 }) {
   return (
     <Link
       href={href}
       aria-label={label}
+      data-ftue={dataFtue}
       className={cn(
         "group flex flex-col items-center gap-1 text-[11px] transition-colors",
         active ? "text-bone" : "text-fog hover:text-stone",
