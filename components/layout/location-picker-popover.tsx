@@ -88,6 +88,7 @@ export function LocationPickerPopover({
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         type="button"
+        data-ftue="ftue-location"
         aria-label={`Current location: ${activeCity.name}, ${activeCity.state_code}. Click to change.`}
         aria-haspopup="dialog"
         className={cn(

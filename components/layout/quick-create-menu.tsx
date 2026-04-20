@@ -16,6 +16,7 @@ export function QuickCreateMenu() {
     <Popover>
       <PopoverTrigger
         aria-label="Quick create"
+        data-ftue="ftue-quick-create"
         className="flex size-10 items-center justify-center rounded-full bg-fern text-bone transition-colors hover:bg-living-fern"
       >
         <Plus className="size-5" />

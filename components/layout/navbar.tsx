@@ -36,6 +36,15 @@ export function Navbar({ user }: NavbarProps) {
             <Link
               key={href}
               href={href}
+              data-ftue={
+                href === "/home"
+                  ? "ftue-nav-home"
+                  : href === "/events"
+                    ? "ftue-nav-events"
+                    : href === "/mixes"
+                      ? "ftue-nav-mixes"
+                      : undefined
+              }
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 pathname.startsWith(href)
@@ -52,6 +61,7 @@ export function Navbar({ user }: NavbarProps) {
           <LocationIndicator />
           <Link
             href="/messages"
+            data-ftue="ftue-messages"
             aria-label="Messages"
             className="relative rounded-md p-2 text-mb-text-secondary transition-colors hover:text-mb-text-primary"
           >
@@ -64,12 +74,13 @@ export function Navbar({ user }: NavbarProps) {
           </Link>
           <Link
             href="/search"
+            data-ftue="ftue-search"
             aria-label="Search"
             className="rounded-md p-2 text-mb-text-secondary transition-colors hover:text-mb-text-primary"
           >
             <Search className="size-5" />
           </Link>
-          {user ? <AvatarDropdown user={user} /> : null}
+          {user ? <AvatarDropdown user={user} ftueAnchor="ftue-profile" /> : null}
         </div>
       </nav>
     </header>

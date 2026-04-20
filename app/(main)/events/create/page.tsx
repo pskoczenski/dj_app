@@ -25,7 +25,10 @@ export default function CreateEventPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-6 font-display text-2xl font-bold text-bone">
+      <h1
+        className="mb-6 font-display text-2xl font-bold text-bone"
+        data-ftue="ftue-create-heading"
+      >
         Create Event
       </h1>
       <EventForm mode="create" currentUserId={user.id} />

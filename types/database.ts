@@ -721,6 +721,7 @@ export type Database = {
           created_at: string | null
           deleted_at: string | null
           display_name: string
+          ftue_completed_at: string | null
           genre_ids: string[]
           id: string
           profile_image_url: string | null
@@ -736,6 +737,7 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           display_name: string
+          ftue_completed_at?: string | null
           genre_ids?: string[]
           id: string
           profile_image_url?: string | null
@@ -751,6 +753,7 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           display_name?: string
+          ftue_completed_at?: string | null
           genre_ids?: string[]
           id?: string
           profile_image_url?: string | null
