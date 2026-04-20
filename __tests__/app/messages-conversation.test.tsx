@@ -83,6 +83,8 @@ describe("Conversation page", () => {
       loadMore: jest.fn(),
       sendMessage: jest.fn().mockResolvedValue(undefined),
       sending: false,
+      typingPeerIds: [],
+      notifyTyping: jest.fn(),
     });
   });
 
@@ -103,6 +105,8 @@ describe("Conversation page", () => {
       loadMore: jest.fn(),
       sendMessage,
       sending: false,
+      typingPeerIds: [],
+      notifyTyping: jest.fn(),
     });
     renderPage();
     const input = screen.getByLabelText(/message input/i);

@@ -15,6 +15,7 @@ import { useConversations } from "@/hooks/use-conversations";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useMessages } from "@/hooks/use-messages";
 import { conversationsService } from "@/lib/services/conversations";
+import type { Profile } from "@/types";
 
 export default function ConversationPage({
 }: {
@@ -34,8 +35,12 @@ export default function ConversationPage({
     loadMore,
     sendMessage,
     sending,
+    typingPeerIds,
+    notifyTyping,
   } = useMessages(conversationId);
-  const [participantNames, setParticipantNames] = useState<string[]>([]);
+  const [groupParticipants, setGroupParticipants] = useState<
+    Pick<Profile, "id" | "display_name">[]
+  >([]);
 
   const listRef = useRef<HTMLDivElement>(null);
   const previousCount = useRef(0);
@@ -69,9 +74,29 @@ export default function ConversationPage({
     if (!conversation || conversation.type !== "event_group") return;
     conversationsService
       .getParticipants(conversation.id)
-      .then((ps) => setParticipantNames(ps.map((p) => p.display_name)))
-      .catch(() => setParticipantNames([]));
+      .then((ps) =>
+        setGroupParticipants(ps.map((p) => ({ id: p.id, display_name: p.display_name }))),
+      )
+      .catch(() => setGroupParticipants([]));
   }, [conversation]);
+
+  const typingLabel = useMemo(() => {
+    if (!typingPeerIds?.length) return null;
+    if (conversation?.type === "dm" && conversation.otherParticipant) {
+      const other = conversation.otherParticipant;
+      if (typingPeerIds.includes(other.id)) {
+        return `${other.display_name} is typing…`;
+      }
+      return "Someone is typing…";
+    }
+    const names = typingPeerIds
+      .map((id) => groupParticipants.find((p) => p.id === id)?.display_name)
+      .filter((n): n is string => Boolean(n));
+    if (names.length === 0) return "Someone is typing…";
+    if (names.length === 1) return `${names[0]} is typing…`;
+    if (names.length === 2) return `${names[0]} and ${names[1]} are typing…`;
+    return `${names[0]} and ${names.length - 1} others are typing…`;
+  }, [conversation, groupParticipants, typingPeerIds]);
 
   useEffect(() => {
     const el = listRef.current;
@@ -158,8 +183,10 @@ export default function ConversationPage({
           ) : (
             <p className="truncate text-sm font-semibold text-bone">{headerTitle}</p>
           )}
-          {!isDm && participantNames.length > 0 ? (
-            <p className="truncate text-xs text-fog">{participantNames.join(", ")}</p>
+          {!isDm && groupParticipants.length > 0 ? (
+            <p className="truncate text-xs text-fog">
+              {groupParticipants.map((p) => p.display_name).join(", ")}
+            </p>
           ) : null}
         </div>
       </div>
@@ -197,8 +224,19 @@ export default function ConversationPage({
         </div>
       </div>
 
+      {typingLabel ? (
+        <p className="px-1 text-xs text-fog min-h-[1.25rem]" aria-live="polite">
+          {typingLabel}
+        </p>
+      ) : (
+        <div className="min-h-[1.25rem]" aria-hidden />
+      )}
+
       <ComposeBar
         sending={sending}
+        onDraftChange={(draft) => {
+          if (draft.trim().length > 0) notifyTyping();
+        }}
         onSend={async (body) => {
           await sendMessage(body);
         }}

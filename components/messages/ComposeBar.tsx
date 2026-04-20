@@ -7,9 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 export function ComposeBar({
   onSend,
   sending = false,
+  onDraftChange,
 }: {
   onSend: (body: string) => Promise<void>;
   sending?: boolean;
+  /** Called when the draft text changes (e.g. to broadcast typing activity). */
+  onDraftChange?: (value: string) => void;
 }) {
   const [value, setValue] = useState("");
   const trimmed = value.trim();
@@ -26,7 +29,11 @@ export function ComposeBar({
         <Textarea
           aria-label="Message input"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value;
+            setValue(v);
+            onDraftChange?.(v);
+          }}
           rows={2}
           placeholder="Type a message…"
           onKeyDown={(e) => {
