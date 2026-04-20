@@ -56,7 +56,7 @@ export function LocationPickerPopover({
       clearResults();
       return;
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setRecent(readRecentCities());
     const t = window.requestAnimationFrame(() => {
       inputRef.current?.focus();

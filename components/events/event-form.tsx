@@ -206,8 +206,14 @@ export function EventForm({
   const [fixedAmount, setFixedAmount] = useState(initFixedAmount);
   const [scaleMin, setScaleMin] = useState(initScaleMin);
   const [scaleMax, setScaleMax] = useState(initScaleMax);
-  const [tiers, setTiers] = useState<TierRow[]>(
-    initTiers.map((t) => ({ ...t, id: typeof crypto !== "undefined" ? crypto.randomUUID() : String(Math.random()) }))
+  const [tiers, setTiers] = useState<TierRow[]>(() =>
+    initTiers.map((t, i) => ({
+      ...t,
+      id:
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `tier-${i}`,
+    })),
   );
   const [isTicketed, setIsTicketed] = useState<boolean>(event?.is_ticketed ?? false);
 

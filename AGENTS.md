@@ -167,9 +167,14 @@ __tests__/
 - **Components**: render with mocked hooks/props. Test user interactions (click, type, submit) and visible output. Use `screen.getByRole`, `screen.getByText`, etc. — prefer accessible queries.
 - **Do not** make real Supabase calls in tests. All external dependencies are mocked.
 
-- **Workflow:** 
-After implementing any new feature or making multi-file changes, always run the full test suite (`npm test` or equivalent) and fix any failing tests before considering the task complete.
-After the testing instruction\n\nAfter editing TypeScript files, run the linter (`npm run lint` or equivalent) and fix all errors/warnings before finishing. Pay special attention to Next.js server/client boundary rules and ensure 'use client' directives are correct.
+### Task completion (agents)
+
+Before considering a task finished—after implementing a feature, fixing bugs, or making multi-file changes—you **must** satisfy **both** of the following:
+
+1. **Tests:** Run **`npm test`** (full suite) and fix any failing tests.
+2. **Lint:** Run **`npm run lint`** and fix **all** errors and warnings reported by ESLint (including React Compiler and React hooks rules where they apply).
+
+Do not treat the task as complete until the linter is clean and tests pass. When you edit TypeScript or TSX, pay special attention to Next.js server/client boundaries and correct `"use client"` directives.
 
 ---
 

@@ -81,10 +81,7 @@ supabase/migrations/    # SQL migrations (apply with `supabase db push`)
 
 **Testing:** Tests mirror the source tree in `__tests__/`. Run with `npm test`.
 
-**Workflow:** 
-After implementing any new feature or making multi-file changes, always run the full test suite (`npm test` or equivalent) and fix any failing tests before considering the task complete.
-after the testing instruction\n\nAfter editing TypeScript files, run the linter (`npm run lint` or equivalent) and fix all errors/warnings before finishing. Pay special attention to Next.js server/client boundary rules and ensure 'use client' directives are correct.
-
+**Task completion (agents):** Before considering work finished, you **must** (1) run **`npm test`** and fix failing tests, and (2) run **`npm run lint`** and fix **all** ESLint errors and warnings. The task is not complete until both pass. For TS/TSX changes, respect Next.js server/client boundaries and `"use client"` usage (see **`AGENTS.md`** for full detail).
 
 ## Current State (as of 2026-03-29)
 

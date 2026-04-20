@@ -56,9 +56,13 @@ function MixesBrowser() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const appendInFlightRef = useRef(false);
   const routerRef = useRef(router);
-  routerRef.current = router;
   const searchParamsRef = useRef(searchParams);
-  searchParamsRef.current = searchParams;
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
 
   const mixIds = useMemo(() => mixes.map((m) => m.id), [mixes]);
   const serverLikedIds = useLikedMixIds(mixIds, currentUser?.id);
