@@ -18,6 +18,114 @@ describe("conversationsService", () => {
     mockAuthGetUser.mockResolvedValue({ data: { user: null }, error: null });
   });
 
+  describe("patchInboxAfterMessageInsert", () => {
+    const baseItem = {
+      id: "conv-1",
+      type: "dm" as const,
+      event_id: null,
+      updated_at: "2026-01-01T00:00:00.000Z",
+      lastMessage: {
+        body: "old",
+        sender_id: "user-2",
+        created_at: "2026-01-01T00:00:00.000Z",
+      },
+      unreadCount: 2,
+      otherParticipant: {
+        id: "user-2",
+        display_name: "Beta",
+        slug: "beta",
+        profile_image_url: null,
+      },
+      event: null,
+    };
+
+    it("returns refetch when conversation is not in the list", async () => {
+      mockAuthGetUser.mockResolvedValue({
+        data: { user: { id: "user-1" } },
+        error: null,
+      });
+
+      const out = await conversationsService.patchInboxAfterMessageInsert(
+        [],
+        {
+          id: "m1",
+          conversation_id: "conv-x",
+          body: "hi",
+          sender_id: "user-2",
+          created_at: "2026-01-02T00:00:00.000Z",
+        },
+        "user-1",
+      );
+
+      expect(out).toBe("refetch");
+      expect(fromMock).not.toHaveBeenCalled();
+    });
+
+    it("merges message, bumps unread from other user, fetches conversation updated_at", async () => {
+      mockAuthGetUser.mockResolvedValue({
+        data: { user: { id: "user-1" } },
+        error: null,
+      });
+
+      const maybeSingle = jest.fn().mockResolvedValue({
+        data: { updated_at: "2026-01-03T12:00:00.000Z" },
+        error: null,
+      });
+      const eq = jest.fn().mockReturnValue({ maybeSingle });
+      const select = jest.fn().mockReturnValue({ eq });
+      fromMock.mockReturnValueOnce({ select });
+
+      const out = await conversationsService.patchInboxAfterMessageInsert(
+        [baseItem],
+        {
+          id: "m-new",
+          conversation_id: "conv-1",
+          body: "yo",
+          sender_id: "user-2",
+          created_at: "2026-01-03T12:00:00.000Z",
+        },
+        "user-1",
+      );
+
+      expect(out).not.toBe("refetch");
+      if (out === "refetch") throw new Error("expected merged list");
+      expect(out[0]?.lastMessage?.body).toBe("yo");
+      expect(out[0]?.unreadCount).toBe(3);
+      expect(out[0]?.updated_at).toBe("2026-01-03T12:00:00.000Z");
+      expect(fromMock).toHaveBeenCalledWith("conversations");
+    });
+
+    it("does not bump unread for own message", async () => {
+      mockAuthGetUser.mockResolvedValue({
+        data: { user: { id: "user-1" } },
+        error: null,
+      });
+
+      const maybeSingle = jest.fn().mockResolvedValue({
+        data: { updated_at: "2026-01-04T00:00:00.000Z" },
+        error: null,
+      });
+      const eq = jest.fn().mockReturnValue({ maybeSingle });
+      const select = jest.fn().mockReturnValue({ eq });
+      fromMock.mockReturnValueOnce({ select });
+
+      const out = await conversationsService.patchInboxAfterMessageInsert(
+        [baseItem],
+        {
+          id: "m-own",
+          conversation_id: "conv-1",
+          body: "me",
+          sender_id: "user-1",
+          created_at: "2026-01-04T00:00:00.000Z",
+        },
+        "user-1",
+      );
+
+      if (out === "refetch") throw new Error("expected merged list");
+      expect(out[0]?.unreadCount).toBe(2);
+    });
+  });
+
   it("getOrCreateDM calls rpc with argument", async () => {
     mockRpc.mockResolvedValueOnce({ data: "conv-1", error: null });
     const id = await conversationsService.getOrCreateDM("user-2");
