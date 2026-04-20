@@ -156,6 +156,59 @@ export async function getInbox(
   );
 }
 
+/** Row shape from Realtime `messages` INSERT (or equivalent). */
+export type MessageInsertInboxPayload = {
+  id: string;
+  conversation_id: string;
+  body: string;
+  sender_id: string;
+  created_at: string | null;
+};
+
+/**
+ * Apply a single new message to the inbox list without reloading all threads.
+ * Returns `"refetch"` when the conversation is missing from the list (e.g. new thread)
+ * or conversation metadata cannot be read — caller should run full `getInbox`.
+ */
+export async function patchInboxAfterMessageInsert(
+  items: ConversationInboxItem[],
+  message: MessageInsertInboxPayload,
+  currentUserId?: string,
+): Promise<ConversationInboxItem[] | "refetch"> {
+  const userId = await resolveCurrentUserId(currentUserId);
+  const idx = items.findIndex((c) => c.id === message.conversation_id);
+  if (idx === -1) return "refetch";
+
+  const { data: convRow, error } = await supabase()
+    .from(TABLES.conversations)
+    .select("updated_at")
+    .eq("id", message.conversation_id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!convRow) return "refetch";
+
+  const prev = items[idx]!;
+  const lastMessage: ConversationInboxItem["lastMessage"] = {
+    body: message.body,
+    sender_id: message.sender_id,
+    created_at: message.created_at,
+  };
+  const unreadDelta = message.sender_id !== userId ? 1 : 0;
+  const merged: ConversationInboxItem = {
+    ...prev,
+    updated_at: convRow.updated_at ?? message.created_at,
+    lastMessage,
+    unreadCount: prev.unreadCount + unreadDelta,
+  };
+
+  const next = [...items];
+  next[idx] = merged;
+  return next.sort(
+    (a, b) =>
+      new Date(b.updated_at ?? 0).getTime() - new Date(a.updated_at ?? 0).getTime(),
+  );
+}
+
 export async function getOrCreateDM(otherUserId: string): Promise<string> {
   const { data, error } = await supabase().rpc("get_or_create_dm", {
     other_user_id: otherUserId,
@@ -345,6 +398,7 @@ export async function markAsRead(
 
 export const conversationsService = {
   getInbox,
+  patchInboxAfterMessageInsert,
   getOrCreateDM,
   createEventGroupThread,
   ensureEventGroupThread,

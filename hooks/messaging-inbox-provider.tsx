@@ -2,14 +2,19 @@
 
 import {
   createContext,
+  startTransition,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-import { conversationsService } from "@/lib/services/conversations";
+import {
+  conversationsService,
+  type MessageInsertInboxPayload,
+} from "@/lib/services/conversations";
 import { createClient } from "@/lib/supabase/client";
 import type { ConversationInboxItem } from "@/types";
 
@@ -25,6 +30,8 @@ const MessagingInboxContext = createContext<MessagingInboxContextValue | null>(
   null,
 );
 
+const SEEN_MESSAGE_IDS_MAX = 500;
+
 export function MessagingInboxProvider({
   userId,
   userLoading,
@@ -39,6 +46,14 @@ export function MessagingInboxProvider({
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  const conversationsRef = useRef<ConversationInboxItem[]>([]);
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
+  const inboxPatchChainRef = useRef(Promise.resolve());
+  const seenMessageIdsRef = useRef<Set<string>>(new Set());
 
   const fetchInbox = useCallback(
     async (opts?: { background?: boolean }) => {
@@ -56,6 +71,7 @@ export function MessagingInboxProvider({
       try {
         const data = await conversationsService.getInbox(userId);
         setConversations(data);
+        conversationsRef.current = data;
         if (!background) setError(null);
       } catch (err) {
         setError(err instanceof Error ? err : new Error(String(err)));
@@ -68,7 +84,9 @@ export function MessagingInboxProvider({
 
   useEffect(() => {
     if (userLoading) return;
-    void fetchInbox({ background: false });
+    startTransition(() => {
+      void fetchInbox({ background: false });
+    });
   }, [fetchInbox, userLoading]);
 
   useEffect(() => {
@@ -79,8 +97,54 @@ export function MessagingInboxProvider({
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages" },
-        () => {
-          void fetchInbox({ background: true });
+        (payload) => {
+          const row = payload.new as Partial<MessageInsertInboxPayload> | null;
+          if (
+            !row?.id ||
+            !row.conversation_id ||
+            !row.body ||
+            !row.sender_id
+          ) {
+            void fetchInbox({ background: true });
+            return;
+          }
+          if (seenMessageIdsRef.current.has(row.id)) return;
+          seenMessageIdsRef.current.add(row.id);
+          if (seenMessageIdsRef.current.size > SEEN_MESSAGE_IDS_MAX) {
+            seenMessageIdsRef.current.clear();
+          }
+
+          const message: MessageInsertInboxPayload = {
+            id: row.id,
+            conversation_id: row.conversation_id,
+            body: row.body,
+            sender_id: row.sender_id,
+            created_at: row.created_at ?? null,
+          };
+
+          inboxPatchChainRef.current = inboxPatchChainRef.current
+            .then(async () => {
+              try {
+                const prev = conversationsRef.current;
+                const out =
+                  await conversationsService.patchInboxAfterMessageInsert(
+                    prev,
+                    message,
+                    userId,
+                  );
+                if (out === "refetch") {
+                  await fetchInbox({ background: true });
+                  return;
+                }
+                conversationsRef.current = out;
+                setConversations(out);
+              } catch {
+                await fetchInbox({ background: true });
+              }
+            })
+            .catch(() => {
+              void fetchInbox({ background: true });
+            });
         },
       )
       .subscribe();

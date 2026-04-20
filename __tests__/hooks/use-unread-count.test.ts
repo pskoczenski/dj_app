@@ -6,6 +6,7 @@ const mockGetInbox = jest.fn();
 jest.mock("@/lib/services/conversations", () => ({
   conversationsService: {
     getInbox: (...a: unknown[]) => mockGetInbox(...a),
+    patchInboxAfterMessageInsert: jest.fn().mockResolvedValue("refetch"),
   },
 }));
 

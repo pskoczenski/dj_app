@@ -1,11 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import { DEFAULT_MESSAGES_PAGE_SIZE, messagesService } from "@/lib/services/messages";
 import { conversationsService } from "@/lib/services/conversations";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { createClient } from "@/lib/supabase/client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { MessageWithSender } from "@/types";
+
+const TYPING_SEND_MIN_MS = 1500;
+const TYPING_PEER_IDLE_MS = 3000;
 
 function uniqueById(items: MessageWithSender[]): MessageWithSender[] {
   const seen = new Set<string>();
@@ -20,26 +24,34 @@ function uniqueById(items: MessageWithSender[]): MessageWithSender[] {
 
 export function useMessages(conversationId: string) {
   const { user, loading: userLoading } = useCurrentUser();
+  const userId = user?.id;
   const [messages, setMessages] = useState<MessageWithSender[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [sending, setSending] = useState(false);
+  const [typingPeerIds, setTypingPeerIds] = useState<string[]>([]);
   const lastSeenNewestRef = useRef<string | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const realtimeSubscribedRef = useRef(false);
+  const lastTypingSentAtRef = useRef(0);
+  const typingPeerTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  );
 
   const markAsReadIfNew = useCallback(
     async (incoming: MessageWithSender[]) => {
-      if (!conversationId || !user?.id || incoming.length === 0) return;
+      if (!conversationId || !userId || incoming.length === 0) return;
       const newest = incoming[0]?.created_at ?? null;
       if (!newest || newest === lastSeenNewestRef.current) return;
       lastSeenNewestRef.current = newest;
-      await conversationsService.markAsRead(conversationId, user.id);
+      await conversationsService.markAsRead(conversationId, userId);
     },
-    [conversationId, user?.id],
+    [conversationId, userId],
   );
 
   const fetchLatest = useCallback(async () => {
-    if (!conversationId || !user?.id) {
+    if (!conversationId || !userId) {
       setMessages([]);
       setLoading(false);
       return;
@@ -58,7 +70,7 @@ export function useMessages(conversationId: string) {
     } finally {
       setLoading(false);
     }
-  }, [conversationId, markAsReadIfNew, user?.id]);
+  }, [conversationId, markAsReadIfNew, userId]);
 
   const loadMore = useCallback(async () => {
     if (!conversationId || !hasMore || messages.length === 0) return;
@@ -117,16 +129,70 @@ export function useMessages(conversationId: string) {
     [conversationId, markAsReadIfNew, user],
   );
 
+  /** `isActive` false = user cleared the compose box; send immediately so peers hide the indicator. */
+  const notifyTyping = useCallback((isActive = true) => {
+    if (!userId || !realtimeSubscribedRef.current || !channelRef.current) return;
+    if (isActive) {
+      const now = Date.now();
+      if (now - lastTypingSentAtRef.current < TYPING_SEND_MIN_MS) return;
+      lastTypingSentAtRef.current = now;
+    }
+    void channelRef.current.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { userId, active: isActive },
+    });
+  }, [userId]);
+
+  useEffect(() => {
+    lastSeenNewestRef.current = null;
+  }, [conversationId]);
+
   useEffect(() => {
     if (userLoading) return;
-    void fetchLatest();
+    startTransition(() => {
+      void fetchLatest();
+    });
   }, [fetchLatest, userLoading]);
 
   useEffect(() => {
-    if (!conversationId || !user?.id) return;
+    startTransition(() => {
+      setTypingPeerIds([]);
+    });
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (!conversationId || !userId) return;
+
+    const typingTimeoutsForCleanup = typingPeerTimeoutsRef.current;
+
     const client = createClient();
-    const channel = client
-      .channel(`messages:${conversationId}`)
+    const channel = client.channel(`messages:${conversationId}`, {
+      config: { broadcast: { self: false } },
+    });
+
+    const clearPeerTyping = (userId: string) => {
+      const t = typingPeerTimeoutsRef.current.get(userId);
+      if (t) clearTimeout(t);
+      typingPeerTimeoutsRef.current.delete(userId);
+      setTypingPeerIds((prev) => prev.filter((id) => id !== userId));
+    };
+
+    const refreshPeerTyping = (typingUserId: string) => {
+      if (!typingUserId || typingUserId === userId) return;
+      const existing = typingPeerTimeoutsRef.current.get(typingUserId);
+      if (existing) clearTimeout(existing);
+      setTypingPeerIds((prev) =>
+        prev.includes(typingUserId) ? prev : [...prev, typingUserId],
+      );
+      const t = setTimeout(() => clearPeerTyping(typingUserId), TYPING_PEER_IDLE_MS);
+      typingPeerTimeoutsRef.current.set(typingUserId, t);
+    };
+
+    channelRef.current = channel;
+    realtimeSubscribedRef.current = false;
+
+    channel
       .on(
         "postgres_changes",
         {
@@ -136,17 +202,58 @@ export function useMessages(conversationId: string) {
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          const row = payload.new as { sender_id?: string };
-          // Own messages are already handled optimistically in sendMessage
-          if (row.sender_id === user.id) return;
-          void fetchLatest();
+          const row = payload.new as { id?: string; sender_id?: string };
+          if (row.sender_id === userId) return;
+          const id = row.id;
+          if (!id) {
+            void fetchLatest();
+            return;
+          }
+          void (async () => {
+            try {
+              const msg = await messagesService.getMessageWithSender(id);
+              if (!msg) {
+                void fetchLatest();
+                return;
+              }
+              setMessages((prev) => {
+                if (prev.some((m) => m.id === msg.id)) return prev;
+                return [msg, ...prev];
+              });
+              await markAsReadIfNew([msg]);
+            } catch {
+              void fetchLatest();
+            }
+          })();
         },
       )
-      .subscribe();
+      .on("broadcast", { event: "typing" }, (broadcastPayload) => {
+        const inner = broadcastPayload.payload as
+          | { userId?: string; active?: boolean }
+          | undefined;
+        const uid = inner?.userId;
+        if (!uid || uid === userId) return;
+        const active = inner?.active !== false;
+        if (!active) {
+          clearPeerTyping(uid);
+          return;
+        }
+        refreshPeerTyping(uid);
+      })
+      .subscribe((status) => {
+        realtimeSubscribedRef.current = status === "SUBSCRIBED";
+      });
+
     return () => {
+      realtimeSubscribedRef.current = false;
+      channelRef.current = null;
+      for (const t of typingTimeoutsForCleanup.values()) {
+        clearTimeout(t);
+      }
+      typingTimeoutsForCleanup.clear();
       void client.removeChannel(channel);
     };
-  }, [conversationId, fetchLatest, user?.id]);
+  }, [conversationId, fetchLatest, markAsReadIfNew, userId]);
 
   return {
     messages,
@@ -157,5 +264,7 @@ export function useMessages(conversationId: string) {
     loadMore,
     sendMessage,
     refetch: fetchLatest,
+    typingPeerIds,
+    notifyTyping,
   };
 }

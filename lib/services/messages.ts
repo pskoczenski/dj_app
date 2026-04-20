@@ -45,6 +45,22 @@ export async function getMessages(
   return (data ?? []) as MessageWithSender[];
 }
 
+/** Single message with sender embed — used for incremental Realtime merge without refetching the full page. */
+export async function getMessageWithSender(
+  messageId: string,
+): Promise<MessageWithSender | null> {
+  const { data, error } = await supabase()
+    .from(TABLES.messages)
+    .select(
+      "*, sender:profiles!messages_sender_id_fkey(id,display_name,slug,profile_image_url)",
+    )
+    .eq("id", messageId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error) throw error;
+  return (data ?? null) as MessageWithSender | null;
+}
+
 export async function send(
   conversationId: string,
   body: string,
@@ -86,6 +102,7 @@ export async function deleteMessage(messageId: string): Promise<void> {
 
 export const messagesService = {
   getMessages,
+  getMessageWithSender,
   send,
   deleteMessage,
 };

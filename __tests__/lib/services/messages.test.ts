@@ -58,4 +58,24 @@ describe("messagesService", () => {
     });
     expect(mockMarkAsRead).toHaveBeenCalledWith("conv-1", "user-1");
   });
+
+  it("getMessageWithSender selects by id with sender embed", async () => {
+    const maybeSingle = jest.fn().mockResolvedValue({
+      data: {
+        id: "m1",
+        body: "x",
+        sender: { id: "u1", display_name: "A", slug: "a", profile_image_url: null },
+      },
+      error: null,
+    });
+    const is = jest.fn().mockReturnValue({ maybeSingle });
+    const eq = jest.fn().mockReturnValue({ is });
+    const select = jest.fn().mockReturnValue({ eq });
+    fromMock.mockReturnValueOnce({ select });
+
+    const row = await messagesService.getMessageWithSender("m1");
+
+    expect(eq).toHaveBeenCalledWith("id", "m1");
+    expect(row?.id).toBe("m1");
+  });
 });
