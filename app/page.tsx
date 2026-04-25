@@ -18,26 +18,12 @@ export default async function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-mb-surface-0 text-mb-text-primary">
       <nav
-        className="flex items-center justify-between border-b border-mb-border-hair px-6 py-5 md:px-10 md:py-[18px]"
+        className="flex items-center border-b border-mb-border-hair px-6 py-5 md:px-10 md:py-[18px]"
         aria-label="Site"
       >
         <Link href="/" className="shrink-0 focus-visible:outline-none">
           <Wordmark className="text-sm" />
         </Link>
-        <div className="flex items-center gap-1 sm:gap-4">
-          <Link
-            href="/login"
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
-          >
-            Log in
-          </Link>
-          <Link
-            href="/signup"
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
-          >
-            Sign up
-          </Link>
-        </div>
       </nav>
 
       <main className="mx-auto w-full max-w-[900px] flex-1 px-6 pb-12 pt-20 md:px-10 md:pt-[140px]">
