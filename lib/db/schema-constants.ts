@@ -9,6 +9,8 @@ export const TABLES = {
   eventLikes: "event_likes",
   eventSaves: "event_saves",
   eventLineup: "event_lineup",
+  reports: "reports",
+  blocks: "blocks",
   conversations: "conversations",
   conversationParticipants: "conversation_participants",
   messages: "messages",

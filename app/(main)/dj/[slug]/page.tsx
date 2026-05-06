@@ -18,6 +18,8 @@ import { MixCard } from "@/components/mixes/mix-card";
 import { EventCard } from "@/components/events/event-card";
 import { QuickMessageDialog } from "@/components/messages/QuickMessageDialog";
 import { buttonVariants } from "@/components/ui/button";
+import { BlockUserButton } from "@/components/shared/block-user-button";
+import { ReportDialog } from "@/components/shared/report-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -320,6 +322,22 @@ export default function DjProfilePage({
                     Message
                   </span>
                 }
+              />
+              <BlockUserButton blockedId={profile.id} />
+              <ReportDialog
+                subjectType="profile"
+                subjectId={profile.id}
+                trigger={
+                  <span
+                    className={buttonVariants({
+                      variant: "outline",
+                      size: "sm",
+                    })}
+                  >
+                    Report
+                  </span>
+                }
+                title="Report user"
               />
             </div>
           </div>

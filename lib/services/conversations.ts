@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
+import { blocksService } from "@/lib/services/blocks";
 import type {
   ConversationInboxItem,
   EventStatus,
@@ -210,6 +211,16 @@ export async function patchInboxAfterMessageInsert(
 }
 
 export async function getOrCreateDM(otherUserId: string): Promise<string> {
+  // Service-layer guard (defense in depth; DB RPC also enforces).
+  try {
+    const status = await blocksService.getBlockStatus(otherUserId);
+    if (status.blockedByMe || status.blockedMe) {
+      throw new Error("Messaging is unavailable.");
+    }
+  } catch {
+    // If we can't read block state (RLS), rely on DB enforcement.
+  }
+
   const { data, error } = await supabase().rpc("get_or_create_dm", {
     other_user_id: otherUserId,
   });

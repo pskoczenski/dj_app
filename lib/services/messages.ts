@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { TABLES } from "@/lib/db/schema-constants";
 import { conversationsService } from "@/lib/services/conversations";
+import { blocksService } from "@/lib/services/blocks";
 import type { MessageWithSender } from "@/types";
 
 export const DEFAULT_MESSAGES_PAGE_SIZE = 30;
@@ -69,6 +70,20 @@ export async function send(
   const senderId = await resolveCurrentUserId(currentUserId);
   const trimmed = body.trim();
   if (!trimmed) throw new Error("Message cannot be empty.");
+
+  // Service-layer guard (defense in depth; DB policy also enforces for DMs).
+  try {
+    const participants = await conversationsService.getParticipants(conversationId);
+    const other = participants.find((p) => p.id !== senderId)?.id ?? null;
+    if (other) {
+      const status = await blocksService.getBlockStatus(other);
+      if (status.blockedByMe || status.blockedMe) {
+        throw new Error("Messaging is unavailable.");
+      }
+    }
+  } catch {
+    // If we can't read block state (RLS), rely on DB policy for enforcement.
+  }
 
   const { data, error } = await supabase()
     .from(TABLES.messages)
