@@ -6,10 +6,10 @@ import { cn } from "@/lib/utils";
 /** Avoid static prerender quirks for credential POST flows on the edge network. */
 export const dynamic = "force-dynamic";
 
-export default function ComingSoonPage(props: {
-  searchParams?: { next?: string; error?: string };
+export default async function ComingSoonPage(props: {
+  searchParams?: Promise<{ next?: string; error?: string }>;
 }) {
-  const searchParams = props.searchParams ?? {};
+  const searchParams = (await props.searchParams) ?? {};
   const next = typeof searchParams.next === "string" ? searchParams.next : "";
   const hasError = searchParams.error === "1";
 

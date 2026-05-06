@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     const url = new URL(request.url);
     const form = await request.formData();
     const next = safeRedirectTarget(form.get("next")?.toString());
-    return NextResponse.redirect(new URL(next, url.origin));
+    return NextResponse.redirect(new URL(next, url.origin), 303);
   }
 
   const password = process.env.COMING_SOON_PASSWORD;
@@ -49,13 +49,13 @@ export async function POST(request: Request) {
     const redirectUrl = new URL("/coming-soon", url.origin);
     if (form.get("next")) redirectUrl.searchParams.set("next", next);
     redirectUrl.searchParams.set("error", "1");
-    return NextResponse.redirect(redirectUrl);
+    return NextResponse.redirect(redirectUrl, 303);
   }
 
   const token = randomBytes(32).toString("base64url");
   const cookieValue = await createComingSoonCookieValue({ secret, token });
 
-  const res = NextResponse.redirect(new URL(next, url.origin));
+  const res = NextResponse.redirect(new URL(next, url.origin), 303);
   res.cookies.set(comingSoonCookieName, cookieValue, {
     httpOnly: true,
     sameSite: "lax",
