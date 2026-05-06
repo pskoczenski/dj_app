@@ -12,4 +12,11 @@ describe("root layout metadata", () => {
       siteName: "Mirrorball",
     });
   });
+
+  it("sets global robots to noindex,nofollow", () => {
+    expect(metadata.robots).toMatchObject({
+      index: false,
+      follow: false,
+    });
+  });
 });

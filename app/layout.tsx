@@ -33,6 +33,14 @@ export const metadata: Metadata = {
     template: "%s — Mirrorball",
   },
   description: "A home for the people keeping the dance floor honest.",
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
   openGraph: {
     title: "Mirrorball",
     description: "A home for the people keeping the dance floor honest.",
