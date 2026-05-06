@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -20,27 +20,32 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
-type BannerMode = "banner" | "hidden";
-
 function withUpdatedAt(consent: CookieConsent): CookieConsent {
   return { ...consent, updatedAt: new Date().toISOString() };
 }
 
 export function CookieConsentBanner() {
   const pathname = usePathname();
-  const existing = useMemo(() => getConsentFromCookie(), []);
-  const [mode, setMode] = useState<BannerMode>(existing ? "hidden" : "banner");
+  // Render nothing during SSR + first client render so hydration matches.
+  // Reading document.cookie during render produces a server/client mismatch
+  // that bails React out of hydrating this subtree, leaving non-interactive
+  // markup behind.
+  const [hasMounted, setHasMounted] = useState(false);
+  const [existing, setExisting] = useState<CookieConsent | null>(null);
+  const [dismissed, setDismissed] = useState(false);
   const [open, setOpen] = useState(false);
-  const [functional, setFunctional] = useState<boolean>(() => {
-    const c = existing ?? defaultConsent();
-    return Boolean(c.categories.functional);
-  });
+  const [functional, setFunctional] = useState(false);
 
   useEffect(() => {
-    if (existing) setMode("hidden");
-  }, [existing]);
+    const consent = getConsentFromCookie();
+    setExisting(consent);
+    setFunctional(Boolean(consent?.categories.functional));
+    setHasMounted(true);
+  }, []);
 
+  if (!hasMounted) return null;
   if (pathname === "/coming-soon") return null;
+  if (existing || dismissed) return null;
 
   function saveChoice(nextFunctional: boolean) {
     const next = withUpdatedAt({
@@ -48,12 +53,11 @@ export function CookieConsentBanner() {
       categories: { necessary: true, functional: nextFunctional },
     });
     setConsentCookie(next);
+    setExisting(next);
     setFunctional(nextFunctional);
-    setMode("hidden");
+    setDismissed(true);
     setOpen(false);
   }
-
-  if (mode === "hidden") return null;
 
   return (
     <>
