@@ -77,16 +77,21 @@ function decodeConsentCookieValue(value: string): CookieConsent | null {
 }
 
 export function getConsentFromCookie(cookieStore?: CookieStoreLike): CookieConsent | null {
-  const raw = cookieStore
-    ? cookieStore.get(COOKIE_CONSENT_COOKIE_NAME)?.value?.trim()
-    : readDocumentCookie(COOKIE_CONSENT_COOKIE_NAME)?.trim();
-  if (!raw) return null;
+  try {
+    const raw = cookieStore
+      ? cookieStore.get(COOKIE_CONSENT_COOKIE_NAME)?.value?.trim()
+      : readDocumentCookie(COOKIE_CONSENT_COOKIE_NAME)?.trim();
+    if (!raw) return null;
 
-  const parsed = decodeConsentCookieValue(raw);
-  if (!parsed) return null;
+    const parsed = decodeConsentCookieValue(raw);
+    if (!parsed) return null;
 
-  if (parsed.version !== COOKIE_CONSENT_VERSION) return null;
-  return parsed;
+    if (parsed.version !== COOKIE_CONSENT_VERSION) return null;
+    return parsed;
+  } catch {
+    // Never let a malformed cookie break hydration / rendering.
+    return null;
+  }
 }
 
 export function serializeConsent(consent: CookieConsent): string {
