@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
 import type { CurrentUser } from "@/hooks/use-current-user";
 import { LogOut, Pencil, User } from "lucide-react";
@@ -22,6 +23,14 @@ interface AvatarDropdownProps {
 
 export function AvatarDropdown({ user, ftueAnchor }: AvatarDropdownProps) {
   const router = useRouter();
+
+  const initials =
+    user.displayName
+      .split(" ")
+      .map((w) => w[0] ?? "")
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "MB";
 
   async function handleLogout() {
     const supabase = createClient();
@@ -37,7 +46,14 @@ export function AvatarDropdown({ user, ftueAnchor }: AvatarDropdownProps) {
         className="flex size-8 cursor-pointer items-center justify-center rounded-full border border-mb-border-soft bg-mb-surface-3 text-mb-turquoise-pale outline-none transition-colors hover:bg-mb-surface-3 hover:text-mb-text-primary focus-visible:ring-2 focus-visible:ring-mb-turquoise-mid"
         aria-label="User menu"
       >
-        <User className="size-4" aria-hidden />
+        {user.avatarUrl ? (
+          <Avatar size="sm" className="size-7 border-0 after:hidden">
+            <AvatarImage src={user.avatarUrl} alt="" />
+            <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+          </Avatar>
+        ) : (
+          <User className="size-4" aria-hidden />
+        )}
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" sideOffset={8} className="w-56">
