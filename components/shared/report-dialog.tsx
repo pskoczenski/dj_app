@@ -76,19 +76,9 @@ export function ReportDialog({
           },
         })
       ) : (
-        <span
-          role="button"
-          tabIndex={0}
-          onClick={() => setOpen(true)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setOpen(true);
-            }
-          }}
-        >
+        <button type="button" onClick={() => setOpen(true)}>
           {trigger}
-        </span>
+        </button>
       )}
 
       <DialogContent className="sm:max-w-md pr-10 pt-6">

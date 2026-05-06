@@ -32,9 +32,9 @@ export default async function Home() {
           Welcome to Mirrorball.
         </h1>
         <br />
-        <h3 className="max-w-[780px] font-display text-[24px] font-medium leading-[1.1] tracking-[-0.015em] text-mb-text-primary md:text-[36px]">
+        <h2 className="max-w-[780px] font-display text-[24px] font-medium leading-[1.1] tracking-[-0.015em] text-mb-text-primary md:text-[36px]">
           A home for the people keeping the dance floor honest.
-        </h3>
+        </h2>
 
         <div className="mt-10 max-w-[600px] space-y-5 text-base leading-[1.75] text-mb-text-secondary md:text-[17px]">
           <p>
