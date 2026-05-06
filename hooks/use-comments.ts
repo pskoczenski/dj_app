@@ -92,6 +92,48 @@ export function useComments(commentableType: CommentableType, commentableId: str
     }
   }, [comments]);
 
+  const updateComment = useCallback(
+    async (commentId: string, body: string) => {
+      const existing = comments.find((c) => c.id === commentId);
+      if (!existing || commentId.startsWith("tmp-")) return;
+      const trimmed = body.trim();
+      if (!trimmed) {
+        toast.error("Comment cannot be empty.");
+        return;
+      }
+
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId ? { ...c, body: trimmed } : c,
+        ),
+      );
+      try {
+        const saved = await commentsService.update(commentId, body);
+        setComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId
+              ? {
+                  ...c,
+                  body: saved.body,
+                  created_at: saved.created_at,
+                  updated_at: saved.updated_at,
+                  profile_id: saved.profile_id,
+                  author: saved.author ?? c.author,
+                }
+              : c,
+          ),
+        );
+      } catch (err) {
+        setComments((prev) =>
+          prev.map((c) => (c.id === commentId ? existing : c)),
+        );
+        toast.error("Could not save comment.");
+        throw err;
+      }
+    },
+    [comments],
+  );
+
   const hasMore =
     Boolean(commentableId) && totalCount > 0 && comments.length < totalCount;
 
@@ -104,6 +146,7 @@ export function useComments(commentableType: CommentableType, commentableId: str
     loadMore,
     addComment,
     deleteComment,
+    updateComment,
     refetch,
   };
 }

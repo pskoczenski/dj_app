@@ -130,6 +130,47 @@ describe("commentsService", () => {
     expect(ok).toBe(true);
   });
 
+  it("update sets body for own active comment and returns author", async () => {
+    const singleUpdate = jest.fn().mockResolvedValue({
+      data: {
+        id: "c1",
+        body: "revised",
+        created_at: "2026-01-01T00:00:00.000Z",
+        updated_at: "2026-01-02T00:00:00.000Z",
+        profile_id: "user-1",
+      },
+      error: null,
+    });
+    const selectUpdate = jest.fn().mockReturnValue({ single: singleUpdate });
+    const isUpdate = jest.fn().mockReturnValue({ select: selectUpdate });
+    const eqProfileUpdate = jest.fn().mockReturnValue({ is: isUpdate });
+    const eqIdUpdate = jest.fn().mockReturnValue({ eq: eqProfileUpdate });
+    const update = jest.fn().mockReturnValue({ eq: eqIdUpdate });
+
+    const singleProfile = jest.fn().mockResolvedValue({
+      data: {
+        display_name: "DJ Alpha",
+        slug: "dj-alpha",
+        profile_image_url: null,
+      },
+      error: null,
+    });
+    const eqProfile = jest.fn().mockReturnValue({ single: singleProfile });
+    const selectProfile = jest.fn().mockReturnValue({ eq: eqProfile });
+
+    fromMock
+      .mockReturnValueOnce({ update })
+      .mockReturnValueOnce({ select: selectProfile });
+
+    const result = await commentsService.update("c1", " revised ");
+    expect(update).toHaveBeenCalledWith({ body: "revised" });
+    expect(eqIdUpdate).toHaveBeenCalledWith("id", "c1");
+    expect(eqProfileUpdate).toHaveBeenCalledWith("profile_id", "user-1");
+    expect(isUpdate).toHaveBeenCalledWith("deleted_at", null);
+    expect(result.body).toBe("revised");
+    expect(result.author?.display_name).toBe("DJ Alpha");
+  });
+
   it("getCommentCount returns exact count", async () => {
     const is = jest.fn().mockResolvedValue({ count: 4, error: null });
     const eq2 = jest.fn().mockReturnValue({ is });

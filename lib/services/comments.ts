@@ -173,11 +173,58 @@ export async function softDelete(commentId: string): Promise<boolean> {
   return true;
 }
 
+export async function update(
+  commentId: string,
+  body: string,
+): Promise<
+  Pick<
+    CommentWithAuthor,
+    "id" | "body" | "created_at" | "updated_at" | "profile_id" | "author"
+  >
+> {
+  const profileId = await resolveCurrentUserId();
+  if (!profileId) throw new Error("Authentication required.");
+
+  const trimmed = body.trim();
+  if (!trimmed) throw new Error("Comment body cannot be empty.");
+
+  const { data, error } = await supabase()
+    .from(TABLES.comments)
+    .update({ body: trimmed })
+    .eq("id", commentId)
+    .eq("profile_id", profileId)
+    .is("deleted_at", null)
+    .select("id,body,created_at,updated_at,profile_id")
+    .single();
+  if (error) throw error;
+
+  const { data: authorRow, error: authorErr } = await supabase()
+    .from(TABLES.profiles)
+    .select("display_name,slug,profile_image_url")
+    .eq("id", data.profile_id)
+    .single();
+  if (authorErr) throw authorErr;
+
+  return {
+    id: data.id,
+    body: data.body,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    profile_id: data.profile_id,
+    author: {
+      display_name: authorRow.display_name,
+      slug: authorRow.slug,
+      profile_image_url: authorRow.profile_image_url,
+    },
+  };
+}
+
 export const commentsService = {
   getComments,
   getCommentCount,
   create,
   softDelete,
+  update,
 };
 
 export { DEFAULT_COMMENTS_PAGE_SIZE };

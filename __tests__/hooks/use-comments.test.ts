@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 const mockGetComments = jest.fn();
 const mockCreateComment = jest.fn();
 const mockSoftDelete = jest.fn();
+const mockUpdateComment = jest.fn();
 const mockToastError = jest.fn();
 
 jest.mock("@/lib/services/comments", () => ({
@@ -11,6 +12,7 @@ jest.mock("@/lib/services/comments", () => ({
     getComments: (...a: unknown[]) => mockGetComments(...a),
     create: (...a: unknown[]) => mockCreateComment(...a),
     softDelete: (...a: unknown[]) => mockSoftDelete(...a),
+    update: (...a: unknown[]) => mockUpdateComment(...a),
     getCommentCount: jest.fn(),
   },
 }));
@@ -77,6 +79,46 @@ describe("useComments", () => {
 
     expect(result.current.comments).toHaveLength(0);
     expect(result.current.totalCount).toBe(0);
+  });
+
+  it("updateComment replaces body from server response", async () => {
+    mockGetComments.mockResolvedValueOnce({
+      comments: [
+        {
+          id: "c1",
+          body: "old",
+          created_at: "2026-01-01T00:00:00.000Z",
+          updated_at: "2026-01-01T00:00:00.000Z",
+          profile_id: "u1",
+          author: null,
+          likeCount: 3,
+          likedByMe: true,
+        },
+      ],
+      totalCount: 1,
+    });
+    mockUpdateComment.mockResolvedValueOnce({
+      id: "c1",
+      body: "new",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-02T00:00:00.000Z",
+      profile_id: "u1",
+      author: { display_name: "A", slug: "a", profile_image_url: null },
+    });
+    const { result } = renderHook(() => useComments("mix", "mix-1"));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.updateComment("c1", "new");
+    });
+
+    expect(mockUpdateComment).toHaveBeenCalledWith("c1", "new");
+    expect(result.current.comments[0]?.body).toBe("new");
+    expect(result.current.comments[0]?.updated_at).toBe(
+      "2026-01-02T00:00:00.000Z",
+    );
+    expect(result.current.comments[0]?.likeCount).toBe(3);
+    expect(result.current.comments[0]?.likedByMe).toBe(true);
   });
 
   it("loadMore appends older comments", async () => {
