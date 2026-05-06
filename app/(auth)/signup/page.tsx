@@ -177,6 +177,21 @@ export default function SignupPage() {
           Log in
         </Link>
       </p>
+
+      <div className="mt-6 space-y-2 text-center text-xs text-stone">
+        <p>
+          By continuing, you agree to the{" "}
+          <Link href="/terms" className="text-fern hover:text-living-fern">
+            Terms
+          </Link>{" "}
+          and acknowledge the{" "}
+          <Link href="/privacy" className="text-fern hover:text-living-fern">
+            Privacy Policy
+          </Link>
+          .
+        </p>
+        <p>You must be at least 13 years old to use Mirrorball.</p>
+      </div>
     </>
   );
 }

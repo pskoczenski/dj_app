@@ -71,4 +71,35 @@ describe("Landing page (Mirrorball manifesto)", () => {
     render(Page);
     expect(screen.getByRole("main")).toBeInTheDocument();
   });
+
+  it("renders footer legal links", async () => {
+    const Page = await Home();
+    render(Page);
+
+    const footer = screen.getByRole("contentinfo");
+    const nav = within(footer).getByRole("navigation", { name: /footer/i });
+
+    expect(within(nav).getByRole("link", { name: /privacy/i })).toHaveAttribute(
+      "href",
+      "/privacy",
+    );
+    expect(within(nav).getByRole("link", { name: /terms/i })).toHaveAttribute(
+      "href",
+      "/terms",
+    );
+    expect(
+      within(nav).getByRole("link", { name: /guidelines/i }),
+    ).toHaveAttribute("href", "/guidelines");
+    expect(within(nav).getByRole("link", { name: /dmca/i })).toHaveAttribute(
+      "href",
+      "/dmca",
+    );
+    expect(within(nav).getByRole("link", { name: /contact/i })).toHaveAttribute(
+      "href",
+      "/contact",
+    );
+    expect(
+      within(nav).getByRole("link", { name: /cookie preferences/i }),
+    ).toHaveAttribute("href", "/cookie-preferences");
+  });
 });

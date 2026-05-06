@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Wordmark } from "@/components/layout/wordmark";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 
@@ -60,12 +61,7 @@ export default async function Home() {
         </div>
       </main>
 
-      <footer className="mx-auto mt-auto w-full max-w-[900px] px-6 pb-10 pt-32 md:px-10 md:pt-[200px]">
-        <p className="flex flex-wrap items-center gap-x-2 text-xs text-mb-text-tertiary">
-          <Wordmark className="text-xs" />
-          <span>&copy; Mirrorball</span>
-        </p>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
