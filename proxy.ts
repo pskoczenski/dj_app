@@ -40,7 +40,7 @@ function isComingSoonAllowlistedPath(pathname: string): boolean {
   return false;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (process.env.COMING_SOON_ENABLED === "true") {
@@ -56,7 +56,10 @@ export async function middleware(request: NextRequest) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/coming-soon";
       redirectUrl.search = "";
-      redirectUrl.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);
+      redirectUrl.searchParams.set(
+        "next",
+        request.nextUrl.pathname + request.nextUrl.search,
+      );
       return NextResponse.redirect(redirectUrl);
     }
   }
@@ -83,3 +86,4 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
+

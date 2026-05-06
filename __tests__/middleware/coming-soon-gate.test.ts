@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { middleware } from "@/middleware";
+import { proxy } from "@/proxy";
 import { createComingSoonCookieValue } from "@/lib/coming-soon/gate";
 
 jest.mock("@/lib/supabase/middleware", () => ({
@@ -39,7 +39,7 @@ describe("middleware coming-soon gate", () => {
     process.env.COMING_SOON_GATE_SECRET = "secret";
 
     const req = makeRequest("/events?x=1");
-    const res = await middleware(req);
+    const res = await proxy(req);
 
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toBe(
@@ -52,7 +52,7 @@ describe("middleware coming-soon gate", () => {
     process.env.COMING_SOON_GATE_SECRET = "secret";
 
     const req = makeRequest("/coming-soon");
-    const res = await middleware(req);
+    const res = await proxy(req);
 
     expect(res.status).toBe(200);
   });
@@ -69,7 +69,7 @@ describe("middleware coming-soon gate", () => {
     const req = makeRequest("/events", {
       cookie: `mb_gate=${cookieValue}`,
     });
-    const res = await middleware(req);
+    const res = await proxy(req);
 
     expect(res.status).toBe(200);
   });
@@ -79,7 +79,7 @@ describe("middleware coming-soon gate", () => {
     delete process.env.COMING_SOON_GATE_SECRET;
 
     const req = makeRequest("/events");
-    const res = await middleware(req);
+    const res = await proxy(req);
 
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toBe(

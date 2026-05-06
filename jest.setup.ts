@@ -26,40 +26,45 @@ Object.defineProperty(window, "matchMedia", {
 // Next.js server utilities assume Fetch globals exist.
 // Jest's jsdom environment may not provide them, so polyfill.
 if (!globalThis.TextEncoder) {
-  // @ts-expect-error - assign for test runtime
-  globalThis.TextEncoder = TextEncoder;
+  (globalThis as unknown as { TextEncoder: typeof TextEncoder }).TextEncoder =
+    TextEncoder;
 }
 if (!globalThis.TextDecoder) {
-  // @ts-expect-error - assign for test runtime
-  globalThis.TextDecoder = TextDecoder;
+  (globalThis as unknown as { TextDecoder: typeof TextDecoder }).TextDecoder =
+    TextDecoder;
 }
 if (!globalThis.crypto) {
-  // @ts-expect-error - assign for test runtime
-  globalThis.crypto = webcrypto;
+  Object.defineProperty(globalThis, "crypto", {
+    value: webcrypto,
+    configurable: true,
+  });
 } else if (!globalThis.crypto.subtle) {
-  // jsdom may provide `crypto` without `subtle`; patch it in.
-  // @ts-expect-error - patch for test runtime
-  globalThis.crypto.subtle = webcrypto.subtle;
+  // jsdom may provide `crypto` without `subtle`; replace with WebCrypto.
+  Object.defineProperty(globalThis, "crypto", {
+    value: webcrypto,
+    configurable: true,
+  });
 }
 if (!globalThis.ReadableStream) {
-  // @ts-expect-error - assign for test runtime
-  globalThis.ReadableStream = ReadableStream;
+  (globalThis as unknown as { ReadableStream: typeof ReadableStream }).ReadableStream =
+    ReadableStream;
 }
 if (!globalThis.TransformStream) {
-  // @ts-expect-error - assign for test runtime
-  globalThis.TransformStream = TransformStream;
+  (
+    globalThis as unknown as { TransformStream: typeof TransformStream }
+  ).TransformStream = TransformStream;
 }
 if (!globalThis.WritableStream) {
-  // @ts-expect-error - assign for test runtime
-  globalThis.WritableStream = WritableStream;
+  (globalThis as unknown as { WritableStream: typeof WritableStream }).WritableStream =
+    WritableStream;
 }
 if (!globalThis.MessageChannel) {
-  // @ts-expect-error - assign for test runtime
-  globalThis.MessageChannel = MessageChannel;
+  (globalThis as unknown as { MessageChannel: typeof MessageChannel }).MessageChannel =
+    MessageChannel;
 }
 if (!globalThis.MessagePort) {
-  // @ts-expect-error - assign for test runtime
-  globalThis.MessagePort = MessagePort;
+  (globalThis as unknown as { MessagePort: typeof MessagePort }).MessagePort =
+    MessagePort;
 }
 
 // Load fetch polyfill after TextDecoder/TextEncoder are present.
@@ -68,18 +73,14 @@ const undici = require("undici") as typeof import("undici");
 const { Headers, Request, Response, fetch } = undici;
 
 if (!globalThis.Headers) {
-  // @ts-expect-error - assign for test runtime
-  globalThis.Headers = Headers;
+  (globalThis as unknown as { Headers: typeof Headers }).Headers = Headers;
 }
 if (!globalThis.Request) {
-  // @ts-expect-error - assign for test runtime
-  globalThis.Request = Request;
+  (globalThis as unknown as { Request: typeof Request }).Request = Request;
 }
 if (!globalThis.Response) {
-  // @ts-expect-error - assign for test runtime
-  globalThis.Response = Response;
+  (globalThis as unknown as { Response: typeof Response }).Response = Response;
 }
 if (!globalThis.fetch) {
-  // @ts-expect-error - assign for test runtime
-  globalThis.fetch = fetch;
+  (globalThis as unknown as { fetch: typeof fetch }).fetch = fetch;
 }
