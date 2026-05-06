@@ -66,7 +66,10 @@ function CommentsModalBody({
     loadMore,
     addComment,
     deleteComment,
-  } = useComments(commentableType, commentableId);
+    updateComment,
+  } = useComments(commentableType, commentableId, {
+    subscribeRealtime: true,
+  });
 
   async function handlePost() {
     if (!canPost) return;
@@ -108,6 +111,7 @@ function CommentsModalBody({
             comments={comments}
             currentUserId={user?.id ?? null}
             onDelete={(id) => void deleteComment(id)}
+            onEdit={(id, body) => void updateComment(id, body)}
             onLoadMore={() => void loadMore()}
             hasMore={hasMore}
             readOnly={readOnly}
