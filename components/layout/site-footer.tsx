@@ -4,7 +4,7 @@ import { Wordmark } from "@/components/layout/wordmark";
 type FooterLink = { href: string; label: string };
 type SiteFooterVariant = "public" | "auth";
 
-const FOOTER_LINKS: FooterLink[] = [
+export const SITE_FOOTER_LINKS: FooterLink[] = [
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
   { href: "/guidelines", label: "Guidelines" },
@@ -41,7 +41,7 @@ export function SiteFooter({ variant = "public" }: { variant?: SiteFooterVariant
 
           <nav aria-label="Footer">
             <ul className={`flex flex-wrap gap-x-4 gap-y-2 text-xs ${textClasses}`}>
-              {FOOTER_LINKS.map((link) => (
+              {SITE_FOOTER_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
