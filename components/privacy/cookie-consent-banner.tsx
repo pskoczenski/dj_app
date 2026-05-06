@@ -62,7 +62,11 @@ export function CookieConsentBanner() {
               allow optional functional cookies.
             </p>
             <p className="text-xs text-mb-text-tertiary">
-              <Link href="/cookie-preferences" className="underline underline-offset-4">
+              <Link
+                href="/cookie-preferences"
+                prefetch={false}
+                className="underline underline-offset-4"
+              >
                 Cookie Preferences
               </Link>
             </p>

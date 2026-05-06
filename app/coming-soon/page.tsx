@@ -69,7 +69,11 @@ export default function ComingSoonPage(props: {
         </p>
 
         <div className="mt-8 flex items-center justify-between text-xs text-stone">
-          <Link href="/" className="underline underline-offset-2">
+          <Link
+            href="/"
+            prefetch={false}
+            className="underline underline-offset-2"
+          >
             Back to home
           </Link>
           <form method="post" action="/api/coming-soon/lock">
