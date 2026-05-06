@@ -33,7 +33,6 @@ export function LineupCard({ item, profile }: LineupCardProps) {
           <AvatarImage
             src={profile.profile_image_url}
             alt={name}
-            className="box-border border-2 border-border"
           />
         ) : (
           <AvatarFallback className="text-xs">{initials}</AvatarFallback>
