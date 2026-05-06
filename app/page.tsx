@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Wordmark } from "@/components/layout/wordmark";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { DiscoAmbience } from "@/components/patterns/disco-ambience";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +18,8 @@ export default async function Home() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-mb-surface-0 text-mb-text-primary">
+    <div className="relative flex min-h-screen flex-col bg-mb-surface-0 text-mb-text-primary">
+      <DiscoAmbience />
       <nav
         className="flex items-center border-b border-mb-border-hair px-6 py-5 md:px-10 md:py-[18px]"
         aria-label="Site"
