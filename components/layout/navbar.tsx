@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useUnreadCount } from "@/hooks/use-unread-count";
 import { AvatarDropdown } from "./avatar-dropdown";
 import { LocationIndicator } from "./location-indicator";
+import { FooterLinksMenu } from "./footer-links-menu";
 import { Wordmark } from "./wordmark";
 import type { CurrentUser } from "@/hooks/use-current-user";
 
@@ -59,6 +60,7 @@ export function Navbar({ user }: NavbarProps) {
 
         <div className="ml-auto flex shrink-0 items-center gap-1">
           <LocationIndicator />
+          <FooterLinksMenu />
           <Link
             href="/messages"
             data-ftue="ftue-messages"

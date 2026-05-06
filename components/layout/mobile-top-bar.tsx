@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { MessageCircle, Search } from "lucide-react";
 import { AvatarDropdown } from "@/components/layout/avatar-dropdown";
+import { FooterLinksMenu } from "@/components/layout/footer-links-menu";
 import { LocationIndicator } from "@/components/layout/location-indicator";
 import { Wordmark } from "@/components/layout/wordmark";
 import type { CurrentUser } from "@/hooks/use-current-user";
@@ -19,6 +20,7 @@ export function MobileTopBar({ user }: MobileTopBarProps) {
       </Link>
       <div className="flex shrink-0 items-center gap-0.5">
         <LocationIndicator />
+        <FooterLinksMenu icon="hamburger" align="end" className="p-1.5" />
         <Link
           href="/messages"
           data-ftue="ftue-messages"
