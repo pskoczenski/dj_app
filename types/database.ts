@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocks: {
+        Row: {
+          blocker_id: string
+          blocked_id: string
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          blocker_id: string
+          blocked_id: string
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          blocker_id?: string
+          blocked_id?: string
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocks_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocks_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_lineup: {
         Row: {
           added_by: string
@@ -772,6 +808,44 @@ export type Database = {
           },
         ]
       }
+      reports: {
+        Row: {
+          created_at: string | null
+          id: string
+          note: string | null
+          reason: string
+          reporter_id: string
+          subject_id: string
+          subject_type: Database["public"]["Enums"]["report_subject_type"]
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          reason: string
+          reporter_id: string
+          subject_id: string
+          subject_type: Database["public"]["Enums"]["report_subject_type"]
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          reason?: string
+          reporter_id?: string
+          subject_id?: string
+          subject_type?: Database["public"]["Enums"]["report_subject_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       comment_counts: {
@@ -811,6 +885,7 @@ export type Database = {
         | "apple_music"
         | "other"
       profile_type: "dj" | "promoter" | "venue" | "producer" | "fan"
+      report_subject_type: "profile" | "event" | "mix" | "comment" | "message"
     }
     CompositeTypes: {
       [_ in never]: never
