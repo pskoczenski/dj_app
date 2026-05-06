@@ -23,7 +23,7 @@ function withSupabaseCookies(
 }
 
 function isComingSoonAllowlistedPath(pathname: string): boolean {
-  if (pathname === "/coming-soon") return true;
+  if (pathname === "/coming-soon" || pathname === "/coming-soon/") return true;
   if (pathname === "/api/coming-soon/unlock") return true;
   if (pathname === "/api/coming-soon/lock") return true;
 
@@ -42,6 +42,19 @@ function isComingSoonAllowlistedPath(pathname: string): boolean {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Prerender/static shells may answer POST /coming-soon with 405 even when the
+  // form targets /api/coming-soon/unlock (edge/CDN quirks). Rewrite so the Route
+  // Handler always receives the submission.
+  if (
+    request.method === "POST" &&
+    (pathname === "/coming-soon" || pathname === "/coming-soon/")
+  ) {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = "/api/coming-soon/unlock";
+    rewriteUrl.search = "";
+    return NextResponse.rewrite(rewriteUrl);
+  }
 
   if (process.env.COMING_SOON_ENABLED === "true") {
     const secret = process.env.COMING_SOON_GATE_SECRET;

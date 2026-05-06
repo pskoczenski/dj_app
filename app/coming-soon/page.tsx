@@ -1,6 +1,10 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
+/** Avoid static prerender quirks for credential POST flows on the edge network. */
+export const dynamic = "force-dynamic";
 
 export default function ComingSoonPage(props: {
   searchParams?: { next?: string; error?: string };
@@ -52,9 +56,12 @@ export default function ComingSoonPage(props: {
             />
           </div>
 
-          <Button type="submit" className="w-full">
+          <button
+            type="submit"
+            className={cn(buttonVariants({ variant: "default" }), "w-full")}
+          >
             Enter
-          </Button>
+          </button>
         </form>
 
         <p className="mt-6 text-xs text-fog">

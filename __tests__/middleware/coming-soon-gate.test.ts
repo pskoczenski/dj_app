@@ -57,6 +57,28 @@ describe("middleware coming-soon gate", () => {
     expect(res.status).toBe(200);
   });
 
+  it("rewrites POST /coming-soon to the unlock API Route Handler", async () => {
+    process.env.COMING_SOON_ENABLED = "false";
+
+    const req = new NextRequest(
+      new URL("/coming-soon?next=%2F", "https://example.com"),
+      {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          password: "x",
+          next: "/",
+        }).toString(),
+      },
+    );
+    const res = await proxy(req);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-middleware-rewrite")).toBe(
+      "https://example.com/api/coming-soon/unlock",
+    );
+  });
+
   it("allows request through when valid signed cookie is present", async () => {
     process.env.COMING_SOON_ENABLED = "true";
     process.env.COMING_SOON_GATE_SECRET = "secret";
