@@ -1,6 +1,13 @@
 "use client";
 
-import { cloneElement, isValidElement, useMemo, useState } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  useMemo,
+  useState,
+  type MouseEventHandler,
+  type ReactElement,
+} from "react";
 import { toast } from "sonner";
 import { reportsService, type ReportReason, type ReportSubjectType } from "@/lib/services/reports";
 import { Button } from "@/components/ui/button";
@@ -68,10 +75,10 @@ export function ReportDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {isValidElement(trigger) ? (
-        cloneElement(trigger, {
+      {isValidElement<{ onClick?: MouseEventHandler }>(trigger) ? (
+        cloneElement(trigger as ReactElement<{ onClick?: MouseEventHandler }>, {
           onClick: (e) => {
-            (trigger.props as { onClick?: (evt: unknown) => void } | undefined)?.onClick?.(e);
+            (trigger as ReactElement<{ onClick?: MouseEventHandler }>).props.onClick?.(e);
             setOpen(true);
           },
         })

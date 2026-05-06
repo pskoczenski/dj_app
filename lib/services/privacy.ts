@@ -78,27 +78,24 @@ export async function deleteMyAccount(): Promise<void> {
   const sb = supabase();
   const now = new Date().toISOString();
 
-  const softDelete = (table: string, column: string) =>
-    sb.from(table).update({ deleted_at: now }).eq(column, userId);
-
-  const hardDeleteByProfileId = (table: string) =>
-    sb.from(table).delete().eq("profile_id", userId);
-
   const results = await Promise.all([
     // Soft deletes
-    softDelete(TABLES.profiles, "id"),
-    softDelete(TABLES.events, "created_by"),
-    softDelete(TABLES.mixes, "profile_id"),
-    softDelete(TABLES.messages, "sender_id"),
-    softDelete(TABLES.comments, "profile_id"),
+    sb.from(TABLES.profiles).update({ deleted_at: now }).eq("id", userId),
+    sb.from(TABLES.events).update({ deleted_at: now }).eq("created_by", userId),
+    sb.from(TABLES.mixes).update({ deleted_at: now }).eq("profile_id", userId),
+    sb.from(TABLES.messages).update({ deleted_at: now }).eq("sender_id", userId),
+    sb.from(TABLES.comments).update({ deleted_at: now }).eq("profile_id", userId),
 
     // Hard deletes (per repo convention)
-    sb.from(TABLES.follows).delete().or(`follower_id.eq.${userId},following_id.eq.${userId}`),
-    hardDeleteByProfileId(TABLES.commentLikes),
-    hardDeleteByProfileId(TABLES.mixLikes),
-    hardDeleteByProfileId(TABLES.eventLikes),
-    hardDeleteByProfileId(TABLES.eventSaves),
-    hardDeleteByProfileId(TABLES.conversationParticipants),
+    sb
+      .from(TABLES.follows)
+      .delete()
+      .or(`follower_id.eq.${userId},following_id.eq.${userId}`),
+    sb.from(TABLES.commentLikes).delete().eq("profile_id", userId),
+    sb.from(TABLES.mixLikes).delete().eq("profile_id", userId),
+    sb.from(TABLES.eventLikes).delete().eq("profile_id", userId),
+    sb.from(TABLES.eventSaves).delete().eq("profile_id", userId),
+    sb.from(TABLES.conversationParticipants).delete().eq("profile_id", userId),
     sb.from(TABLES.eventLineup).delete().eq("profile_id", userId),
   ]);
 
