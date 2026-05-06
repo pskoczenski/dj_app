@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Flag, Pencil, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { formatRelativeTime } from "@/lib/format-relative-time";
 import type { CommentWithAuthor } from "@/types";
 import { CommentLikeButton } from "@/components/comments/CommentLikeButton";
+import { ReportDialog } from "@/components/shared/report-dialog";
 
 function initials(name: string): string {
   return name
@@ -85,6 +86,7 @@ export function CommentList({
         const editing = editingId === comment.id;
         const canEdit =
           Boolean(onEdit) && isMine && !readOnly && !comment.id.startsWith("tmp-");
+        const canReport = Boolean(currentUserId) && !isMine && !readOnly;
 
         return (
           <div key={comment.id} className="flex gap-2">
@@ -188,6 +190,22 @@ export function CommentList({
                     initialLiked={comment.likedByMe}
                     initialCount={comment.likeCount}
                     disabled={readOnly}
+                  />
+                ) : null}
+                {canReport ? (
+                  <ReportDialog
+                    subjectType="comment"
+                    subjectId={comment.id}
+                    title="Report comment"
+                    trigger={
+                      <button
+                        type="button"
+                        className="rounded-default p-1 text-fog hover:bg-forest-shadow/80 hover:text-bone"
+                        aria-label="Report comment"
+                      >
+                        <Flag className="size-3.5" aria-hidden />
+                      </button>
+                    }
                   />
                 ) : null}
                 {isMine && !readOnly && !editing && (
