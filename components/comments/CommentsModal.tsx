@@ -67,7 +67,9 @@ function CommentsModalBody({
     addComment,
     deleteComment,
     updateComment,
-  } = useComments(commentableType, commentableId);
+  } = useComments(commentableType, commentableId, {
+    subscribeRealtime: true,
+  });
 
   async function handlePost() {
     if (!canPost) return;

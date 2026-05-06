@@ -104,6 +104,73 @@ export async function getComments(
   };
 }
 
+export async function getCommentWithAuthor(
+  commentId: string,
+): Promise<CommentWithAuthor | null> {
+  const currentUserId = await resolveCurrentUserId();
+
+  const { data, error } = await supabase()
+    .from(TABLES.comments)
+    .select(
+      "id,body,created_at,updated_at,profile_id,author:profiles!comments_profile_id_fkey(id,display_name,slug,profile_image_url)",
+    )
+    .eq("id", commentId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  const row = data as {
+    id: string;
+    body: string;
+    created_at: string | null;
+    updated_at: string | null;
+    profile_id: string;
+    author: {
+      id: string;
+      display_name: string;
+      slug: string;
+      profile_image_url: string | null;
+    } | null;
+  };
+
+  const id = row.id;
+
+  const { count, error: likeCountErr } = await supabase()
+    .from(TABLES.commentLikes)
+    .select("id", { count: "exact", head: true })
+    .eq("comment_id", id);
+  if (likeCountErr) throw likeCountErr;
+
+  let likedByMe = false;
+  if (currentUserId) {
+    const { data: likeRow } = await supabase()
+      .from(TABLES.commentLikes)
+      .select("id")
+      .eq("comment_id", id)
+      .eq("profile_id", currentUserId)
+      .maybeSingle();
+    likedByMe = Boolean(likeRow);
+  }
+
+  return {
+    id: row.id,
+    body: row.body,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    profile_id: row.profile_id,
+    author: row.author
+      ? {
+          display_name: row.author.display_name,
+          slug: row.author.slug,
+          profile_image_url: row.author.profile_image_url,
+        }
+      : null,
+    likeCount: count ?? 0,
+    likedByMe,
+  };
+}
+
 export async function getCommentCount(
   commentableType: CommentableType,
   commentableId: string,
@@ -221,6 +288,7 @@ export async function update(
 
 export const commentsService = {
   getComments,
+  getCommentWithAuthor,
   getCommentCount,
   create,
   softDelete,

@@ -130,6 +130,63 @@ describe("commentsService", () => {
     expect(ok).toBe(true);
   });
 
+  it("getCommentWithAuthor returns null when comment not visible", async () => {
+    const maybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
+    const eqId = jest.fn().mockReturnValue({ is: jest.fn().mockReturnValue({ maybeSingle }) });
+    const select = jest.fn().mockReturnValue({ eq: eqId });
+    fromMock.mockReturnValueOnce({ select });
+
+    const row = await commentsService.getCommentWithAuthor("missing");
+    expect(row).toBeNull();
+  });
+
+  it("getCommentWithAuthor returns hydrated row with likes", async () => {
+    const maybeSingleComment = jest.fn().mockResolvedValue({
+      data: {
+        id: "c9",
+        body: "hi",
+        created_at: "2026-01-01T00:00:00.000Z",
+        updated_at: "2026-01-01T00:00:00.000Z",
+        profile_id: "user-2",
+        author: {
+          id: "user-2",
+          display_name: "Bee",
+          slug: "bee",
+          profile_image_url: null,
+        },
+      },
+      error: null,
+    });
+    const isDeleted = jest
+      .fn()
+      .mockReturnValue({ maybeSingle: maybeSingleComment });
+    const eqId = jest.fn().mockReturnValue({ is: isDeleted });
+    const selectComment = jest.fn().mockReturnValue({ eq: eqId });
+
+    const eqCommentIdHead = jest
+      .fn()
+      .mockResolvedValue({ count: 4, error: null });
+    const selectCountHead = jest.fn().mockReturnValue({ eq: eqCommentIdHead });
+
+    const maybeLiked = jest.fn().mockResolvedValue({
+      data: { id: "lk" },
+      error: null,
+    });
+    const eqProfLike = jest.fn().mockReturnValue({ maybeSingle: maybeLiked });
+    const eqCidSelfLike = jest.fn().mockReturnValue({ eq: eqProfLike });
+    const selectSelfLikeRows = jest.fn().mockReturnValue({ eq: eqCidSelfLike });
+
+    fromMock
+      .mockReturnValueOnce({ select: selectComment })
+      .mockReturnValueOnce({ select: selectCountHead })
+      .mockReturnValueOnce({ select: selectSelfLikeRows });
+
+    const row = await commentsService.getCommentWithAuthor("c9");
+    expect(row?.likeCount).toBe(4);
+    expect(row?.likedByMe).toBe(true);
+    expect(row?.author?.slug).toBe("bee");
+  });
+
   it("update sets body for own active comment and returns author", async () => {
     const singleUpdate = jest.fn().mockResolvedValue({
       data: {
