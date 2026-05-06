@@ -48,6 +48,22 @@ describe("LoginPage", () => {
     );
   });
 
+  it("renders Terms/Privacy links and 13+ statement", () => {
+    render(<LoginPage />);
+
+    expect(
+      screen.getByText(/you must be at least 13 years old to use mirrorball/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /terms/i })).toHaveAttribute(
+      "href",
+      "/terms",
+    );
+    expect(screen.getByRole("link", { name: /privacy policy/i })).toHaveAttribute(
+      "href",
+      "/privacy",
+    );
+  });
+
   it("calls signInWithPassword, ensures profile, and redirects on success", async () => {
     mockSignIn.mockResolvedValueOnce({
       data: {
