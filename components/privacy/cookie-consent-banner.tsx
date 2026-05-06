@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   defaultConsent,
   getConsentFromCookie,
@@ -26,6 +27,7 @@ function withUpdatedAt(consent: CookieConsent): CookieConsent {
 }
 
 export function CookieConsentBanner() {
+  const pathname = usePathname();
   const existing = useMemo(() => getConsentFromCookie(), []);
   const [mode, setMode] = useState<BannerMode>(existing ? "hidden" : "banner");
   const [open, setOpen] = useState(false);
@@ -37,6 +39,8 @@ export function CookieConsentBanner() {
   useEffect(() => {
     if (existing) setMode("hidden");
   }, [existing]);
+
+  if (pathname === "/coming-soon") return null;
 
   function saveChoice(nextFunctional: boolean) {
     const next = withUpdatedAt({

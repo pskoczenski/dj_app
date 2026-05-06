@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const url = new URL(request.url);
 
-  const res = NextResponse.redirect(new URL("/coming-soon", url.origin));
+  const res = NextResponse.redirect(new URL("/coming-soon", url.origin), 303);
   res.cookies.set(comingSoonCookieName, "", {
     httpOnly: true,
     sameSite: "lax",

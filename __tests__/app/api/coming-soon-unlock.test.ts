@@ -34,7 +34,7 @@ describe("POST /api/coming-soon/unlock", () => {
       }),
     );
 
-    expect(res.status).toBe(307);
+    expect(res.status).toBe(303);
     expect(res.headers.get("location")).toBe(
       "https://example.com/coming-soon?next=%2Fevents&error=1",
     );
@@ -53,7 +53,7 @@ describe("POST /api/coming-soon/unlock", () => {
       }),
     );
 
-    expect(res.status).toBe(307);
+    expect(res.status).toBe(303);
     expect(res.headers.get("location")).toBe("https://example.com/events?x=1");
 
     const setCookie = res.headers.get("set-cookie");
