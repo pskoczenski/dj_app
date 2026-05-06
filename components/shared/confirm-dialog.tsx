@@ -11,6 +11,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ConfirmDialogProps {
   trigger: React.ReactNode;
@@ -20,6 +22,8 @@ interface ConfirmDialogProps {
   cancelLabel?: string;
   onConfirm: () => void;
   variant?: "default" | "destructive";
+  triggerVariant?: "default" | "outline" | "destructive";
+  triggerDisabled?: boolean;
 }
 
 export function ConfirmDialog({
@@ -30,10 +34,15 @@ export function ConfirmDialog({
   cancelLabel = "Cancel",
   onConfirm,
   variant = "default",
+  triggerVariant = "outline",
+  triggerDisabled = false,
 }: ConfirmDialogProps) {
   return (
     <AlertDialog>
-      <AlertDialogTrigger className="cursor-pointer">
+      <AlertDialogTrigger
+        className={cn(buttonVariants({ variant: triggerVariant }))}
+        disabled={triggerDisabled}
+      >
         {trigger}
       </AlertDialogTrigger>
       <AlertDialogContent>
