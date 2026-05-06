@@ -163,13 +163,15 @@ export function CommentsModal({
   commentableId,
   title,
   trigger,
+  openByDefault = false,
 }: {
   commentableType: CommentableType;
   commentableId: string;
   title: string;
   trigger: ReactNode;
+  openByDefault?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(openByDefault);
 
   const triggerRender: ReactElement = isValidElement(trigger)
     ? (trigger as ReactElement)

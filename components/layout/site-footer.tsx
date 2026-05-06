@@ -10,6 +10,7 @@ const FOOTER_LINKS: FooterLink[] = [
   { href: "/guidelines", label: "Guidelines" },
   { href: "/dmca", label: "DMCA" },
   { href: "/contact", label: "Contact" },
+  { href: "/accessibility", label: "Accessibility" },
   { href: "/cookie-preferences", label: "Cookie Preferences" },
 ];
 
