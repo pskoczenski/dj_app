@@ -33,6 +33,14 @@ export const metadata: Metadata = {
     template: "%s — Mirrorball",
   },
   description: "A home for the people keeping the dance floor honest.",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      // Keep the default /favicon.ico around for older clients; browsers that
+      // support SVG favicons will prefer the SVG link above.
+      { url: "/favicon.ico" },
+    ],
+  },
   robots: {
     index: false,
     follow: false,
